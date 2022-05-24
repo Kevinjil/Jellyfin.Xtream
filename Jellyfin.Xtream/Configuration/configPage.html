@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Template</title>
+</head>
+<body>
+    <div id="TemplateConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="TemplateConfigForm">
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="BaseUrl">Base URL</label>
+                        <input id="BaseUrl" name="BaseUrl" type="text" is="emby-input" />
+                        <div class="fieldDescription">The base url including protocol without trailing slash.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="BaseUrl">Username</label>
+                        <input id="Username" name="Username" type="text" is="emby-input" />
+                        <div class="fieldDescription">The username.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="BaseUrl">Password</label>
+                        <input id="Password" name="Password" type="password" is="emby-input" />
+                        <div class="fieldDescription">The password.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var TemplateConfig = {
+                pluginUniqueId: '5d774c35-8567-46d3-a950-9bb8227a0c5d'
+            };
+
+            document.querySelector('#TemplateConfigPage')
+                .addEventListener('pageshow', function() {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(TemplateConfig.pluginUniqueId).then(function (config) {
+                        document.querySelector('#BaseUrl').value = config.BaseUrl;
+                        document.querySelector('#Username').value = config.Username;
+                        document.querySelector('#Password').value = config.Password;
+                        Dashboard.hideLoadingMsg();
+                    });    
+                });
+            
+            document.querySelector('#TemplateConfigForm')
+                .addEventListener('submit', function(e) {
+                Dashboard.showLoadingMsg();
+
+                ApiClient.getPluginConfiguration(TemplateConfig.pluginUniqueId).then(function (config) {
+                    config.BaseUrl = document.querySelector('#BaseUrl').value;
+                    config.Username = document.querySelector('#Username').value;
+                    config.Password = document.querySelector('#Password').value;
+                    ApiClient.updatePluginConfiguration(TemplateConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+
+                e.preventDefault();
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
