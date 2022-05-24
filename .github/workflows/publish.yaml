@@ -10,6 +10,8 @@ jobs:
   call:
     uses: jellyfin/jellyfin-meta-plugins/.github/workflows/publish.yaml@master
     with:
+      dotnet-version: "5.0.*"
+      dotnet-target:  "net5.0"
       version: ${{ github.event.release.tag_name }}
       is-unstable: ${{ github.event.release.prerelease }}
     secrets:
