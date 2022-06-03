@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Jellyfin plugin repo
-      uses: Kevinjil/jellyfin-plugin-repo-action@v0.2.1
+      uses: Kevinjil/jellyfin-plugin-repo-action@v0.2.2
       with:
         githubToken: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
