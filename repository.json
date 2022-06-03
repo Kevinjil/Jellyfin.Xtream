@@ -1,1 +1,22 @@
-[]
+[
+  [
+    {
+      "category": "Live TV",
+      "description": "Stream Live IPTV, Video On-Demand, and Series from an Xtream-compatible server using this plugin.\n",
+      "guid": "5d774c35-8567-46d3-a950-9bb8227a0c5d",
+      "name": "Jellyfin Xtream",
+      "overview": "Stream content from an Xtream-compatible server.",
+      "owner": "Kevinjil",
+      "versions": [
+        {
+          "changelog": "Initial release of the Jellyfin.Xtream plugin.",
+          "checksum": "1f09ff53f7d34e5081f597018d11aaa8",
+          "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.1.0/jellyfin-xtream_0.1.0.0.zip",
+          "targetAbi": "10.7.0.0",
+          "timestamp": "2022-05-24T14:41:58Z",
+          "version": "0.1.0.0"
+        }
+      ]
+    }
+  ]
+]
