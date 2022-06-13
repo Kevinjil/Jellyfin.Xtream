@@ -1,40 +1,24 @@
 export default function (view) {
-  const getConfigurationPageUrl = (name) => {
-    return 'configurationpage?name=' + encodeURIComponent(name);
-  }
+  const pluginId = window.Xtream.PluginConfig.UniqueId;
 
-  function getTabs() {
-    var tabs = [
-      {
-        href: getConfigurationPageUrl('XtreamCredentials'),
-        name: 'Xtream Credentials'
-      }
-    ];
-    return tabs;
-  }
-
-  var XtreamConfig = {
-    pluginUniqueId: '5d774c35-8567-46d3-a950-9bb8227a0c5d'
-  };
-
-  document.querySelector('#XtreamConfigPage').addEventListener('pageshow', function () {
+  document.querySelector('#XtreamCredentialsPage').addEventListener('pageshow', () => {
     Dashboard.showLoadingMsg();
-    ApiClient.getPluginConfiguration(XtreamConfig.pluginUniqueId).then(function (config) {
-      document.querySelector('#BaseUrl').value = config.BaseUrl;
-      document.querySelector('#Username').value = config.Username;
-      document.querySelector('#Password').value = config.Password;
+    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+      document.querySelector('#XtreamCredentialsForm #BaseUrl').value = config.BaseUrl;
+      document.querySelector('#XtreamCredentialsForm #Username').value = config.Username;
+      document.querySelector('#XtreamCredentialsForm #Password').value = config.Password;
       Dashboard.hideLoadingMsg();
     });
   });
 
-  document.querySelector('#XtreamConfigForm').addEventListener('submit', function (e) {
+  document.querySelector('#XtreamCredentialsForm').addEventListener('submit', (e) => {
     Dashboard.showLoadingMsg();
 
-    ApiClient.getPluginConfiguration(XtreamConfig.pluginUniqueId).then(function (config) {
-      config.BaseUrl = document.querySelector('#BaseUrl').value;
-      config.Username = document.querySelector('#Username').value;
-      config.Password = document.querySelector('#Password').value;
-      ApiClient.updatePluginConfiguration(XtreamConfig.pluginUniqueId, config).then(function (result) {
+    ApiClient.getPluginConfiguration(pluginId).then((config) => {
+      config.BaseUrl = document.querySelector('#XtreamCredentialsForm #BaseUrl').value;
+      config.Username = document.querySelector('#XtreamCredentialsForm #Username').value;
+      config.Password = document.querySelector('#XtreamCredentialsForm #Password').value;
+      ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
         Dashboard.processPluginConfigurationUpdateResult(result);
       });
     });
@@ -43,7 +27,7 @@ export default function (view) {
     return false;
   });
 
-  view.addEventListener("viewshow", function (e) {
-    LibraryMenu.setTabs('credentials', 2, getTabs);
+  view.addEventListener("viewshow", () => {
+    LibraryMenu.setTabs('XtreamCredentials', 2, window.Xtream.getTabs);
   });
 }
