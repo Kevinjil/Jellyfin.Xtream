@@ -73,8 +73,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         {
             new PluginPageInfo
             {
-                Name = this.Name,
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
+                Name = "XtreamCredentials",
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamCredentials.html", GetType().Namespace)
+            },
+            new PluginPageInfo
+            {
+                Name = "XtreamCredentials.js",
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamCredentials.js", GetType().Namespace)
             }
         };
     }
