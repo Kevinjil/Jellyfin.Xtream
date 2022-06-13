@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -140,13 +141,13 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public Task<IEnumerable<TimerInfo>> GetTimersAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult<IEnumerable<TimerInfo>>(new List<TimerInfo>());
         }
 
         /// <inheritdoc />
         public Task<IEnumerable<SeriesTimerInfo>> GetSeriesTimersAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult<IEnumerable<SeriesTimerInfo>>(new List<SeriesTimerInfo>());
         }
 
         /// <inheritdoc />
@@ -233,13 +234,59 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public Task<SeriesTimerInfo> GetNewTimerDefaultsAsync(CancellationToken cancellationToken, ProgramInfo? program = null)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new SeriesTimerInfo
+            {
+                PostPaddingSeconds = 120,
+                PrePaddingSeconds = 120,
+                RecordAnyChannel = false,
+                RecordAnyTime = true,
+                RecordNewOnly = false
+            });
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId, DateTime startDateUtc, DateTime endDateUtc, CancellationToken cancellationToken)
+        public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId, DateTime startDateUtc, DateTime endDateUtc, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            string key = $"xtream-epg-{channelId}";
+            ICollection<ProgramInfo>? items = null;
+            if (memoryCache.TryGetValue(key, out ICollection<ProgramInfo> o))
+            {
+                items = o;
+            }
+            else
+            {
+                items = new List<ProgramInfo>();
+                Plugin? plugin = Plugin.Instance;
+                if (plugin == null)
+                {
+                    throw new ArgumentException("Plugin not initialized!");
+                }
+
+                PluginConfiguration config = plugin.Configuration;
+                using (XtreamClient client = new XtreamClient())
+                {
+                    int streamId = int.Parse(channelId, CultureInfo.InvariantCulture);
+                    EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
+                    foreach (EpgInfo epg in epgs.Listings)
+                    {
+                        items.Add(new ProgramInfo()
+                        {
+                            Id = $"epg-{epg.Id}",
+                            ChannelId = channelId,
+                            StartDate = epg.Start,
+                            EndDate = epg.End,
+                            Name = epg.Title,
+                            Overview = epg.Description,
+                        });
+                    }
+                }
+
+                memoryCache.Set(key, items, DateTimeOffset.Now.AddMinutes(10));
+            }
+
+            return from epg in items
+                   where epg.EndDate >= startDateUtc && epg.StartDate < endDateUtc
+                   select epg;
         }
 
         /// <inheritdoc />

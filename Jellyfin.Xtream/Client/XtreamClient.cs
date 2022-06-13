@@ -104,6 +104,12 @@ namespace Jellyfin.Xtream.Client
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_live_categories",
                cancellationToken);
 
+        public Task<EpgListings> GetEpgInfoAsync(ConnectionInfo connectionInfo, int streamId, CancellationToken cancellationToken) =>
+             QueryApi<EpgListings>(
+               connectionInfo,
+               $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_simple_data_table&stream_id={streamId}",
+               cancellationToken);
+
         /// <summary>
         /// Dispose the HTTP client.
         /// </summary>
