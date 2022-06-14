@@ -156,7 +156,7 @@ namespace Jellyfin.Xtream
         }
 
         /// <inheritdoc />
-        public Task UpdateTimerAsync(TimerInfo info, CancellationToken cancellationToken)
+        public Task UpdateTimerAsync(TimerInfo updatedTimer, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
