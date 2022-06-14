@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Threading;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Configuration;
 using MediaBrowser.Common.Configuration;

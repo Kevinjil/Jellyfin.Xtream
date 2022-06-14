@@ -17,17 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
-using MediaBrowser.Common.Net;
-using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
@@ -110,9 +105,7 @@ namespace Jellyfin.Xtream
                 throw new ArgumentException("Plugin not initialized!");
             }
 
-            PluginConfiguration config = plugin.Configuration;
             List<ChannelInfo> items = new List<ChannelInfo>();
-
             await foreach (StreamInfo channel in GetLiveStreams(cancellationToken))
             {
                 items.Add(new ChannelInfo()
@@ -262,7 +255,6 @@ namespace Jellyfin.Xtream
                     throw new ArgumentException("Plugin not initialized!");
                 }
 
-                PluginConfiguration config = plugin.Configuration;
                 using (XtreamClient client = new XtreamClient())
                 {
                     int streamId = int.Parse(channelId, CultureInfo.InvariantCulture);

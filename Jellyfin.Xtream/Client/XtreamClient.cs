@@ -15,9 +15,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client.Models;
@@ -51,9 +49,9 @@ namespace Jellyfin.Xtream.Client
 
         private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
         {
-          Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
-          string jsonContent = await _client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
-          return JsonConvert.DeserializeObject<T>(jsonContent)!;
+            Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
+            string jsonContent = await _client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+            return JsonConvert.DeserializeObject<T>(jsonContent)!;
         }
 
         public Task<PlayerApi> GetUserAndServerInfoAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>
@@ -122,8 +120,8 @@ namespace Jellyfin.Xtream.Client
         /// <inheritdoc />
         public void Dispose()
         {
-          Dispose(true);
-          GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
