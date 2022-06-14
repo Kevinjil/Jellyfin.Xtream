@@ -9,11 +9,11 @@
     "versions": [
       {
         "changelog": "Make the plugin compatible with Jellyfin v10.8.0 release.",
-        "checksum": "34695728a39a2edc9570054c3c558013",
-        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.2.1/jellyfin-xtream_0.2.0.0.zip",
+        "checksum": "3b199a8cf3a6dad80f65bd0d86d0a977",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.2.1/jellyfin-xtream_0.2.1.0.zip",
         "targetAbi": "10.8.0.0",
-        "timestamp": "2022-06-14T02:23:44Z",
-        "version": "0.2.0.0"
+        "timestamp": "2022-06-14T02:28:49Z",
+        "version": "0.2.1.0"
       },
       {
         "changelog": "Introduce native Live TV integration (#3) with the ability to select which channels are included and EPG support. ",
