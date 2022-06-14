@@ -9,5 +9,5 @@ jobs:
   call:
     uses: jellyfin/jellyfin-meta-plugins/.github/workflows/scan-codeql.yaml@master
     with:
-      dotnet-version: "5.0.*"
+      dotnet-version: "6.0.*"
       repository-name: Kevinjil/Jellyfin.Xtream
