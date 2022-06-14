@@ -13,8 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
 
+#pragma warning disable CA2227
 namespace Jellyfin.Xtream.Configuration
 {
     /// <summary>
@@ -31,6 +33,7 @@ namespace Jellyfin.Xtream.Configuration
             BaseUrl = "https://example.com";
             Username = string.Empty;
             Password = string.Empty;
+            LiveTv = new SerializableDictionary<int, HashSet<int>>();
         }
 
         /// <summary>
@@ -47,5 +50,11 @@ namespace Jellyfin.Xtream.Configuration
         /// Gets or sets the password.
         /// </summary>
         public string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the channels displayed in Live TV.
+        /// </summary>
+        public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; }
     }
 }
+#pragma warning restore CA2227
