@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "Introduce native Live TV restream capabilities. This enables sharing a single Xtream Live TV stream with multiple clients and thus using less concurrent active streams from the Xtream provider.",
+        "checksum": "1162c057212a7a0b2ec91bad88798478",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.3.0/jellyfin-xtream_0.3.0.0.zip",
+        "targetAbi": "10.8.0.0",
+        "timestamp": "2022-06-20T21:51:05Z",
+        "version": "0.3.0.0"
+      },
+      {
         "changelog": "Make the plugin compatible with Jellyfin v10.8.0 release.",
         "checksum": "3b199a8cf3a6dad80f65bd0d86d0a977",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.2.1/jellyfin-xtream_0.2.1.0.zip",
