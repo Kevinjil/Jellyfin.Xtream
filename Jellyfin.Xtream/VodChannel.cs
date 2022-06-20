@@ -194,6 +194,9 @@ namespace Jellyfin.Xtream
                             Name = channel.Name,
                             Path = uri,
                             Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
+                            SupportsDirectPlay = false,
+                            SupportsDirectStream = true,
+                            SupportsProbing = true,
                         }
                     };
                     items.Add(new ChannelItemInfo()
