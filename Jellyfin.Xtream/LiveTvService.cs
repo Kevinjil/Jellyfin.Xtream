@@ -17,15 +17,18 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
+using Jellyfin.Xtream.Service;
+using MediaBrowser.Controller;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -35,19 +38,24 @@ namespace Jellyfin.Xtream
     /// <summary>
     /// Class LiveTvService.
     /// </summary>
-    public class LiveTvService : ILiveTvService
+    public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     {
+        private readonly IServerApplicationHost appHost;
+        private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger<LiveTvService> logger;
         private readonly IMemoryCache memoryCache;
-        private int liveStreams;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LiveTvService"/> class.
         /// </summary>
+        /// <param name="appHost">Instance of the <see cref="IServerApplicationHost"/> interface.</param>
+        /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
         /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
         /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-        public LiveTvService(ILogger<LiveTvService> logger, IMemoryCache memoryCache)
+        public LiveTvService(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger<LiveTvService> logger, IMemoryCache memoryCache)
         {
+            this.appHost = appHost;
+            this.httpClientFactory = httpClientFactory;
             this.logger = logger;
             this.memoryCache = memoryCache;
         }
@@ -177,44 +185,7 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public Task<MediaSourceInfo> GetChannelStream(string channelId, string streamId, CancellationToken cancellationToken)
         {
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
-            PluginConfiguration config = plugin.Configuration;
-            logger.LogInformation("Start livestream {ChannelId}", channelId);
-            liveStreams++;
-
-            string uri = $"{config.BaseUrl}/{config.Username}/{config.Password}/{channelId}";
-            var mediaSourceInfo = new MediaSourceInfo
-            {
-                Id = liveStreams.ToString(CultureInfo.InvariantCulture),
-                Path = uri,
-                Protocol = MediaProtocol.Http,
-                RequiresOpening = true,
-                MediaStreams = new List<MediaStream>
-                {
-                    new MediaStream
-                    {
-                        Type = MediaStreamType.Video,
-                        IsInterlaced = true,
-                        // Set the index to -1 because we don't know the exact index of the video stream within the container
-                        Index = -1,
-                    },
-                    new MediaStream
-                    {
-                        Type = MediaStreamType.Audio,
-                        // Set the index to -1 because we don't know the exact index of the audio stream within the container
-                        Index = -1
-                    }
-                },
-                Container = "mpegts",
-                SupportsProbing = true
-            };
-
-            return Task.FromResult(mediaSourceInfo);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -291,6 +262,43 @@ namespace Jellyfin.Xtream
         public Task ResetTuner(string id, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public Task<ILiveStream> GetChannelStreamWithDirectStreamProvider(string channelId, string streamId, List<ILiveStream> currentLiveStreams, CancellationToken cancellationToken)
+        {
+            ILiveStream? stream = currentLiveStreams.Find(stream => stream.TunerHostId == Restream.TunerHost && stream.MediaSource.Id == channelId);
+            if (stream != null)
+            {
+                return Task.FromResult(stream);
+            }
+
+            Plugin? plugin = Plugin.Instance;
+            if (plugin == null)
+            {
+                throw new ArgumentException("Plugin not initialized!");
+            }
+
+            PluginConfiguration config = plugin.Configuration;
+
+            string uri = $"{config.BaseUrl}/{config.Username}/{config.Password}/{channelId}";
+            MediaSourceInfo mediaSourceInfo = new MediaSourceInfo()
+            {
+                EncoderProtocol = MediaProtocol.Http,
+                Id = channelId,
+                IsInfiniteStream = true,
+                IsRemote = true,
+                Path = uri,
+                Protocol = MediaProtocol.Http,
+                SupportsDirectPlay = false,
+                SupportsDirectStream = true,
+                SupportsProbing = true,
+                RequiresOpening = true,
+                RequiresClosing = true,
+            };
+
+            stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
+            return Task.FromResult(stream);
         }
     }
 }

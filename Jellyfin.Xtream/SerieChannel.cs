@@ -312,6 +312,9 @@ namespace Jellyfin.Xtream
                             Name = episode.Title,
                             Path = uri,
                             Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
+                            SupportsDirectPlay = false,
+                            SupportsDirectStream = true,
+                            SupportsProbing = true,
                         }
                     };
                     items.Add(new ChannelItemInfo()
