@@ -14,21 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using Jellyfin.Xtream.Client.Models;
-using Jellyfin.Xtream.Configuration;
-using MediaBrowser.Common.Net;
-using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.MediaInfo;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Service
 {
@@ -37,7 +23,7 @@ namespace Jellyfin.Xtream.Service
     /// </summary>
     public class WrappedBufferReadStream : Stream
     {
-        private readonly WrappedBufferStream buffer;
+        private readonly WrappedBufferStream sourceBuffer;
 
         private long position;
         private long readHead;
@@ -46,13 +32,13 @@ namespace Jellyfin.Xtream.Service
         /// <summary>
         /// Initializes a new instance of the <see cref="WrappedBufferReadStream"/> class.
         /// </summary>
-        /// <param name="buffer">The source buffer to read from.</param>
-        public WrappedBufferReadStream(WrappedBufferStream buffer)
+        /// <param name="sourceBuffer">The source buffer to read from.</param>
+        public WrappedBufferReadStream(WrappedBufferStream sourceBuffer)
         {
-            this.buffer = buffer;
-            this.readHead = buffer.TotalBytesWritten;
+            this.sourceBuffer = sourceBuffer;
+            this.readHead = sourceBuffer.TotalBytesWritten;
             this.totalBytesRead = 0;
-            this.Position = buffer.Position;
+            this.position = sourceBuffer.Position;
         }
 
         /// <summary>
@@ -85,8 +71,8 @@ namespace Jellyfin.Xtream.Service
         /// <inheritdoc />
         public override int Read(byte[] buffer, int offset, int count)
         {
-            long gap = this.buffer.TotalBytesWritten - readHead;
-            if (gap > this.buffer.BufferSize)
+            long gap = sourceBuffer.TotalBytesWritten - readHead;
+            if (gap > sourceBuffer.BufferSize)
             {
                 // TODO: design good handling method.
                 // Options:
@@ -96,7 +82,7 @@ namespace Jellyfin.Xtream.Service
             }
 
             // The bytes that still need to be copied.
-            long remaining = Math.Min(count, this.buffer.TotalBytesWritten - readHead);
+            long remaining = Math.Min(count, sourceBuffer.TotalBytesWritten - readHead);
             long remainingOffset = offset;
 
             long read = 0;
@@ -105,10 +91,10 @@ namespace Jellyfin.Xtream.Service
             while (remaining > 0)
             {
                 // The amount of bytes that we can directly write from the current position without wrapping.
-                long readable = Math.Min(remaining, this.buffer.BufferSize - Position);
+                long readable = Math.Min(remaining, sourceBuffer.BufferSize - Position);
 
                 // Copy the data.
-                Array.Copy(this.buffer.Buffer, Position, buffer, remainingOffset, readable);
+                Array.Copy(sourceBuffer.Buffer, Position, buffer, remainingOffset, readable);
                 remaining -= readable;
                 remainingOffset += readable;
 
@@ -118,7 +104,7 @@ namespace Jellyfin.Xtream.Service
                 totalBytesRead += readable;
 
                 // We might have to loop the position.
-                Position %= this.buffer.BufferSize;
+                Position %= sourceBuffer.BufferSize;
             }
 
             return (int)read;

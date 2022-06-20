@@ -52,16 +52,16 @@ namespace Jellyfin.Xtream.Service
         private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger logger;
         private readonly CancellationTokenSource tokenSource;
+        private readonly bool enableStreamSharing;
+        private readonly string uniqueId;
+        private readonly string uri;
 
         private Task? copyTask;
         private Stream? inputStream;
 
         private int consumerCount;
         private string originalStreamId;
-        private bool enableStreamSharing;
         private MediaSourceInfo mediaSource;
-        private string uniqueId;
-        private string uri;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Restream"/> class.

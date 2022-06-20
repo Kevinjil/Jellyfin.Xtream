@@ -29,7 +29,6 @@ using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;

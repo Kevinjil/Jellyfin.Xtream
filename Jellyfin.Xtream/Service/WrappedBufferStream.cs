@@ -14,21 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using Jellyfin.Xtream.Client.Models;
-using Jellyfin.Xtream.Configuration;
-using MediaBrowser.Common.Net;
-using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.MediaInfo;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Service
 {
@@ -37,7 +23,7 @@ namespace Jellyfin.Xtream.Service
     /// </summary>
     public class WrappedBufferStream : Stream
     {
-        private readonly byte[] buffer;
+        private readonly byte[] sourceBuffer;
 
         private long position;
         private long totalBytesWritten;
@@ -48,20 +34,20 @@ namespace Jellyfin.Xtream.Service
         /// <param name="bufferSize">Size in bytes of the internal buffer.</param>
         public WrappedBufferStream(int bufferSize)
         {
-            this.buffer = new byte[bufferSize];
+            this.sourceBuffer = new byte[bufferSize];
             this.totalBytesWritten = 0;
         }
 
         /// <summary>
         /// Gets the maximal size in bytes of read/write chunks.
         /// </summary>
-        public int BufferSize { get => buffer.Length; }
+        public int BufferSize { get => sourceBuffer.Length; }
 
 #pragma warning disable CA1819
         /// <summary>
         /// Gets the internal buffer.
         /// </summary>
-        public byte[] Buffer { get => buffer; }
+        public byte[] Buffer { get => sourceBuffer; }
 #pragma warning restore CA1819
 
         /// <summary>
@@ -106,7 +92,7 @@ namespace Jellyfin.Xtream.Service
                 long writable = Math.Min(remaining, BufferSize - Position);
 
                 // Copy the data.
-                Array.Copy(buffer, remainingOffset, this.buffer, Position, writable);
+                Array.Copy(buffer, remainingOffset, sourceBuffer, Position, writable);
                 remaining -= writable;
                 remainingOffset += writable;
                 Position += writable;
