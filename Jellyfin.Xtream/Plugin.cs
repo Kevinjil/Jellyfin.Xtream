@@ -26,76 +26,78 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream
 {
-/// <summary>
-/// The main plugin.
-/// </summary>
-public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
-{
-    private readonly ILogger<Plugin> _logger;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="Plugin"/> class.
+    /// The main plugin.
     /// </summary>
-    /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
-    /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger)
-        : base(applicationPaths, xmlSerializer)
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
-        _logger = logger;
-        Instance = this;
-    }
+        private readonly ILogger<Plugin> _logger;
 
-    /// <inheritdoc />
-    public override string Name => "Jellyfin Xtream";
-
-    /// <inheritdoc />
-    public override Guid Id => Guid.Parse("5d774c35-8567-46d3-a950-9bb8227a0c5d");
-
-    /// <summary>
-    /// Gets the Xtream connection info with credentials.
-    /// </summary>
-    public ConnectionInfo Creds
-    {
-        get => new ConnectionInfo(this.Configuration.BaseUrl, this.Configuration.Username, this.Configuration.Password);
-    }
-
-    /// <summary>
-    /// Gets the current plugin instance.
-    /// </summary>
-    public static Plugin? Instance { get; private set; }
-
-    /// <inheritdoc />
-    public IEnumerable<PluginPageInfo> GetPages()
-    {
-        return new[]
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Plugin"/> class.
+        /// </summary>
+        /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
+        /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
+        /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger)
+            : base(applicationPaths, xmlSerializer)
         {
-            new PluginPageInfo
+            _logger = logger;
+            Instance = this;
+        }
+
+        /// <inheritdoc />
+        public override string Name => "Jellyfin Xtream";
+
+        /// <inheritdoc />
+        public override Guid Id => Guid.Parse("5d774c35-8567-46d3-a950-9bb8227a0c5d");
+
+        /// <summary>
+        /// Gets the Xtream connection info with credentials.
+        /// </summary>
+        public ConnectionInfo Creds
+        {
+            get => new ConnectionInfo(this.Configuration.BaseUrl, this.Configuration.Username, this.Configuration.Password);
+        }
+
+        /// <summary>
+        /// Gets the current plugin instance.
+        /// </summary>
+        public static Plugin? Instance { get; private set; }
+
+        /// <inheritdoc />
+        public IEnumerable<PluginPageInfo> GetPages()
+        {
+            CultureInfo ci = CultureInfo.InvariantCulture;
+            string? ns = GetType().Namespace;
+            return new[]
             {
-                Name = "XtreamCredentials",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamCredentials.html", GetType().Namespace)
-            },
-            new PluginPageInfo
-            {
-                Name = "XtreamCredentials.js",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamCredentials.js", GetType().Namespace)
-            },
-            new PluginPageInfo
-            {
-                Name = "XtreamLive",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamLive.html", GetType().Namespace)
-            },
-            new PluginPageInfo
-            {
-                Name = "XtreamLive.js",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.XtreamLive.js", GetType().Namespace)
-            },
-            new PluginPageInfo
-            {
-                Name = "Xtream.js",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.Xtream.js", GetType().Namespace)
-            }
-        };
+                new PluginPageInfo
+                {
+                    Name = "XtreamCredentials",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamCredentials.html", ns)
+                },
+                new PluginPageInfo
+                {
+                    Name = "XtreamCredentials.js",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamCredentials.js", ns)
+                },
+                new PluginPageInfo
+                {
+                    Name = "XtreamLive",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamLive.html", ns)
+                },
+                new PluginPageInfo
+                {
+                    Name = "XtreamLive.js",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamLive.js", ns)
+                },
+                new PluginPageInfo
+                {
+                    Name = "Xtream.js",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.js", ns)
+                }
+            };
+        }
     }
-}
 }
