@@ -121,11 +121,11 @@ namespace Jellyfin.Xtream.Service
                 IsRemote = true,
                 Path = uri,
                 Protocol = MediaProtocol.Http,
+                RequiresClosing = isLive,
+                RequiresOpening = isLive,
                 SupportsDirectPlay = false,
                 SupportsDirectStream = true,
                 SupportsProbing = true,
-                RequiresOpening = true,
-                RequiresClosing = true,
             };
         }
     }
