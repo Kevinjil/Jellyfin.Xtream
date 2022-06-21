@@ -134,20 +134,28 @@ namespace Jellyfin.Xtream.Service
             }
 
             inputStream = await response.Content.ReadAsStreamAsync(CancellationToken.None).ConfigureAwait(false);
-            copyTask = Task.Run(() => inputStream.CopyTo(buffer), tokenSource.Token);
+            copyTask = inputStream.CopyToAsync(buffer, tokenSource.Token)
+                .ContinueWith(
+                    (Task t) =>
+                    {
+                        this.logger.LogInformation("Restream for channel {ChannelId} finished with state {Status}", mediaSource.Id, t.Status);
+                        inputStream.Close();
+                        inputStream = null;
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.None,
+                    TaskScheduler.Default);
         }
 
         /// <inheritdoc />
         public async Task Close()
         {
-            if (inputStream == null || copyTask == null)
+            if (copyTask == null)
             {
-                throw new ArgumentNullException("inputStream");
+                throw new ArgumentNullException("copyTask");
             }
 
             tokenSource.Cancel();
-            inputStream.Close();
-            inputStream = null;
             await copyTask.ConfigureAwait(false);
         }
 
