@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
+using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
@@ -133,10 +134,12 @@ namespace Jellyfin.Xtream
 
                 foreach (Category category in categories)
                 {
+                    ParsedName parsedName = plugin.StreamService.ParseName(category.CategoryName);
                     items.Add(new ChannelItemInfo()
                     {
                         Id = category.CategoryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         Name = category.CategoryName,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Folder,
                     });
                 }
@@ -167,47 +170,31 @@ namespace Jellyfin.Xtream
 
             using (XtreamClient client = new XtreamClient())
             {
-                var channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+                IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
-                foreach (var channel in channels)
+                foreach (StreamInfo channel in channels)
                 {
+                    string id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     long added = long.Parse(channel.Added, System.Globalization.CultureInfo.InvariantCulture);
-
-                    PluginConfiguration config = plugin.Configuration;
-                    string uri = $"{config.BaseUrl}/{config.Username}/{config.Password}/{channel.StreamId}";
-                    if (!string.IsNullOrEmpty(channel.ContainerExtension))
-                    {
-                        uri += $".{channel.ContainerExtension}";
-                    }
-
+                    ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        new MediaSourceInfo()
-                        {
-                            EncoderProtocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            Id = "xtream-live-" + channel.StreamId,
-                            IsInfiniteStream = true,
-                            IsRemote = true,
-                            Name = channel.Name,
-                            Path = uri,
-                            Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            SupportsDirectPlay = false,
-                            SupportsDirectStream = true,
-                            SupportsProbing = true,
-                        }
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, id, string.Empty)
                     };
+
                     items.Add(new ChannelItemInfo()
                     {
                         ContentType = ChannelMediaContentType.TvExtra,
                         DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
                         FolderType = ChannelFolderType.Container,
-                        Id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        Id = id,
                         ImageUrl = channel.StreamIcon,
                         IsLiveStream = true,
                         MediaSources = sources,
                         MediaType = ChannelMediaType.Video,
-                        Name = channel.Name,
+                        Name = parsedName.Title,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Media,
                     });
                 }

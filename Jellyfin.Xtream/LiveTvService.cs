@@ -19,6 +19,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
@@ -116,11 +117,13 @@ namespace Jellyfin.Xtream
             List<ChannelInfo> items = new List<ChannelInfo>();
             await foreach (StreamInfo channel in GetLiveStreams(cancellationToken))
             {
+                ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
                 {
                     Id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     ImageUrl = channel.StreamIcon,
-                    Name = channel.Name,
+                    Name = parsed.Title,
+                    Tags = parsed.Tags,
                 });
             }
 
@@ -279,24 +282,7 @@ namespace Jellyfin.Xtream
                 throw new ArgumentException("Plugin not initialized!");
             }
 
-            PluginConfiguration config = plugin.Configuration;
-
-            string uri = $"{config.BaseUrl}/{config.Username}/{config.Password}/{channelId}";
-            MediaSourceInfo mediaSourceInfo = new MediaSourceInfo()
-            {
-                EncoderProtocol = MediaProtocol.Http,
-                Id = channelId,
-                IsInfiniteStream = true,
-                IsRemote = true,
-                Path = uri,
-                Protocol = MediaProtocol.Http,
-                SupportsDirectPlay = false,
-                SupportsDirectStream = true,
-                SupportsProbing = true,
-                RequiresOpening = true,
-                RequiresClosing = true,
-            };
-
+            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, null);
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
             return Task.FromResult(stream);
         }

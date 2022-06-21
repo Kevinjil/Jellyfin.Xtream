@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Configuration;
+using Jellyfin.Xtream.Service;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -44,6 +45,7 @@ namespace Jellyfin.Xtream
         {
             _logger = logger;
             Instance = this;
+            StreamService = new StreamService(logger, this);
         }
 
         /// <inheritdoc />
@@ -64,6 +66,11 @@ namespace Jellyfin.Xtream
         /// Gets the current plugin instance.
         /// </summary>
         public static Plugin? Instance { get; private set; }
+
+        /// <summary>
+        /// Gets the stream service instance.
+        /// </summary>
+        public StreamService StreamService { get; init; }
 
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
