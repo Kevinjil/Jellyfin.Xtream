@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
-using Jellyfin.Xtream.Configuration;
+using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
@@ -150,10 +150,12 @@ namespace Jellyfin.Xtream
 
                 foreach (Category category in categories)
                 {
+                    ParsedName parsedName = plugin.StreamService.ParseName(category.CategoryName);
                     items.Add(new ChannelItemInfo()
                     {
                         Id = $"cat-{category.CategoryId}",
                         Name = category.CategoryName,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Folder,
                     });
                 }
@@ -189,10 +191,12 @@ namespace Jellyfin.Xtream
 
                 foreach (Series serie in series)
                 {
+                    ParsedName parsedName = plugin.StreamService.ParseName(serie.Name);
                     items.Add(new ChannelItemInfo()
                     {
                         Id = $"ser-{serie.SeriesId}",
-                        Name = serie.Name,
+                        Name = parsedName.Title,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Folder,
                         ImageUrl = serie.Cover,
                         DateModified = serie.LastModified,
@@ -202,7 +206,7 @@ namespace Jellyfin.Xtream
                         {
                             Name = name.Trim()
                         }).ToList(),
-                        FolderType = ChannelFolderType.Series,
+                        // FolderType = ChannelFolderType.Series,
                     });
                 }
 
@@ -240,14 +244,16 @@ namespace Jellyfin.Xtream
                     Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
                     if (season != null)
                     {
+                        ParsedName parsedName = plugin.StreamService.ParseName(season.Name);
                         items.Add(new ChannelItemInfo()
                         {
                             Id = $"{seriesId}-{seasonId}",
-                            Name = season.Name,
+                            Name = parsedName.Title,
+                            Tags = new List<string>(parsedName.Tags),
                             Type = ChannelItemType.Folder,
                             ImageUrl = season.Cover,
                             DateCreated = season.AirDate,
-                            FolderType = ChannelFolderType.Season,
+                            // FolderType = ChannelFolderType.Season,
                         });
                     }
                     else
@@ -258,7 +264,7 @@ namespace Jellyfin.Xtream
                             Name = $"Season {seasonId}",
                             Type = ChannelItemType.Folder,
                             ImageUrl = series.Info.Cover,
-                            FolderType = ChannelFolderType.Season,
+                            // FolderType = ChannelFolderType.Season,
                         });
                     }
                 }
@@ -294,39 +300,24 @@ namespace Jellyfin.Xtream
 
                 foreach (Episode episode in channel.Episodes[season])
                 {
-                    PluginConfiguration config = plugin.Configuration;
-                    string uri = $"{config.BaseUrl}/series/{config.Username}/{config.Password}/{episode.EpisodeId}";
-                    if (!string.IsNullOrEmpty(episode.ContainerExtension))
-                    {
-                        uri += $".{episode.ContainerExtension}";
-                    }
-
+                    string id = episode.EpisodeId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    ParsedName parsedName = plugin.StreamService.ParseName(episode.Title);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        new MediaSourceInfo()
-                        {
-                            EncoderProtocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            Id = "xtream-series-" + episode.EpisodeId,
-                            IsInfiniteStream = false,
-                            IsRemote = true,
-                            Name = episode.Title,
-                            Path = uri,
-                            Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            SupportsDirectPlay = false,
-                            SupportsDirectStream = true,
-                            SupportsProbing = true,
-                        }
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.Series, id, episode.ContainerExtension)
                     };
+
                     items.Add(new ChannelItemInfo()
                     {
                         ContentType = ChannelMediaContentType.Episode,
                         DateCreated = DateTimeOffset.FromUnixTimeSeconds(episode.Added).DateTime,
-                        Id = episode.EpisodeId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        Id = id,
                         ImageUrl = episode.Info.MovieImage,
                         IsLiveStream = false,
                         MediaSources = sources,
                         MediaType = ChannelMediaType.Video,
-                        Name = episode.Title,
+                        Name = parsedName.Title,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Media,
                     });
                 }

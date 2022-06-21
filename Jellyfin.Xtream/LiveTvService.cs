@@ -29,7 +29,6 @@ using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -116,11 +115,13 @@ namespace Jellyfin.Xtream
             List<ChannelInfo> items = new List<ChannelInfo>();
             await foreach (StreamInfo channel in GetLiveStreams(cancellationToken))
             {
+                ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
                 {
                     Id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     ImageUrl = channel.StreamIcon,
-                    Name = channel.Name,
+                    Name = parsed.Title,
+                    Tags = parsed.Tags,
                 });
             }
 
@@ -279,24 +280,7 @@ namespace Jellyfin.Xtream
                 throw new ArgumentException("Plugin not initialized!");
             }
 
-            PluginConfiguration config = plugin.Configuration;
-
-            string uri = $"{config.BaseUrl}/{config.Username}/{config.Password}/{channelId}";
-            MediaSourceInfo mediaSourceInfo = new MediaSourceInfo()
-            {
-                EncoderProtocol = MediaProtocol.Http,
-                Id = channelId,
-                IsInfiniteStream = true,
-                IsRemote = true,
-                Path = uri,
-                Protocol = MediaProtocol.Http,
-                SupportsDirectPlay = false,
-                SupportsDirectStream = true,
-                SupportsProbing = true,
-                RequiresOpening = true,
-                RequiresClosing = true,
-            };
-
+            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, null);
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
             return Task.FromResult(stream);
         }

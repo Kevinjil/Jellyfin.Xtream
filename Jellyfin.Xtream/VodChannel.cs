@@ -19,7 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
-using Jellyfin.Xtream.Configuration;
+using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
@@ -27,7 +27,6 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Jellyfin.Xtream
 {
@@ -130,15 +129,16 @@ namespace Jellyfin.Xtream
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                this.logger.LogInformation("{Array}", JsonConvert.SerializeObject(categories));
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
                 foreach (Category category in categories)
                 {
+                    ParsedName parsedName = plugin.StreamService.ParseName(category.CategoryName);
                     items.Add(new ChannelItemInfo()
                     {
                         Id = category.CategoryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         Name = category.CategoryName,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Folder,
                     });
                 }
@@ -169,47 +169,31 @@ namespace Jellyfin.Xtream
 
             using (XtreamClient client = new XtreamClient())
             {
-                var channels = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+                IEnumerable<StreamInfo> vods = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
-                foreach (var channel in channels)
+                foreach (StreamInfo vod in vods)
                 {
-                    long added = long.Parse(channel.Added, System.Globalization.CultureInfo.InvariantCulture);
-
-                    PluginConfiguration config = plugin.Configuration;
-                    string uri = $"{config.BaseUrl}/movie/{config.Username}/{config.Password}/{channel.StreamId}";
-                    if (!string.IsNullOrEmpty(channel.ContainerExtension))
-                    {
-                        uri += $".{channel.ContainerExtension}";
-                    }
-
+                    string id = vod.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    long added = long.Parse(vod.Added, System.Globalization.CultureInfo.InvariantCulture);
+                    ParsedName parsedName = plugin.StreamService.ParseName(vod.Name);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        new MediaSourceInfo()
-                        {
-                            EncoderProtocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            Id = "xtream-vod-" + channel.StreamId,
-                            IsInfiniteStream = false,
-                            IsRemote = true,
-                            Name = channel.Name,
-                            Path = uri,
-                            Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http,
-                            SupportsDirectPlay = false,
-                            SupportsDirectStream = true,
-                            SupportsProbing = true,
-                        }
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.Vod, id, vod.ContainerExtension)
                     };
+
                     items.Add(new ChannelItemInfo()
                     {
                         ContentType = ChannelMediaContentType.Movie,
                         DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
                         FolderType = ChannelFolderType.Container,
-                        Id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ImageUrl = channel.StreamIcon,
+                        Id = id,
+                        ImageUrl = vod.StreamIcon,
                         IsLiveStream = false,
                         MediaSources = sources,
                         MediaType = ChannelMediaType.Video,
-                        Name = channel.Name,
+                        Name = parsedName.Title,
+                        Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Media,
                     });
                 }
