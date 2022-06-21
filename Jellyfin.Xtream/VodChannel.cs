@@ -131,7 +131,6 @@ namespace Jellyfin.Xtream
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                this.logger.LogInformation("{Array}", JsonConvert.SerializeObject(categories));
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
                 foreach (Category category in categories)
