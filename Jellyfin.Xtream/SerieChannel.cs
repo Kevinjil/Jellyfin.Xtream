@@ -207,7 +207,7 @@ namespace Jellyfin.Xtream
                         {
                             Name = name.Trim()
                         }).ToList(),
-                        FolderType = ChannelFolderType.Series,
+                        // FolderType = ChannelFolderType.Series,
                     });
                 }
 
@@ -254,7 +254,7 @@ namespace Jellyfin.Xtream
                             Type = ChannelItemType.Folder,
                             ImageUrl = season.Cover,
                             DateCreated = season.AirDate,
-                            FolderType = ChannelFolderType.Season,
+                            // FolderType = ChannelFolderType.Season,
                         });
                     }
                     else
@@ -265,7 +265,7 @@ namespace Jellyfin.Xtream
                             Name = $"Season {seasonId}",
                             Type = ChannelItemType.Folder,
                             ImageUrl = series.Info.Cover,
-                            FolderType = ChannelFolderType.Season,
+                            // FolderType = ChannelFolderType.Season,
                         });
                     }
                 }
