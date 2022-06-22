@@ -81,7 +81,6 @@ namespace Jellyfin.Xtream
                 {
                     ChannelMediaType.Video
                 },
-                MaxPageSize = int.MaxValue
             };
         }
 
