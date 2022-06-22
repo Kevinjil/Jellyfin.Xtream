@@ -81,7 +81,7 @@ namespace Jellyfin.Xtream
             {
                 new PluginPageInfo
                 {
-                    Name = "XtreamCredentials",
+                    Name = "XtreamCredentials.html",
                     EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamCredentials.html", ns)
                 },
                 new PluginPageInfo
@@ -91,7 +91,7 @@ namespace Jellyfin.Xtream
                 },
                 new PluginPageInfo
                 {
-                    Name = "XtreamLive",
+                    Name = "XtreamLive.html",
                     EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamLive.html", ns)
                 },
                 new PluginPageInfo

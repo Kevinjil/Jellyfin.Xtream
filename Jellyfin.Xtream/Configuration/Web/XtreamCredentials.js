@@ -1,33 +1,35 @@
 export default function (view) {
-  const pluginId = window.Xtream.PluginConfig.UniqueId;
+  view.addEventListener("viewshow", () => import(
+    window.ApiClient.getUrl("web/ConfigurationPage", {
+      name: "Xtream.js",
+    })
+  ).then((Xtream) => Xtream.default
+  ).then((Xtream) => {
+    const pluginId = Xtream.PluginConfig.UniqueId;
+    LibraryMenu.setTabs('Xtream Credentials', 0, Xtream.getTabs);
 
-  document.querySelector('#XtreamCredentialsPage').addEventListener('pageshow', () => {
     Dashboard.showLoadingMsg();
     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-      document.querySelector('#XtreamCredentialsForm #BaseUrl').value = config.BaseUrl;
-      document.querySelector('#XtreamCredentialsForm #Username').value = config.Username;
-      document.querySelector('#XtreamCredentialsForm #Password').value = config.Password;
+      view.querySelector('#BaseUrl').value = config.BaseUrl;
+      view.querySelector('#Username').value = config.Username;
+      view.querySelector('#Password').value = config.Password;
       Dashboard.hideLoadingMsg();
     });
-  });
 
-  document.querySelector('#XtreamCredentialsForm').addEventListener('submit', (e) => {
-    Dashboard.showLoadingMsg();
+    view.querySelector('#XtreamCredentialsForm').addEventListener('submit', (e) => {
+      Dashboard.showLoadingMsg();
 
-    ApiClient.getPluginConfiguration(pluginId).then((config) => {
-      config.BaseUrl = document.querySelector('#XtreamCredentialsForm #BaseUrl').value;
-      config.Username = document.querySelector('#XtreamCredentialsForm #Username').value;
-      config.Password = document.querySelector('#XtreamCredentialsForm #Password').value;
-      ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
-        Dashboard.processPluginConfigurationUpdateResult(result);
+      ApiClient.getPluginConfiguration(pluginId).then((config) => {
+        config.BaseUrl = view.querySelector('#BaseUrl').value;
+        config.Username = view.querySelector('#Username').value;
+        config.Password = view.querySelector('#Password').value;
+        ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
+          Dashboard.processPluginConfigurationUpdateResult(result);
+        });
       });
+
+      e.preventDefault();
+      return false;
     });
-
-    e.preventDefault();
-    return false;
-  });
-
-  view.addEventListener("viewshow", () => {
-    LibraryMenu.setTabs('XtreamCredentials', 2, window.Xtream.getTabs);
-  });
+  }));
 }

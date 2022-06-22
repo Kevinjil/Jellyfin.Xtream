@@ -1,6 +1,4 @@
 export default function (view) {
-  const pluginId = window.Xtream.PluginConfig.UniqueId;
-
   const createStreamRow = (live, data, state, update) => {
     const tr = document.createElement('tr');
     tr.dataset['streamId'] = data.StreamId;
@@ -26,8 +24,10 @@ export default function (view) {
 
   const createCategoryTable = (live, data, state, update) => {
     const table = document.createElement('table');
-    ApiClient.fetch({ url: ApiClient.getUrl(`Xtream/LiveStreams/${data.CategoryId}`), type: 'GET' })
-      .then((response) => response.json())
+    ApiClient.fetch({
+      url: ApiClient.getUrl(`Xtream/LiveStreams/${data.CategoryId}`),
+      type: 'GET',
+    }).then((response) => response.json())
       .then((streams) => {
         for (let i = 0; i < streams.length; ++i) {
           const stream = streams[i];
@@ -136,36 +136,45 @@ export default function (view) {
     return result;
   };
 
-  document.querySelector('#XtreamLivePage').addEventListener('pageshow', () => {
+  view.addEventListener("viewshow", () => import(
+    ApiClient.getUrl("web/ConfigurationPage", {
+      name: "Xtream.js",
+    })
+  ).then((Xtream) => Xtream.default
+  ).then((Xtream) => {
+    const pluginId = Xtream.PluginConfig.UniqueId;
+    LibraryMenu.setTabs('Live TV', 1, Xtream.getTabs);
+
     Dashboard.showLoadingMsg();
     const fetchConfig = ApiClient.getPluginConfiguration(pluginId);
-    const fetchCategories = ApiClient.fetch({ url: ApiClient.getUrl('Xtream/LiveCategories'), type: 'GET' }).then((response) => response.json());
-    Promise.all([fetchConfig, fetchCategories]).then(([config, categories]) => {
-      const live = document.querySelector('#XtreamLiveForm #LiveContent');
-      for (let i = 0; i < categories.length; ++i) {
-        const elem = createRow(config.LiveTv, categories[i]);
-        live.appendChild(elem);
-      }
-      Dashboard.hideLoadingMsg();
-    });
-  });
+    const fetchCategories = ApiClient.fetch({
+      url: ApiClient.getUrl('Xtream/LiveCategories'),
+      type: 'GET',
+    }).then((response) => response.json());
 
-  document.querySelector('#XtreamLiveForm').addEventListener('submit', (e) => {
-    Dashboard.showLoadingMsg();
-
-    ApiClient.getPluginConfiguration(pluginId).then((config) => {
-      const live = document.querySelector('#XtreamLiveForm #LiveContent');
-      config.LiveTv = computeLiveTv(config, live);
-      ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
-        Dashboard.processPluginConfigurationUpdateResult(result);
+    Promise.all([fetchConfig, fetchCategories])
+      .then(([config, categories]) => {
+        const live = view.querySelector('#LiveContent');
+        for (let i = 0; i < categories.length; ++i) {
+          const elem = createRow(config.LiveTv, categories[i]);
+          live.appendChild(elem);
+        }
+        Dashboard.hideLoadingMsg();
       });
+
+    view.querySelector('#XtreamLiveForm').addEventListener('submit', (e) => {
+      Dashboard.showLoadingMsg();
+
+      ApiClient.getPluginConfiguration(pluginId).then((config) => {
+        const live = view.querySelector('#LiveContent');
+        config.LiveTv = computeLiveTv(config, live);
+        ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
+          Dashboard.processPluginConfigurationUpdateResult(result);
+        });
+      });
+
+      e.preventDefault();
+      return false;
     });
-
-    e.preventDefault();
-    return false;
-  });
-
-  view.addEventListener("viewshow", () => {
-    LibraryMenu.setTabs('XtreamLive', 2, window.Xtream.getTabs);
-  });
+  }));
 }
