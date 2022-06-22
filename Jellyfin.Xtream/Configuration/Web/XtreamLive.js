@@ -117,12 +117,19 @@ export default function (view) {
     return tr;
   };
 
-  view.addEventListener("viewshow", () => import(
-    ApiClient.getUrl("web/ConfigurationPage", {
-      name: "Xtream.js",
-    })
-  ).then((Xtream) => Xtream.default
-  ).then((Xtream) => {
+  const req = (name) =>
+    import(
+      ApiClient.getUrl("web/ConfigurationPage", {
+        name,
+      })
+    ).then((dep) => dep.default);
+
+  view.addEventListener("viewshow", () => Promise.all(
+    [
+      req("datatables.min.js"),
+      req("Xtream.js")
+    ]
+  ).then(([DataTables, Xtream]) => {
     const pluginId = Xtream.PluginConfig.UniqueId;
     LibraryMenu.setTabs('Live TV', 1, Xtream.getTabs);
 
@@ -142,6 +149,9 @@ export default function (view) {
           const elem = createRow(liveData, categories[i]);
           live.appendChild(elem);
         }
+        $(view.querySelector("#LiveTable")).DataTable({
+          responsive: true,
+        });
         Dashboard.hideLoadingMsg();
       });
 

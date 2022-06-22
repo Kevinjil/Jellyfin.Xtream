@@ -103,7 +103,17 @@ namespace Jellyfin.Xtream
                 {
                     Name = "Xtream.js",
                     EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.js", ns)
-                }
+                },
+                new PluginPageInfo
+                {
+                    Name = "datatables.min.js",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.datatables.min.js", ns)
+                },
+                new PluginPageInfo
+                {
+                    Name = "datatables.min.css",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.datatables.min.css", ns)
+                },
             };
         }
     }

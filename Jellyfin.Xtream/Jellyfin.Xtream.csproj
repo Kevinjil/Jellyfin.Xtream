@@ -39,6 +39,10 @@
     <EmbeddedResource Include="Configuration\Web\XtreamLive.html" />
     <None Remove="Configuration\Web\XtreamLive.js" />
     <EmbeddedResource Include="Configuration\Web\XtreamLive.js" />
+    <None Remove="Configuration\Web\datatables.min.css" />
+    <EmbeddedResource Include="Configuration\Web\datatables.min.css" />
+    <None Remove="Configuration\Web\datatables.min.js" />
+    <EmbeddedResource Include="Configuration\Web\datatables.min.js" />
   </ItemGroup>
 
 </Project>
