@@ -58,6 +58,7 @@ export default function (view) {
         checkbox.checked = true
       }
     }
+    checkbox.onchange = () => checkbox.checked ? live[data.CategoryId] = [] : delete live[data.CategoryId];
     td.appendChild(checkbox);
     tr.appendChild(td);
 
@@ -73,15 +74,28 @@ export default function (view) {
       Dashboard.showLoadingMsg();
       expand.innerText = '-';
       const state = checkbox.indeterminate ? undefined : checkbox.checked;
-      const table = createCategoryTable(live, data, state, () => {
+      const table = createCategoryTable(live, data, state, (e) => {
+        const eventTr = e.target.parentElement.parentElement;
+        const streamId = parseInt(eventTr.dataset['streamId']);
+
         let all = true;
         let none = true;
         table.querySelectorAll('input[type="checkbox"]').forEach((c) => {
           all &= c.checked;
           none &= !c.checked;
         });
+
         checkbox.checked = all;
         checkbox.indeterminate = !(all || none);
+
+        if (checkbox.indeterminate) {
+          live[data.CategoryId] ??= [];
+          live[data.CategoryId].push(streamId);
+        } else if (checkbox.checked) {
+          live[data.CategoryId] = [];
+        } else {
+          delete live[data.CategoryId];
+        }
       });
       checkbox.onclick = () => {
         table.querySelectorAll('input[type="checkbox"]').forEach((c) => c.checked = checkbox.checked);
@@ -103,39 +117,6 @@ export default function (view) {
     return tr;
   };
 
-  const computeLiveTv = (config, live) => {
-    const result = {};
-    const categories = live.querySelectorAll('tr[data-category-id]');
-    for (let i = 0; i < categories.length; ++i) {
-      const category = categories[i];
-      const categoryId = category.dataset['categoryId'];
-
-      const checkbox = category.querySelector(':scope > td > input[type="checkbox"]');
-      if (checkbox.indeterminate) {
-        const table = category.querySelector('table');
-        if (!table) {
-          result[categoryId] = config.LiveTv[categoryId];
-          continue;
-        }
-
-        const streams = table.querySelectorAll('tr[data-stream-id]');
-        for (let j = 0; j < streams.length; ++j) {
-          const stream = streams[j];
-          const streamId = stream.dataset['streamId'];
-
-          const checkbox2 = stream.querySelector('td > input[type="checkbox"]');
-          if (checkbox2.checked) {
-            result[categoryId] ??= [];
-            result[categoryId].push(streamId);
-          }
-        }
-      } else if (checkbox.checked) {
-        result[categoryId] = [];
-      }
-    }
-    return result;
-  };
-
   view.addEventListener("viewshow", () => import(
     ApiClient.getUrl("web/ConfigurationPage", {
       name: "Xtream.js",
@@ -152,11 +133,13 @@ export default function (view) {
       type: 'GET',
     }).then((response) => response.json());
 
+    let liveData;
     Promise.all([fetchConfig, fetchCategories])
       .then(([config, categories]) => {
+        liveData = config.LiveTv;
         const live = view.querySelector('#LiveContent');
         for (let i = 0; i < categories.length; ++i) {
-          const elem = createRow(config.LiveTv, categories[i]);
+          const elem = createRow(liveData, categories[i]);
           live.appendChild(elem);
         }
         Dashboard.hideLoadingMsg();
@@ -166,8 +149,7 @@ export default function (view) {
       Dashboard.showLoadingMsg();
 
       ApiClient.getPluginConfiguration(pluginId).then((config) => {
-        const live = view.querySelector('#LiveContent');
-        config.LiveTv = computeLiveTv(config, live);
+        config.LiveTv = liveData;
         ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
           Dashboard.processPluginConfigurationUpdateResult(result);
         });
