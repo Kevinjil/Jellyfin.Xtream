@@ -64,7 +64,7 @@ export default function (view) {
     td = document.createElement('td');
     const expand = document.createElement('button');
     expand.type = 'button';
-    expand.className = 'emby-button';
+    expand.className = 'emby-button raised monospace';
     expand.innerText = '+';
     expand.onclick = (e) => {
       e.preventDefault();
