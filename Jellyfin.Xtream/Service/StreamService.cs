@@ -115,6 +115,7 @@ namespace Jellyfin.Xtream.Service
                 Id = id,
                 IsInfiniteStream = isLive,
                 IsRemote = true,
+                Name = "default",
                 Path = uri,
                 Protocol = MediaProtocol.Http,
                 RequiresClosing = isLive,
