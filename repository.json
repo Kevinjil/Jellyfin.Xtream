@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "Add support for tag parsing in entries. Also improved the visual appearance of the Live TV configuration menu. Minor bugfixes for closing Live TV restreams and internal improvements for channels.\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.3.0...v0.4.0",
+        "checksum": "5027cd7c45d2f02b91945820a24f1f6b",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.4.0/jellyfin-xtream_0.4.0.0.zip",
+        "targetAbi": "10.8.0.0",
+        "timestamp": "2022-06-23T00:33:08Z",
+        "version": "0.4.0.0"
+      },
+      {
         "changelog": "Introduce native Live TV restream capabilities. This enables sharing a single Xtream Live TV stream with multiple clients and thus using less concurrent active streams from the Xtream provider.",
         "checksum": "1162c057212a7a0b2ec91bad88798478",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.3.0/jellyfin-xtream_0.3.0.0.zip",
