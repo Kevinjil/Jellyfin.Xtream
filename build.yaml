@@ -1,7 +1,7 @@
 ---
 name: "Jellyfin Xtream"
 guid: "5d774c35-8567-46d3-a950-9bb8227a0c5d"
-version: "0.3.0.0"
+version: "0.4.0.0"
 targetAbi: "10.8.0.0"
 framework: "net6.0"
 overview: "Stream content from an Xtream-compatible server."
