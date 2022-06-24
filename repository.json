@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "## What's Changed\r\n* Fix opening streams in Xtream Live by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/19\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.4.0...v0.4.1",
+        "checksum": "7cad12a5e495319ef36804bbff842116",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.4.1/jellyfin-xtream_0.4.1.0.zip",
+        "targetAbi": "10.8.0.0",
+        "timestamp": "2022-06-24T16:59:01Z",
+        "version": "0.4.1.0"
+      },
+      {
         "changelog": "Add support for tag parsing in entries. Also improved the visual appearance of the Live TV configuration menu. Minor bugfixes for closing Live TV restreams and internal improvements for channels.\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.3.0...v0.4.0",
         "checksum": "5027cd7c45d2f02b91945820a24f1f6b",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.4.0/jellyfin-xtream_0.4.0.0.zip",
