@@ -25,7 +25,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream
@@ -36,17 +35,14 @@ namespace Jellyfin.Xtream
     public class VodChannel : IChannel
     {
         private readonly ILogger<VodChannel> logger;
-        private readonly IMemoryCache memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VodChannel"/> class.
         /// </summary>
         /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-        public VodChannel(ILogger<VodChannel> logger, IMemoryCache memoryCache)
+        public VodChannel(ILogger<VodChannel> logger)
         {
             this.logger = logger;
-            this.memoryCache = memoryCache;
         }
 
         /// <inheritdoc />
@@ -113,12 +109,6 @@ namespace Jellyfin.Xtream
 
         private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
         {
-            string key = "xtream-vod-categories";
-            if (memoryCache.TryGetValue(key, out ChannelItemResult o))
-            {
-                return o;
-            }
-
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
@@ -142,19 +132,12 @@ namespace Jellyfin.Xtream
                     Items = items,
                     TotalRecordCount = items.Count
                 };
-                memoryCache.Set(key, result, DateTimeOffset.Now.AddMinutes(7));
                 return result;
             }
         }
 
         private async Task<ChannelItemResult> GetVideos(string categoryId, CancellationToken cancellationToken)
         {
-            string key = $"xtream-vod-{categoryId}";
-            if (memoryCache.TryGetValue(key, out ChannelItemResult o))
-            {
-                return o;
-            }
-
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
@@ -192,7 +175,6 @@ namespace Jellyfin.Xtream
                     Items = items,
                     TotalRecordCount = items.Count
                 };
-                memoryCache.Set(key, result, DateTimeOffset.Now.AddMinutes(1));
                 return result;
             }
         }
