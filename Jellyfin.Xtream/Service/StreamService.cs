@@ -87,8 +87,9 @@ namespace Jellyfin.Xtream.Service
         /// <param name="type">The stream media type.</param>
         /// <param name="id">The unique identifier of the stream.</param>
         /// <param name="extension">The container extension of the stream.</param>
+        /// <param name="restream">Boolean indicating whether or not restreaming is used.</param>
         /// <returns>The media source info as <see cref="MediaSourceInfo"/> class.</returns>
-        public MediaSourceInfo GetMediaSourceInfo(StreamType type, string id, string? extension)
+        public MediaSourceInfo GetMediaSourceInfo(StreamType type, string id, string? extension, bool restream = false)
         {
             string prefix = string.Empty;
             switch (type)
@@ -118,8 +119,8 @@ namespace Jellyfin.Xtream.Service
                 Name = "default",
                 Path = uri,
                 Protocol = MediaProtocol.Http,
-                RequiresClosing = isLive,
-                RequiresOpening = isLive,
+                RequiresClosing = restream,
+                RequiresOpening = restream,
                 SupportsDirectPlay = false,
                 SupportsDirectStream = true,
                 SupportsProbing = true,
