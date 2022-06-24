@@ -32,6 +32,8 @@ namespace Jellyfin.Xtream
     /// </summary>
     public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
+        private static Plugin? instance;
+
         private readonly ILogger<Plugin> _logger;
 
         /// <summary>
@@ -44,7 +46,7 @@ namespace Jellyfin.Xtream
             : base(applicationPaths, xmlSerializer)
         {
             _logger = logger;
-            Instance = this;
+            instance = this;
             StreamService = new StreamService(logger, this);
         }
 
@@ -65,7 +67,18 @@ namespace Jellyfin.Xtream
         /// <summary>
         /// Gets the current plugin instance.
         /// </summary>
-        public static Plugin? Instance { get; private set; }
+        public static Plugin Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    throw new InvalidOperationException("Plugin instance not available");
+                }
+
+                return instance;
+            }
+        }
 
         /// <summary>
         /// Gets the stream service instance.

@@ -55,12 +55,7 @@ namespace Jellyfin.Xtream.Api
         [HttpGet("LiveCategories")]
         public async Task<ActionResult<ICollection<Category>>> GetLiveCategories(CancellationToken cancellationToken)
         {
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
@@ -78,12 +73,7 @@ namespace Jellyfin.Xtream.Api
         [HttpGet("LiveStreams/{categoryId}")]
         public async Task<ActionResult<ICollection<StreamInfo>>> GetLiveStreams(int categoryId, CancellationToken cancellationToken)
         {
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<StreamInfo> streams = await client.GetLiveStreamsByCategoryAsync(

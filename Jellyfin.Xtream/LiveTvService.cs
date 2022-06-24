@@ -72,12 +72,7 @@ namespace Jellyfin.Xtream
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
         private async IAsyncEnumerable<StreamInfo> GetLiveStreams([EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             PluginConfiguration config = plugin.Configuration;
             using (XtreamClient client = new XtreamClient())
             {
@@ -106,12 +101,7 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken cancellationToken)
         {
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             List<ChannelInfo> items = new List<ChannelInfo>();
             await foreach (StreamInfo channel in GetLiveStreams(cancellationToken))
             {
@@ -221,12 +211,7 @@ namespace Jellyfin.Xtream
             else
             {
                 items = new List<ProgramInfo>();
-                Plugin? plugin = Plugin.Instance;
-                if (plugin == null)
-                {
-                    throw new ArgumentException("Plugin not initialized!");
-                }
-
+                Plugin plugin = Plugin.Instance;
                 using (XtreamClient client = new XtreamClient())
                 {
                     int streamId = int.Parse(channelId, CultureInfo.InvariantCulture);
@@ -274,12 +259,7 @@ namespace Jellyfin.Xtream
                 return Task.FromResult(stream);
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, null, true);
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
             return Task.FromResult(stream);

@@ -119,12 +119,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
@@ -160,12 +155,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
