@@ -56,7 +56,7 @@ namespace Jellyfin.Xtream
         public string? Description => "Live IPTV streamed from the Xtream-compatible server.";
 
         /// <inheritdoc />
-        public string DataVersion => string.Empty;
+        public string DataVersion => Plugin.Instance.Creds.ToString();
 
         /// <inheritdoc />
         public string HomePageUrl => string.Empty;
