@@ -149,12 +149,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
@@ -190,12 +185,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<Series> series = await client.GetSeriesByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
@@ -237,12 +227,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
@@ -304,12 +289,7 @@ namespace Jellyfin.Xtream
                 return o;
             }
 
-            Plugin? plugin = Plugin.Instance;
-            if (plugin == null)
-            {
-                throw new ArgumentException("Plugin not initialized!");
-            }
-
+            Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
