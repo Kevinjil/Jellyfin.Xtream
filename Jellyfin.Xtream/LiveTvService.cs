@@ -280,7 +280,7 @@ namespace Jellyfin.Xtream
                 throw new ArgumentException("Plugin not initialized!");
             }
 
-            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, null);
+            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, null, true);
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
             return Task.FromResult(stream);
         }
