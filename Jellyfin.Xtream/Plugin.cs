@@ -23,6 +23,7 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
+using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream
@@ -42,12 +43,14 @@ namespace Jellyfin.Xtream
         /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
         /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
         /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger)
+        /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
+        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger, ITaskManager taskManager)
             : base(applicationPaths, xmlSerializer)
         {
             _logger = logger;
             instance = this;
             StreamService = new StreamService(logger, this);
+            TaskService = new TaskService(logger, this, taskManager);
         }
 
         /// <inheritdoc />
@@ -85,6 +88,11 @@ namespace Jellyfin.Xtream
         /// </summary>
         public StreamService StreamService { get; init; }
 
+        /// <summary>
+        /// Gets the task service instance.
+        /// </summary>
+        public TaskService TaskService { get; init; }
+
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
         {
@@ -118,6 +126,26 @@ namespace Jellyfin.Xtream
                     EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.js", ns)
                 }
             };
+        }
+
+        /// <inheritdoc />
+        public override void UpdateConfiguration(BasePluginConfiguration configuration)
+        {
+            base.UpdateConfiguration(configuration);
+
+            // Force a refresh of TV guide on configuration update.
+            // - This will update the TV channels.
+            // - This will remove channels on credentials change.
+            TaskService.CancelIfRunningAndQueue(
+                "Emby.Server.Implementations",
+                "Emby.Server.Implementations.LiveTv.RefreshGuideScheduledTask");
+
+            // Force a refresh of Channels on configuration update.
+            // - This will update the channel entries.
+            // - This will remove channel entries on credentials change.
+            TaskService.CancelIfRunningAndQueue(
+                "Emby.Server.Implementations",
+                "Emby.Server.Implementations.Channels.RefreshChannelsScheduledTask");
         }
     }
 }

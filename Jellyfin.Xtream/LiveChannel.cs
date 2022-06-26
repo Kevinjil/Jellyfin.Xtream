@@ -25,7 +25,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream
@@ -36,17 +35,14 @@ namespace Jellyfin.Xtream
     public class LiveChannel : IChannel
     {
         private readonly ILogger<LiveChannel> logger;
-        private readonly IMemoryCache memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LiveChannel"/> class.
         /// </summary>
         /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-        public LiveChannel(ILogger<LiveChannel> logger, IMemoryCache memoryCache)
+        public LiveChannel(ILogger<LiveChannel> logger)
         {
             this.logger = logger;
-            this.memoryCache = memoryCache;
         }
 
         /// <inheritdoc />
@@ -56,7 +52,7 @@ namespace Jellyfin.Xtream
         public string? Description => "Live IPTV streamed from the Xtream-compatible server.";
 
         /// <inheritdoc />
-        public string DataVersion => string.Empty;
+        public string DataVersion => Plugin.Instance.Creds.ToString();
 
         /// <inheritdoc />
         public string HomePageUrl => string.Empty;
@@ -113,12 +109,6 @@ namespace Jellyfin.Xtream
 
         private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
         {
-            string key = "xtream-live-categories";
-            if (memoryCache.TryGetValue(key, out ChannelItemResult o))
-            {
-                return o;
-            }
-
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
@@ -142,19 +132,12 @@ namespace Jellyfin.Xtream
                     Items = items,
                     TotalRecordCount = items.Count
                 };
-                memoryCache.Set(key, result, DateTimeOffset.Now.AddMinutes(7));
                 return result;
             }
         }
 
         private async Task<ChannelItemResult> GetVideos(string categoryId, CancellationToken cancellationToken)
         {
-            string key = $"xtream-live-{categoryId}";
-            if (memoryCache.TryGetValue(key, out ChannelItemResult o))
-            {
-                return o;
-            }
-
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
@@ -192,7 +175,6 @@ namespace Jellyfin.Xtream
                     Items = items,
                     TotalRecordCount = items.Count
                 };
-                memoryCache.Set(key, result, DateTimeOffset.Now.AddMinutes(1));
                 return result;
             }
         }
