@@ -51,7 +51,7 @@ namespace Jellyfin.Xtream.Client.Models
         public string CustomSid { get; set; } = string.Empty;
 
         [JsonProperty("tv_archive")]
-        public int TvArchive { get; set; }
+        public bool TvArchive { get; set; }
 
         [JsonProperty("direct_source")]
         public string DirectSource { get; set; } = string.Empty;

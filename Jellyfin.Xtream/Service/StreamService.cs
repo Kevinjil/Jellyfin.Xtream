@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -126,8 +127,16 @@ namespace Jellyfin.Xtream.Service
         /// <param name="id">The unique identifier of the stream.</param>
         /// <param name="extension">The container extension of the stream.</param>
         /// <param name="restream">Boolean indicating whether or not restreaming is used.</param>
+        /// <param name="start">The datetime representing the start time of catcup TV.</param>
+        /// <param name="durationMinutes">The duration in minutes of the catcup TV stream.</param>
         /// <returns>The media source info as <see cref="MediaSourceInfo"/> class.</returns>
-        public MediaSourceInfo GetMediaSourceInfo(StreamType type, string id, string? extension, bool restream = false)
+        public MediaSourceInfo GetMediaSourceInfo(
+            StreamType type,
+            string id,
+            string? extension = null,
+            bool restream = false,
+            DateTime? start = null,
+            int durationMinutes = 0)
         {
             string prefix = string.Empty;
             switch (type)
@@ -145,6 +154,12 @@ namespace Jellyfin.Xtream.Service
             if (!string.IsNullOrEmpty(extension))
             {
                 uri += $".{extension}";
+            }
+
+            if (type == StreamType.CatchUp)
+            {
+                string? startString = start?.ToString("o").Replace('T', ':');
+                uri = $"{config.BaseUrl}/streaming/timeshift.php?username={config.Username}&password={config.Password}&stream={id}&start={startString}&duration={durationMinutes}";
             }
 
             bool isLive = type == StreamType.Live;

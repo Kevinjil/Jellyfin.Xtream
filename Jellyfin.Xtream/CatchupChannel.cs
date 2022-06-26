@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2022  Kevin Jilissen
+// Copyright (C) 2022  Kevin Jilissen
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
@@ -32,27 +34,27 @@ namespace Jellyfin.Xtream
     /// <summary>
     /// The Xtream Codes API channel.
     /// </summary>
-    public class LiveChannel : IChannel
+    public class CatchupChannel : IChannel
     {
-        private readonly ILogger<LiveChannel> logger;
+        private readonly ILogger<CatchupChannel> logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LiveChannel"/> class.
+        /// Initializes a new instance of the <see cref="CatchupChannel"/> class.
         /// </summary>
         /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        public LiveChannel(ILogger<LiveChannel> logger)
+        public CatchupChannel(ILogger<CatchupChannel> logger)
         {
             this.logger = logger;
         }
 
         /// <inheritdoc />
-        public string? Name => "Xtream Live";
+        public string? Name => "Xtream Catch-up";
 
         /// <inheritdoc />
-        public string? Description => "Live IPTV streamed from the Xtream-compatible server.";
+        public string? Description => "Rewatch IPTV streamed from the Xtream-compatible server.";
 
         /// <inheritdoc />
-        public string DataVersion => Plugin.Instance.Creds.ToString();
+        public string DataVersion => Plugin.Instance.Creds.ToString() + Random.Shared.NextInt64();
 
         /// <inheritdoc />
         public string HomePageUrl => string.Empty;
@@ -101,70 +103,88 @@ namespace Jellyfin.Xtream
         {
             if (string.IsNullOrEmpty(query.FolderId))
             {
-                return await GetCategories(cancellationToken).ConfigureAwait(false);
+                return await GetChannels(cancellationToken).ConfigureAwait(false);
             }
 
-            return await GetVideos(query.FolderId, cancellationToken).ConfigureAwait(false);
+            int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
+            string categoryId = query.FolderId.Substring(0, separator);
+            int channelId = int.Parse(query.FolderId.Substring(separator + 1), CultureInfo.InvariantCulture);
+            return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetChannels(CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
-            using (XtreamClient client = new XtreamClient())
+            List<ChannelItemInfo> items = new List<ChannelItemInfo>();
+            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreams(cancellationToken))
             {
-                List<Category> categories = await client.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                List<ChannelItemInfo> items = new List<ChannelItemInfo>();
-
-                foreach (Category category in categories)
+                if (!channel.TvArchive)
                 {
-                    ParsedName parsedName = plugin.StreamService.ParseName(category.CategoryName);
-                    items.Add(new ChannelItemInfo()
-                    {
-                        Id = category.CategoryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        Name = category.CategoryName,
-                        Tags = new List<string>(parsedName.Tags),
-                        Type = ChannelItemType.Folder,
-                    });
+                    // Channel has no catch-up support.
+                    continue;
                 }
 
-                ChannelItemResult result = new ChannelItemResult()
+                ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
+                items.Add(new ChannelItemInfo()
                 {
-                    Items = items,
-                    TotalRecordCount = items.Count
-                };
-                return result;
+                    Id = $"{channel.CategoryId}-{channel.StreamId}",
+                    ImageUrl = channel.StreamIcon,
+                    Name = parsedName.Title,
+                    Tags = new List<string>(parsedName.Tags),
+                    Type = ChannelItemType.Folder,
+                });
             }
+
+            ChannelItemResult result = new ChannelItemResult()
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+            return result;
         }
 
-        private async Task<ChannelItemResult> GetVideos(string categoryId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetStreams(string categoryId, int channelId, CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
-                IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+                StreamInfo? channel = (
+                    await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false)
+                ).FirstOrDefault(s => s.StreamId == channelId);
+                if (channel == null)
+                {
+                    throw new ArgumentException($"Channel with id {channelId} not found in category {categoryId}");
+                }
+
+                string channelString = channelId.ToString(CultureInfo.InvariantCulture);
+                EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, channelId, cancellationToken).ConfigureAwait(false);
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
-                foreach (StreamInfo channel in channels)
+                // Include all EPGs that start during the maximum cache interval of Jellyfin for channels.
+                DateTime startBefore = DateTime.UtcNow.AddHours(3);
+                DateTime startAfter = DateTime.UtcNow.AddDays(-channel.TvArchiveDuration);
+                foreach (EpgInfo epg in epgs.Listings.Where(epg => epg.Start < startBefore && epg.Start >= startAfter))
                 {
-                    string id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    long added = long.Parse(channel.Added, System.Globalization.CultureInfo.InvariantCulture);
-                    ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
+                    string id = epg.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    ParsedName parsedName = plugin.StreamService.ParseName(epg.Title);
+                    int durationMinutes = (int)Math.Ceiling((epg.End - epg.Start).TotalMinutes);
+                    string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, id)
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: epg.Start, durationMinutes: durationMinutes)
                     };
 
                     items.Add(new ChannelItemInfo()
                     {
                         ContentType = ChannelMediaContentType.TvExtra,
-                        DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
+                        DateCreated = epg.Start,
                         FolderType = ChannelFolderType.Container,
                         Id = id,
-                        ImageUrl = channel.StreamIcon,
-                        IsLiveStream = true,
+                        IsLiveStream = false,
                         MediaSources = sources,
                         MediaType = ChannelMediaType.Video,
-                        Name = parsedName.Title,
+                        Name = $"{dateTitle} - {parsedName.Title}",
+                        PremiereDate = epg.Start,
                         Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Media,
                     });
