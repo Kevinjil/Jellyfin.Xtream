@@ -18,12 +18,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
-using Jellyfin.Xtream.Configuration;
 using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
@@ -65,45 +63,12 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public string HomePageUrl => string.Empty;
 
-        /// <summary>
-        /// Gets an async iterator for the configured channels.
-        /// </summary>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        private async IAsyncEnumerable<StreamInfo> GetLiveStreams([EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            Plugin plugin = Plugin.Instance;
-            PluginConfiguration config = plugin.Configuration;
-            using (XtreamClient client = new XtreamClient())
-            {
-                foreach (var entry in config.LiveTv)
-                {
-                    string categoryId = entry.Key.ToString(CultureInfo.InvariantCulture);
-                    HashSet<int> streams = entry.Value;
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-
-                    IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                    foreach (StreamInfo channel in channels)
-                    {
-                        // If the set is empty, include all channels for the category.
-                        if (streams.Count == 0 || streams.Contains(channel.StreamId))
-                        {
-                            yield return channel;
-                        }
-                    }
-                }
-            }
-        }
-
         /// <inheritdoc />
         public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             List<ChannelInfo> items = new List<ChannelInfo>();
-            await foreach (StreamInfo channel in GetLiveStreams(cancellationToken))
+            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreams(cancellationToken))
             {
                 ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
