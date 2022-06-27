@@ -160,6 +160,35 @@ namespace Jellyfin.Xtream
                 EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, channelId, cancellationToken).ConfigureAwait(false);
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
+                // Create fallback single-stream catch-up if no EPG is available.
+                if (epgs.Listings.Count == 0)
+                {
+                    DateTime now = DateTime.UtcNow;
+                    DateTime start = now.AddDays(-channel.TvArchiveDuration);
+                    int duration = channel.TvArchiveDuration * 24 * 60;
+                    return new ChannelItemResult()
+                    {
+                        Items = new List<ChannelItemInfo>()
+                        {
+                            new ChannelItemInfo()
+                            {
+                                ContentType = ChannelMediaContentType.TvExtra,
+                                FolderType = ChannelFolderType.Container,
+                                Id = $"fallback-{channelId}",
+                                IsLiveStream = false,
+                                MediaSources = new List<MediaSourceInfo>()
+                                {
+                                    plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: start, durationMinutes: duration)
+                                },
+                                MediaType = ChannelMediaType.Video,
+                                Name = $"No EPG available",
+                                Type = ChannelItemType.Media,
+                            }
+                        },
+                        TotalRecordCount = items.Count
+                    };
+                }
+
                 // Include all EPGs that start during the maximum cache interval of Jellyfin for channels.
                 DateTime startBefore = DateTime.UtcNow.AddHours(3);
                 DateTime startAfter = DateTime.UtcNow.AddDays(-channel.TvArchiveDuration);
