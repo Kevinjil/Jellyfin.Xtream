@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "## What's Changed\r\n* Refactor plugin instance access by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/20\r\n* Fix caching issues on credentials change by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/21\r\n* Implement Catch-up support by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/22\r\n* Fix Live TV channel deselection. by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/24\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.4.1...v0.5.0",
+        "checksum": "c2975325244e5b145d7267eb52fedeb5",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.5.0/jellyfin-xtream_0.5.0.0.zip",
+        "targetAbi": "10.8.0.0",
+        "timestamp": "2022-06-27T07:28:30Z",
+        "version": "0.5.0.0"
+      },
+      {
         "changelog": "## What's Changed\r\n* Fix opening streams in Xtream Live by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/19\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.4.0...v0.4.1",
         "checksum": "7cad12a5e495319ef36804bbff842116",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.4.1/jellyfin-xtream_0.4.1.0.zip",
