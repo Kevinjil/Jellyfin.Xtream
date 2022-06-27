@@ -94,7 +94,6 @@ namespace Jellyfin.Xtream.Service
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
         public async IAsyncEnumerable<StreamInfo> GetLiveStreams([EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
             PluginConfiguration config = plugin.Configuration;
             using (XtreamClient client = new XtreamClient())
             {
