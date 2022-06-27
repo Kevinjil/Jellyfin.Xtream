@@ -100,7 +100,11 @@ export default function (view) {
 
         if (checkbox.indeterminate) {
           live[data.CategoryId] ??= [];
-          live[data.CategoryId].push(streamId);
+          if (e.target.checked) {
+            live[data.CategoryId].push(streamId);
+          } else {
+            live[data.CategoryId] = live[data.CategoryId].filter(id => id != streamId);
+          }
         } else if (checkbox.checked) {
           live[data.CategoryId] = [];
         } else {
