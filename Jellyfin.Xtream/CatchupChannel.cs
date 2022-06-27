@@ -54,7 +54,7 @@ namespace Jellyfin.Xtream
         public string? Description => "Rewatch IPTV streamed from the Xtream-compatible server.";
 
         /// <inheritdoc />
-        public string DataVersion => Plugin.Instance.Creds.ToString() + Random.Shared.NextInt64();
+        public string DataVersion => Plugin.Instance.Creds.ToString();
 
         /// <inheritdoc />
         public string HomePageUrl => string.Empty;
@@ -213,6 +213,7 @@ namespace Jellyfin.Xtream
                         MediaSources = sources,
                         MediaType = ChannelMediaType.Video,
                         Name = $"{dateTitle} - {parsedName.Title}",
+                        Overview = epg.Description,
                         PremiereDate = epg.Start,
                         Tags = new List<string>(parsedName.Tags),
                         Type = ChannelItemType.Media,
