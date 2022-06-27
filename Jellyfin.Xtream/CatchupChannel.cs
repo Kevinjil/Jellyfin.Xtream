@@ -171,7 +171,7 @@ namespace Jellyfin.Xtream
                     string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: epg.Start, durationMinutes: durationMinutes)
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: epg.StartLocalTime, durationMinutes: durationMinutes)
                     };
 
                     items.Add(new ChannelItemInfo()

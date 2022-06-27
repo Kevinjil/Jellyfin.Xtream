@@ -158,7 +158,7 @@ namespace Jellyfin.Xtream.Service
 
             if (type == StreamType.CatchUp)
             {
-                string? startString = start?.ToString("o").Replace('T', ':');
+                string? startString = start?.ToString("yyyy'-'MM'-'dd':'HH'-'mm", CultureInfo.InvariantCulture);
                 uri = $"{config.BaseUrl}/streaming/timeshift.php?username={config.Username}&password={config.Password}&stream={id}&start={startString}&duration={durationMinutes}";
             }
 
