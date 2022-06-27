@@ -26,6 +26,11 @@ namespace Jellyfin.Xtream.Service
         Live,
 
         /// <summary>
+        /// Catch up IPTV.
+        /// </summary>
+        CatchUp,
+
+        /// <summary>
         /// On-demand series grouped in seasons and episodes.
         /// </summary>
         Series,

@@ -151,7 +151,7 @@ namespace Jellyfin.Xtream
                     ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, id, string.Empty)
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, id)
                     };
 
                     items.Add(new ChannelItemInfo()

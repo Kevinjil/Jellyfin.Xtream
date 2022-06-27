@@ -4,6 +4,16 @@ export default function (view) {
     tr.dataset['streamId'] = data.StreamId;
 
     let td = document.createElement('td');
+    if (data.TvArchive) {
+      let span = document.createElement('span');
+      span.ariaHidden = true;
+      span.title = `Catch-up supported for ${data.TvArchiveDuration} days.`;
+      span.className = 'material-icons fiber_manual_record';
+      td.appendChild(span);
+    }
+    tr.appendChild(td);
+
+    td = document.createElement('td');
     td.innerHTML = data.Name;
     tr.appendChild(td);
 
