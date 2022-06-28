@@ -1,9 +1,17 @@
+const url = (name) =>
+  ApiClient.getUrl("web/ConfigurationPage", {
+    name,
+  });
+
+$(document).ready(() => {
+  const style = document.createElement('link');
+  style.rel = 'stylesheet';
+  style.href = url('Xtream.css')
+  document.head.appendChild(style);
+});
+
 export default {
   getTabs: () => {
-    const url = (name) =>
-      ApiClient.getUrl("web/ConfigurationPage", {
-        name,
-      });
     const tabs = [
       {
         href: url('XtreamCredentials.html'),

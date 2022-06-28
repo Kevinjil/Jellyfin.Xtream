@@ -1,24 +1,14 @@
 <div id="XtreamLivePage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
   data-require="emby-input,emby-button" data-controller="__plugin/XtreamLive.js">
   <div data-role="content">
-    <style>
-      #LiveContent {
-        vertical-align: baseline;
-      }
-
-      .monospace {
-        font-family: "Noto Sans Mono", monospace;
-      }
-    </style>
     <div class="content-primary">
       <form id="XtreamLiveForm">
         <div class="inputContainer">
-          <table>
+          <table class="categories-table">
             <thead>
               <tr>
-                <th>Category</th>
+                <th colspan="2">Category</th>
                 <th>Display</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="LiveContent">

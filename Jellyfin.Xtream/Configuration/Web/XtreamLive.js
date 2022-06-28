@@ -1,38 +1,45 @@
 export default function (view) {
-  const createStreamRow = (live, data, state, update) => {
+  const htmlExpand = document.createElement('span');
+  htmlExpand.ariaHidden = true;
+  htmlExpand.classList.add('material-icons', 'expand_more');
+
+  const createStreamRow = (data, state, update) => {
     const tr = document.createElement('tr');
     tr.dataset['streamId'] = data.StreamId;
 
     let td = document.createElement('td');
-    if (data.TvArchive) {
-      let span = document.createElement('span');
-      span.ariaHidden = true;
-      span.title = `Catch-up supported for ${data.TvArchiveDuration} days.`;
-      span.className = 'material-icons fiber_manual_record';
-      td.appendChild(span);
-    }
-    tr.appendChild(td);
-
-    td = document.createElement('td');
-    td.innerHTML = data.Name;
-    tr.appendChild(td);
-
-    td = document.createElement('td');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    if (typeof state === 'boolean') {
-      checkbox.checked = state
-    } else {
-      checkbox.checked = live.includes(data.StreamId);
-    }
+    checkbox.checked = state;
     checkbox.onchange = update;
     td.appendChild(checkbox);
+    tr.appendChild(td);
+
+    td = document.createElement('td');
+    const label = document.createElement('label');
+    label.innerText = data.Name;
+    td.appendChild(label);
+    tr.appendChild(td);
+
+    td = document.createElement('td');
+    if (data.TvArchive) {
+      td.title = `Catch-up supported for ${data.TvArchiveDuration} days.`;
+
+      let span = document.createElement('span');
+      span.innerText = data.TvArchiveDuration;
+      td.appendChild(span);
+
+      span = document.createElement('span');
+      span.ariaHidden = true;
+      span.className = 'material-icons timer';
+      td.appendChild(span);
+    }
     tr.appendChild(td);
 
     return tr;
   }
 
-  const createCategoryTable = (live, data, state, update) => {
+  const createCategoryTable = (live, data, update) => {
     const table = document.createElement('table');
     ApiClient.fetch({
       url: ApiClient.getUrl(`Xtream/LiveStreams/${data.CategoryId}`),
@@ -41,7 +48,15 @@ export default function (view) {
       .then((streams) => {
         for (let i = 0; i < streams.length; ++i) {
           const stream = streams[i];
-          const row = createStreamRow(live[data.CategoryId] ?? [], stream, state, update);
+          let cbState;
+          if (live === undefined){
+            cbState = false;
+          } else if (live.length === 0) {
+            cbState = true;
+          } else {
+            cbState = live.includes(stream.StreamId);
+          }
+          const row = createStreamRow(stream, cbState, update);
           table.appendChild(row);
         }
         Dashboard.hideLoadingMsg();
@@ -55,10 +70,6 @@ export default function (view) {
     tr.dataset['categoryId'] = data.CategoryId;
 
     let td = document.createElement('td');
-    td.innerHTML = data.CategoryName;
-    tr.appendChild(td);
-
-    td = document.createElement('td');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     if (data.CategoryId in live) {
@@ -73,18 +84,21 @@ export default function (view) {
     tr.appendChild(td);
 
     td = document.createElement('td');
+    td.innerHTML = data.CategoryName;
+    tr.appendChild(td);
+
+    td = document.createElement('td');
     const expand = document.createElement('button');
     expand.type = 'button';
-    expand.className = 'emby-button raised monospace';
-    expand.innerText = '+';
+    expand.className = 'paper-icon-button-light';
+    expand.appendChild(htmlExpand.cloneNode(true));
     expand.onclick = (e) => {
       e.preventDefault();
       const originalClick = expand.onclick;
 
       Dashboard.showLoadingMsg();
-      expand.innerText = '-';
-      const state = checkbox.indeterminate ? undefined : checkbox.checked;
-      const table = createCategoryTable(live, data, state, (e) => {
+      expand.firstElementChild.classList.replace('expand_more', 'expand_less');
+      const table = createCategoryTable(live[data.CategoryId], data, (e) => {
         const eventTr = e.target.parentElement.parentElement;
         const streamId = parseInt(eventTr.dataset['streamId']);
 
@@ -120,7 +134,7 @@ export default function (view) {
         expand.onclick = originalClick;
 
         Dashboard.showLoadingMsg();
-        expand.innerText = '+';
+        expand.firstElementChild.classList.replace('expand_less', 'expand_more');
         td.removeChild(table);
         Dashboard.hideLoadingMsg();
       };

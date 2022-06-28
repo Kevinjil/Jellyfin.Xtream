@@ -31,6 +31,8 @@
   <ItemGroup>
     <None Remove="Configuration\Web\Xtream.js" />
     <EmbeddedResource Include="Configuration\Web\Xtream.js" />
+    <None Remove="Configuration\Web\Xtream.css" />
+    <EmbeddedResource Include="Configuration\Web\Xtream.css" />
     <None Remove="Configuration\Web\XtreamCredentials.html" />
     <EmbeddedResource Include="Configuration\Web\XtreamCredentials.html" />
     <None Remove="Configuration\Web\XtreamCredentials.js" />

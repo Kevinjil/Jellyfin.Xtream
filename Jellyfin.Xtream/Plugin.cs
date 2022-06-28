@@ -122,6 +122,11 @@ namespace Jellyfin.Xtream
                 },
                 new PluginPageInfo
                 {
+                    Name = "Xtream.css",
+                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.css", ns)
+                },
+                new PluginPageInfo
+                {
                     Name = "Xtream.js",
                     EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.js", ns)
                 }
