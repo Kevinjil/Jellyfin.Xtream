@@ -9,7 +9,7 @@
 
 .categories-table th:nth-child(2),
 .categories-table tr[data-category-id]>td:nth-child(3),
-.categories-table tr[data-stream-id]>td:nth-child(2) {
+.categories-table tr[data-item-id]>td:nth-child(2) {
   width: 100%;
 }
 
@@ -17,12 +17,12 @@
   vertical-align: baseline;
 }
 
-.categories-table tr[data-stream-id]>td:nth-child(3) {
+.categories-table tr[data-item-id]>td:nth-child(3) {
   white-space: nowrap;
   padding: 0.3em 0;
 }
 
-.categories-table tr[data-stream-id]>td:nth-child(3)>span {
+.categories-table tr[data-item-id]>td:nth-child(3)>span {
   font-size: 1em;
   vertical-align: middle;
 }

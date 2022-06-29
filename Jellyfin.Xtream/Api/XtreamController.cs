@@ -15,9 +15,11 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Xtream.Api.Models;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -45,6 +47,22 @@ namespace Jellyfin.Xtream.Api
             this.logger = logger;
         }
 
+        private static CategoryResponse CreateCategoryResponse(Category category) =>
+            new CategoryResponse()
+            {
+                Id = category.CategoryId,
+                Name = category.CategoryName,
+            };
+
+        private static ItemResponse CreateItemResponse(StreamInfo stream) =>
+            new ItemResponse()
+            {
+                Id = stream.StreamId,
+                Name = stream.Name,
+                HasCatchup = stream.TvArchive,
+                CatchupDuration = stream.TvArchiveDuration,
+            };
+
         /// <summary>
         /// Get all Live TV categories.
         /// </summary>
@@ -52,13 +70,13 @@ namespace Jellyfin.Xtream.Api
         /// <returns>A collection containing the categories.</returns>
         [Authorize(Policy = "RequiresElevation")]
         [HttpGet("LiveCategories")]
-        public async Task<ActionResult<ICollection<Category>>> GetLiveCategories(CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetLiveCategories(CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                return Ok(categories);
+                return Ok(categories.Select((Category c) => CreateCategoryResponse(c)));
             }
         }
 
@@ -69,8 +87,8 @@ namespace Jellyfin.Xtream.Api
         /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
         /// <returns>A collection containing the streams.</returns>
         [Authorize(Policy = "RequiresElevation")]
-        [HttpGet("LiveStreams/{categoryId}")]
-        public async Task<ActionResult<ICollection<StreamInfo>>> GetLiveStreams(int categoryId, CancellationToken cancellationToken)
+        [HttpGet("LiveCategories/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveStreams(int categoryId, CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
@@ -79,7 +97,7 @@ namespace Jellyfin.Xtream.Api
                   plugin.Creds,
                   categoryId.ToString(CultureInfo.InvariantCulture),
                   cancellationToken).ConfigureAwait(false);
-                return Ok(streams);
+                return Ok(streams.Select((StreamInfo s) => CreateItemResponse(s)));
             }
         }
     }
