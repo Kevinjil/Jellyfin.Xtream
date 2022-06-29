@@ -90,6 +90,14 @@ const createCategoryRow = (wrapper, category, loadItems) => {
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   setCheckboxState(checkbox, wrapper.live);
+  const onchange = () => {
+    if (checkbox.checked) {
+      wrapper.live = [];
+    } else {
+      wrapper.live = undefined;
+    }
+  };
+  checkbox.onchange = onchange;
   td.appendChild(checkbox);
   tr.appendChild(td);
 
@@ -122,11 +130,7 @@ const createCategoryRow = (wrapper, category, loadItems) => {
       Dashboard.hideLoadingMsg();
     });
     checkbox.onchange = () => {
-      if (checkbox.checked) {
-        wrapper.live = [];
-      } else {
-        wrapper.live = undefined;
-      }
+      onchange();
       table.querySelectorAll('input[type="checkbox"]').forEach((c) => c.checked = checkbox.checked);
     };
     td.appendChild(table);
