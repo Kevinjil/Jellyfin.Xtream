@@ -72,7 +72,7 @@ namespace Jellyfin.Xtream.Client
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_series_info&series_id={seriesId}",
                cancellationToken);
 
-        public Task<List<StreamInfo>> GetVodStreamsByCategoryAsync(ConnectionInfo connectionInfo, string categoryId, CancellationToken cancellationToken) =>
+        public Task<List<StreamInfo>> GetVodStreamsByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
              QueryApi<List<StreamInfo>>(
                connectionInfo,
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_vod_streams&category_id={categoryId}",

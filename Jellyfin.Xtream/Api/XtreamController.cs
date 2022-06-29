@@ -142,7 +142,7 @@ namespace Jellyfin.Xtream.Api
             {
                 List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(
                   plugin.Creds,
-                  categoryId.ToString(CultureInfo.InvariantCulture),
+                  categoryId,
                   cancellationToken).ConfigureAwait(false);
                 return Ok(streams.Select((StreamInfo s) => CreateItemResponse(s)));
             }

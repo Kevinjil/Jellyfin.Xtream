@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
@@ -99,84 +100,45 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
+            Plugin plugin = Plugin.Instance;
             if (string.IsNullOrEmpty(query.FolderId))
             {
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
-            return await GetVideos(query.FolderId, cancellationToken).ConfigureAwait(false);
+            if (plugin.StreamService.IsId(query.FolderId, StreamService.CategoryPrefix))
+            {
+                int categoryId = plugin.StreamService.ParseId(query.FolderId, StreamService.CategoryPrefix);
+                return await GetStreams(categoryId, cancellationToken).ConfigureAwait(false);
+            }
+
+            return new ChannelItemResult()
+            {
+                TotalRecordCount = 0,
+            };
         }
 
         private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
-            using (XtreamClient client = new XtreamClient())
+            List<ChannelItemInfo> items = new List<ChannelItemInfo>(
+                await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false));
+            return new ChannelItemResult()
             {
-                List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                List<ChannelItemInfo> items = new List<ChannelItemInfo>();
-
-                foreach (Category category in categories)
-                {
-                    ParsedName parsedName = plugin.StreamService.ParseName(category.CategoryName);
-                    items.Add(new ChannelItemInfo()
-                    {
-                        Id = category.CategoryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        Name = category.CategoryName,
-                        Tags = new List<string>(parsedName.Tags),
-                        Type = ChannelItemType.Folder,
-                    });
-                }
-
-                ChannelItemResult result = new ChannelItemResult()
-                {
-                    Items = items,
-                    TotalRecordCount = items.Count
-                };
-                return result;
-            }
+                Items = items,
+                TotalRecordCount = items.Count
+            };
         }
 
-        private async Task<ChannelItemResult> GetVideos(string categoryId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetStreams(int categoryId, CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
-            using (XtreamClient client = new XtreamClient())
+            List<ChannelItemInfo> items = new List<ChannelItemInfo>(
+                await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false));
+            ChannelItemResult result = new ChannelItemResult()
             {
-                IEnumerable<StreamInfo> vods = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                List<ChannelItemInfo> items = new List<ChannelItemInfo>();
-
-                foreach (StreamInfo vod in vods)
-                {
-                    string id = vod.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    long added = long.Parse(vod.Added, System.Globalization.CultureInfo.InvariantCulture);
-                    ParsedName parsedName = plugin.StreamService.ParseName(vod.Name);
-                    List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
-                    {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.Vod, id, vod.ContainerExtension)
-                    };
-
-                    items.Add(new ChannelItemInfo()
-                    {
-                        ContentType = ChannelMediaContentType.Movie,
-                        DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
-                        FolderType = ChannelFolderType.Container,
-                        Id = id,
-                        ImageUrl = vod.StreamIcon,
-                        IsLiveStream = false,
-                        MediaSources = sources,
-                        MediaType = ChannelMediaType.Video,
-                        Name = parsedName.Title,
-                        Tags = new List<string>(parsedName.Tags),
-                        Type = ChannelItemType.Media,
-                    });
-                }
-
-                ChannelItemResult result = new ChannelItemResult()
-                {
-                    Items = items,
-                    TotalRecordCount = items.Count
-                };
-                return result;
-            }
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+            return result;
         }
 
         /// <inheritdoc />
