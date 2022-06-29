@@ -63,11 +63,20 @@ namespace Jellyfin.Xtream.Api
                 CatchupDuration = stream.TvArchiveDuration,
             };
 
+        private static ItemResponse CreateItemResponse(Series series) =>
+            new ItemResponse()
+            {
+                Id = series.SeriesId,
+                Name = series.Name,
+                HasCatchup = false,
+                CatchupDuration = 0,
+            };
+
         /// <summary>
         /// Get all Live TV categories.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
-        /// <returns>A collection containing the categories.</returns>
+        /// <returns>An enumerable containing the categories.</returns>
         [Authorize(Policy = "RequiresElevation")]
         [HttpGet("LiveCategories")]
         public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetLiveCategories(CancellationToken cancellationToken)
@@ -85,7 +94,7 @@ namespace Jellyfin.Xtream.Api
         /// </summary>
         /// <param name="categoryId">The category for which to fetch the streams.</param>
         /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
-        /// <returns>A collection containing the streams.</returns>
+        /// <returns>An enumerable containing the streams.</returns>
         [Authorize(Policy = "RequiresElevation")]
         [HttpGet("LiveCategories/{categoryId}")]
         public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveStreams(int categoryId, CancellationToken cancellationToken)
@@ -98,6 +107,82 @@ namespace Jellyfin.Xtream.Api
                   categoryId.ToString(CultureInfo.InvariantCulture),
                   cancellationToken).ConfigureAwait(false);
                 return Ok(streams.Select((StreamInfo s) => CreateItemResponse(s)));
+            }
+        }
+
+        /// <summary>
+        /// Get all VOD categories.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+        /// <returns>An enumerable containing the categories.</returns>
+        [Authorize(Policy = "RequiresElevation")]
+        [HttpGet("VodCategories")]
+        public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetVodCategories(CancellationToken cancellationToken)
+        {
+            Plugin plugin = Plugin.Instance;
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+                return Ok(categories.Select((Category c) => CreateCategoryResponse(c)));
+            }
+        }
+
+        /// <summary>
+        /// Get all VOD streams for the given category.
+        /// </summary>
+        /// <param name="categoryId">The category for which to fetch the streams.</param>
+        /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+        /// <returns>An enumerable containing the streams.</returns>
+        [Authorize(Policy = "RequiresElevation")]
+        [HttpGet("VodCategories/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<StreamInfo>>> GetVodStreams(int categoryId, CancellationToken cancellationToken)
+        {
+            Plugin plugin = Plugin.Instance;
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(
+                  plugin.Creds,
+                  categoryId.ToString(CultureInfo.InvariantCulture),
+                  cancellationToken).ConfigureAwait(false);
+                return Ok(streams.Select((StreamInfo s) => CreateItemResponse(s)));
+            }
+        }
+
+        /// <summary>
+        /// Get all Series categories.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+        /// <returns>An enumerable containing the categories.</returns>
+        [Authorize(Policy = "RequiresElevation")]
+        [HttpGet("SeriesCategories")]
+        public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetSeriesCategories(CancellationToken cancellationToken)
+        {
+            Plugin plugin = Plugin.Instance;
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<Category> categories = await client.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+                return Ok(categories.Select((Category c) => CreateCategoryResponse(c)));
+            }
+        }
+
+        /// <summary>
+        /// Get all Series streams for the given category.
+        /// </summary>
+        /// <param name="categoryId">The category for which to fetch the streams.</param>
+        /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+        /// <returns>An enumerable containing the streams.</returns>
+        [Authorize(Policy = "RequiresElevation")]
+        [HttpGet("SeriesCategories/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<StreamInfo>>> GetSeriesStreams(int categoryId, CancellationToken cancellationToken)
+        {
+            Plugin plugin = Plugin.Instance;
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<Series> series = await client.GetSeriesByCategoryAsync(
+                  plugin.Creds,
+                  categoryId.ToString(CultureInfo.InvariantCulture),
+                  cancellationToken).ConfigureAwait(false);
+                return Ok(series.Select((Series s) => CreateItemResponse(s)));
             }
         }
     }
