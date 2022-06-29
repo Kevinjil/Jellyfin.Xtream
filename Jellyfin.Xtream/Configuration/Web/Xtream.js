@@ -170,6 +170,12 @@ const populateCategoriesTable = (table, loadConfig, loadCategories, loadItems) =
     });
 }
 
+const fetchJson = (url) => ApiClient.fetch({
+  dataType: 'json',
+  type: 'GET',
+  url: ApiClient.getUrl(url),
+});
+
 const tabs = [
   {
     href: url('XtreamCredentials.html'),
@@ -178,13 +184,29 @@ const tabs = [
   {
     href: url('XtreamLive.html'),
     name: 'Live TV'
-  }
+  },
+  {
+    href: url('XtreamVod.html'),
+    name: 'Video On-Demand',
+  },
+  {
+    href: url('XtreamSeries.html'),
+    name: 'Series',
+  },
 ];
 
+const setTabs = (index) => {
+  const name = tabs[index].name;
+  LibraryMenu.setTabs(name, index, () => tabs);
+}
+
+const pluginConfig = {
+  UniqueId: '5d774c35-8567-46d3-a950-9bb8227a0c5d'
+};
+
 export default {
-  getTabs: () => tabs,
+  fetchJson,
+  pluginConfig,
   populateCategoriesTable,
-  PluginConfig: {
-    UniqueId: '5d774c35-8567-46d3-a950-9bb8227a0c5d'
-  }
+  setTabs,
 }

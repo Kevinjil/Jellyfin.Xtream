@@ -5,8 +5,8 @@ export default function (view) {
     })
   ).then((Xtream) => Xtream.default
   ).then((Xtream) => {
-    const pluginId = Xtream.PluginConfig.UniqueId;
-    LibraryMenu.setTabs('Xtream Credentials', 0, Xtream.getTabs);
+    const pluginId = Xtream.pluginConfig.UniqueId;
+    Xtream.setTabs(0);
 
     Dashboard.showLoadingMsg();
     ApiClient.getPluginConfiguration(pluginId).then(function (config) {

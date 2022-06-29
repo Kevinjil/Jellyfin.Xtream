@@ -29,18 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Configuration\Web\Xtream.js" />
-    <EmbeddedResource Include="Configuration\Web\Xtream.js" />
-    <None Remove="Configuration\Web\Xtream.css" />
-    <EmbeddedResource Include="Configuration\Web\Xtream.css" />
-    <None Remove="Configuration\Web\XtreamCredentials.html" />
-    <EmbeddedResource Include="Configuration\Web\XtreamCredentials.html" />
-    <None Remove="Configuration\Web\XtreamCredentials.js" />
-    <EmbeddedResource Include="Configuration\Web\XtreamCredentials.js" />
-    <None Remove="Configuration\Web\XtreamLive.html" />
-    <EmbeddedResource Include="Configuration\Web\XtreamLive.html" />
-    <None Remove="Configuration\Web\XtreamLive.js" />
-    <EmbeddedResource Include="Configuration\Web\XtreamLive.js" />
+    <None Remove="Configuration\Web\**" />
+    <EmbeddedResource Include="Configuration\Web\**" />
   </ItemGroup>
 
 </Project>

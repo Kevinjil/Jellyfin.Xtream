@@ -34,6 +34,8 @@ namespace Jellyfin.Xtream.Configuration
             Username = string.Empty;
             Password = string.Empty;
             LiveTv = new SerializableDictionary<int, HashSet<int>>();
+            Vod = new SerializableDictionary<int, HashSet<int>>();
+            Series = new SerializableDictionary<int, HashSet<int>>();
         }
 
         /// <summary>
@@ -55,6 +57,16 @@ namespace Jellyfin.Xtream.Configuration
         /// Gets or sets the channels displayed in Live TV.
         /// </summary>
         public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; }
+
+        /// <summary>
+        /// Gets or sets the streams displayed in VOD.
+        /// </summary>
+        public SerializableDictionary<int, HashSet<int>> Vod { get; set; }
+
+        /// <summary>
+        /// Gets or sets the streams displayed in Series.
+        /// </summary>
+        public SerializableDictionary<int, HashSet<int>> Series { get; set; }
     }
 }
 #pragma warning restore CA2227

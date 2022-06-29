@@ -6,20 +6,20 @@ export default function (view) {
   ).then((Xtream) => Xtream.default
   ).then((Xtream) => {
     const pluginId = Xtream.pluginConfig.UniqueId;
-    Xtream.setTabs(1);
+    Xtream.setTabs(2);
 
-    const table = view.querySelector('#LiveContent');
+    const table = view.querySelector('#VodContent');
     Xtream.populateCategoriesTable(
       table,
-      () => ApiClient.getPluginConfiguration(pluginId).then((config) => config.LiveTv),
-      () => Xtream.fetchJson('Xtream/LiveCategories'),
-      (categoryId) => Xtream.fetchJson(`Xtream/LiveCategories/${categoryId}`),
+      () => ApiClient.getPluginConfiguration(pluginId).then((config) => config.Vod),
+      () => Xtream.fetchJson('Xtream/VodCategories'),
+      (categoryId) => Xtream.fetchJson(`Xtream/VodCategories/${categoryId}`),
     ).then((data) => {
-      view.querySelector('#XtreamLiveForm').addEventListener('submit', (e) => {
+      view.querySelector('#XtreamVodForm').addEventListener('submit', (e) => {
         Dashboard.showLoadingMsg();
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
-          config.LiveTv = data;
+          config.Vod = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);
           });
