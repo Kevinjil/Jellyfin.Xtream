@@ -104,7 +104,7 @@ namespace Jellyfin.Xtream.Api
             {
                 List<StreamInfo> streams = await client.GetLiveStreamsByCategoryAsync(
                   plugin.Creds,
-                  categoryId.ToString(CultureInfo.InvariantCulture),
+                  categoryId,
                   cancellationToken).ConfigureAwait(false);
                 return Ok(streams.Select((StreamInfo s) => CreateItemResponse(s)));
             }
@@ -180,7 +180,7 @@ namespace Jellyfin.Xtream.Api
             {
                 List<Series> series = await client.GetSeriesByCategoryAsync(
                   plugin.Creds,
-                  categoryId.ToString(CultureInfo.InvariantCulture),
+                  categoryId,
                   cancellationToken).ConfigureAwait(false);
                 return Ok(series.Select((Series s) => CreateItemResponse(s)));
             }

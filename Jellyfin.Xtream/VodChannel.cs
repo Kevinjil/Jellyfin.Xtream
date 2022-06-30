@@ -16,9 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
@@ -118,10 +118,37 @@ namespace Jellyfin.Xtream
             };
         }
 
+        private ChannelItemInfo CreateChannelItemInfo(StreamInfo stream)
+        {
+            string id = $"{StreamService.StreamPrefix}{stream.StreamId}";
+            long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
+            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(stream.Name);
+            List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
+            {
+                Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, id, stream.ContainerExtension)
+            };
+
+            return new ChannelItemInfo()
+            {
+                ContentType = ChannelMediaContentType.Movie,
+                DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
+                FolderType = ChannelFolderType.Container,
+                Id = id,
+                ImageUrl = stream.StreamIcon,
+                IsLiveStream = false,
+                MediaSources = sources,
+                MediaType = ChannelMediaType.Video,
+                Name = parsedName.Title,
+                Tags = new List<string>(parsedName.Tags),
+                Type = ChannelItemType.Media,
+            };
+        }
+
         private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-                await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false));
+                (await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false))
+                    .Select((Category category) => Plugin.Instance.StreamService.CreateChannelItemInfo(category)));
             return new ChannelItemResult()
             {
                 Items = items,
@@ -132,7 +159,8 @@ namespace Jellyfin.Xtream
         private async Task<ChannelItemResult> GetStreams(int categoryId, CancellationToken cancellationToken)
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-                await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false));
+                (await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false))
+                    .Select((StreamInfo stream) => CreateChannelItemInfo(stream)));
             ChannelItemResult result = new ChannelItemResult()
             {
                 Items = items,

@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
@@ -104,7 +105,8 @@ namespace Jellyfin.Xtream
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
-            return await GetVideos(query.FolderId, cancellationToken).ConfigureAwait(false);
+            int categoryId = int.Parse(query.FolderId, CultureInfo.InvariantCulture);
+            return await GetVideos(categoryId, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
@@ -136,7 +138,7 @@ namespace Jellyfin.Xtream
             }
         }
 
-        private async Task<ChannelItemResult> GetVideos(string categoryId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetVideos(int categoryId, CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())

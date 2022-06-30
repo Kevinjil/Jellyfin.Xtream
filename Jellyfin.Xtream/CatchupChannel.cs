@@ -107,7 +107,7 @@ namespace Jellyfin.Xtream
             }
 
             int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
-            string categoryId = query.FolderId.Substring(0, separator);
+            int categoryId = int.Parse(query.FolderId.Substring(0, separator), CultureInfo.InvariantCulture);
             int channelId = int.Parse(query.FolderId.Substring(separator + 1), CultureInfo.InvariantCulture);
             return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
@@ -143,7 +143,7 @@ namespace Jellyfin.Xtream
             return result;
         }
 
-        private async Task<ChannelItemResult> GetStreams(string categoryId, int channelId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetStreams(int categoryId, int channelId, CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())

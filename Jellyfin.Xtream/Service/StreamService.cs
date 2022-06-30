@@ -25,7 +25,6 @@ using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
 using MediaBrowser.Controller.Channels;
-using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
@@ -41,6 +40,26 @@ namespace Jellyfin.Xtream.Service
         /// The id prefix for category channel items.
         /// </summary>
         public const string CategoryPrefix = "category-";
+
+        /// <summary>
+        /// The id prefix for stream channel items.
+        /// </summary>
+        public const string StreamPrefix = "stream-";
+
+        /// <summary>
+        /// The id prefix for series channel items.
+        /// </summary>
+        public const string SeriesPrefix = "series-";
+
+        /// <summary>
+        /// The id prefix for season channel items.
+        /// </summary>
+        public const string SeasonPrefix = "seasons-";
+
+        /// <summary>
+        /// The id prefix for season channel items.
+        /// </summary>
+        public const string EpisodePrefix = "episode-";
 
         private static readonly Regex TagRegex = new Regex(@"\[([^\]]+)\]|\|([^\|]+)\|");
 
@@ -130,7 +149,7 @@ namespace Jellyfin.Xtream.Service
             {
                 foreach (var entry in config.LiveTv)
                 {
-                    string categoryId = entry.Key.ToString(CultureInfo.InvariantCulture);
+                    int categoryId = entry.Key;
                     HashSet<int> streams = entry.Value;
                     if (cancellationToken.IsCancellationRequested)
                     {
@@ -150,7 +169,12 @@ namespace Jellyfin.Xtream.Service
             }
         }
 
-        private ChannelItemInfo CreateChannelItemInfo(Category category)
+        /// <summary>
+        /// Gets an channel item info for the category.
+        /// </summary>
+        /// <param name="category">The Xtream category.</param>
+        /// <returns>A channel item representing the category.</returns>
+        public ChannelItemInfo CreateChannelItemInfo(Category category)
         {
             ParsedName parsedName = ParseName(category.CategoryName);
             return new ChannelItemInfo()
@@ -162,67 +186,116 @@ namespace Jellyfin.Xtream.Service
             };
         }
 
-        private ChannelItemInfo CreateChannelItemInfo(StreamInfo stream, ChannelMediaContentType type)
-        {
-            string id = stream.StreamId.ToString(CultureInfo.InvariantCulture);
-            long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
-            ParsedName parsedName = ParseName(stream.Name);
-            List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
-            {
-                GetMediaSourceInfo(StreamType.Vod, id, stream.ContainerExtension)
-            };
-
-            return new ChannelItemInfo()
-            {
-                ContentType = type,
-                DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
-                FolderType = ChannelFolderType.Container,
-                Id = id,
-                ImageUrl = stream.StreamIcon,
-                IsLiveStream = false,
-                MediaSources = sources,
-                MediaType = ChannelMediaType.Video,
-                Name = parsedName.Title,
-                Tags = new List<string>(parsedName.Tags),
-                Type = ChannelItemType.Media,
-            };
-        }
-
         /// <summary>
         /// Gets an iterator for the configured VOD categories.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        public async Task<IEnumerable<ChannelItemInfo>> GetVodCategories(CancellationToken cancellationToken)
+        public async Task<IEnumerable<Category>> GetVodCategories(CancellationToken cancellationToken)
         {
             using (XtreamClient client = new XtreamClient())
             {
                 List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-                return categories
-                    .Where((Category category) => plugin.Configuration.Vod.ContainsKey(category.CategoryId))
-                    .Select((Category category) => CreateChannelItemInfo(category));
+                return categories.Where((Category category) => plugin.Configuration.Vod.ContainsKey(category.CategoryId));
             }
         }
 
         /// <summary>
-        /// Gets an iterator for the configured VOD categories.
+        /// Gets an iterator for the configured VOD streams.
         /// </summary>
-        /// <param name="categoryId">The Xtream id of category.</param>
+        /// <param name="categoryId">The Xtream id of the category.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        public async Task<IEnumerable<ChannelItemInfo>> GetVodStreams(int categoryId, CancellationToken cancellationToken)
+        public async Task<IEnumerable<StreamInfo>> GetVodStreams(int categoryId, CancellationToken cancellationToken)
         {
             if (!plugin.Configuration.Vod.ContainsKey(categoryId))
             {
-                return new List<ChannelItemInfo>();
+                return new List<StreamInfo>();
             }
 
             using (XtreamClient client = new XtreamClient())
             {
                 List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                return streams
-                    .Where((StreamInfo stream) => plugin.Configuration.Vod.ContainsKey(stream.CategoryId))
-                    .Select((StreamInfo stream) => CreateChannelItemInfo(stream, ChannelMediaContentType.Movie));
+                return streams.Where((StreamInfo stream) => plugin.Configuration.Vod.ContainsKey(stream.CategoryId));
+            }
+        }
+
+        /// <summary>
+        /// Gets an iterator for the configured Series categories.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
+        public async Task<IEnumerable<Category>> GetSeriesCategories(CancellationToken cancellationToken)
+        {
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<Category> categories = await client.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+                return categories
+                    .Where((Category category) => plugin.Configuration.Series.ContainsKey(category.CategoryId));
+            }
+        }
+
+        /// <summary>
+        /// Gets an iterator for the configured Series.
+        /// </summary>
+        /// <param name="categoryId">The Xtream id of the category.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
+        public async Task<IEnumerable<Series>> GetSeries(int categoryId, CancellationToken cancellationToken)
+        {
+            if (!plugin.Configuration.Vod.ContainsKey(categoryId))
+            {
+                return new List<Series>();
+            }
+
+            using (XtreamClient client = new XtreamClient())
+            {
+                List<Series> series = await client.GetSeriesByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+                return series.Where((Series series) => plugin.Configuration.Series.ContainsKey(series.CategoryId));
+            }
+        }
+
+        /// <summary>
+        /// Gets an iterator for the configured seasons in the Series.
+        /// </summary>
+        /// <param name="seriesId">The Xtream id of the Series.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
+        public async Task<IEnumerable<Tuple<SeriesStreamInfo, int>>> GetSeasons(int seriesId, CancellationToken cancellationToken)
+        {
+            using (XtreamClient client = new XtreamClient())
+            {
+                SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+                int categoryId = series.Info.CategoryId;
+                if (!plugin.Configuration.Series.ContainsKey(categoryId) || !plugin.Configuration.Series[categoryId].Contains(seriesId))
+                {
+                    return new List<Tuple<SeriesStreamInfo, int>>();
+                }
+
+                Series serie = series.Info;
+                return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
+            }
+        }
+
+        /// <summary>
+        /// Gets an iterator for the configured seasons in the Series.
+        /// </summary>
+        /// <param name="seriesId">The Xtream id of the Series.</param>
+        /// <param name="seasonId">The Xtream id of the Season.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
+        public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
+        {
+            using (XtreamClient client = new XtreamClient())
+            {
+                SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+                Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
+                if (season == null)
+                {
+                    return new List<Tuple<SeriesStreamInfo, Season, Episode>>();
+                }
+
+                return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season, Episode>(series, season, episode));
             }
         }
 
