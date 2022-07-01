@@ -8,10 +8,13 @@ export default function (view) {
     const pluginId = Xtream.pluginConfig.UniqueId;
     Xtream.setTabs(3);
 
+    const getConfig = ApiClient.getPluginConfiguration(pluginId);
+    const visible = view.querySelector("#Visible");
+    getConfig.then((config) => visible.checked = config.IsSeriesVisible);
     const table = view.querySelector('#SeriesContent');
     Xtream.populateCategoriesTable(
       table,
-      () => ApiClient.getPluginConfiguration(pluginId).then((config) => config.Series),
+      () => getConfig.then((config) => config.Series),
       () => Xtream.fetchJson('Xtream/SeriesCategories'),
       (categoryId) => Xtream.fetchJson(`Xtream/SeriesCategories/${categoryId}`),
     ).then((data) => {
@@ -19,6 +22,7 @@ export default function (view) {
         Dashboard.showLoadingMsg();
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
+          config.IsSeriesVisible = visible.checked;
           config.Series = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);

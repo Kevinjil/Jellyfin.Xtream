@@ -8,10 +8,13 @@ export default function (view) {
     const pluginId = Xtream.pluginConfig.UniqueId;
     Xtream.setTabs(2);
 
+    const getConfig = ApiClient.getPluginConfiguration(pluginId);
+    const visible = view.querySelector("#Visible");
+    getConfig.then((config) => visible.checked = config.IsVodVisible);
     const table = view.querySelector('#VodContent');
     Xtream.populateCategoriesTable(
       table,
-      () => ApiClient.getPluginConfiguration(pluginId).then((config) => config.Vod),
+      () => getConfig.then((config) => config.Vod),
       () => Xtream.fetchJson('Xtream/VodCategories'),
       (categoryId) => Xtream.fetchJson(`Xtream/VodCategories/${categoryId}`),
     ).then((data) => {
@@ -19,6 +22,7 @@ export default function (view) {
         Dashboard.showLoadingMsg();
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
+          config.IsVodVisible = visible.checked;
           config.Vod = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);

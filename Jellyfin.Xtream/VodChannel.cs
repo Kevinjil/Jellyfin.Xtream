@@ -172,7 +172,7 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public bool IsEnabledFor(string userId)
         {
-            return true;
+            return Plugin.Instance.Configuration.IsVodVisible;
         }
     }
 }
