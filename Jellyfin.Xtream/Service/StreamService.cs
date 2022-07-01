@@ -139,7 +139,8 @@ namespace Jellyfin.Xtream.Service
 
         private bool IsConfigured(SerializableDictionary<int, HashSet<int>> config, int category, int id)
         {
-            return config.ContainsKey(category) && (config[category].Count == 0 || config[category].Contains(id));
+            HashSet<int>? values;
+            return config.TryGetValue(category, out values) && (values.Count == 0 || values.Contains(id));
         }
 
         /// <summary>
@@ -155,20 +156,13 @@ namespace Jellyfin.Xtream.Service
                 foreach (var entry in config.LiveTv)
                 {
                     int categoryId = entry.Key;
-                    HashSet<int> streams = entry.Value;
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                    foreach (StreamInfo channel in channels)
+                    foreach (StreamInfo channel in channels.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId)))
                     {
                         // If the set is empty, include all channels for the category.
-                        if (streams.Count == 0 || streams.Contains(channel.StreamId))
-                        {
-                            yield return channel;
-                        }
+                        yield return channel;
                     }
                 }
             }
@@ -277,7 +271,6 @@ namespace Jellyfin.Xtream.Service
                     return new List<Tuple<SeriesStreamInfo, int>>();
                 }
 
-                SeriesInfo serie = series.Info;
                 return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
             }
         }
