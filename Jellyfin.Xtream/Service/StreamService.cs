@@ -311,7 +311,7 @@ namespace Jellyfin.Xtream.Service
         /// <returns>The media source info as <see cref="MediaSourceInfo"/> class.</returns>
         public MediaSourceInfo GetMediaSourceInfo(
             StreamType type,
-            string id,
+            int id,
             string? extension = null,
             bool restream = false,
             DateTime? start = null,
@@ -345,7 +345,7 @@ namespace Jellyfin.Xtream.Service
             return new MediaSourceInfo()
             {
                 EncoderProtocol = MediaProtocol.Http,
-                Id = id,
+                Id = id.ToString(CultureInfo.InvariantCulture),
                 IsInfiniteStream = isLive,
                 IsRemote = true,
                 Name = "default",

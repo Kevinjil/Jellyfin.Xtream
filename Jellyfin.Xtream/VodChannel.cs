@@ -120,12 +120,11 @@ namespace Jellyfin.Xtream
 
         private ChannelItemInfo CreateChannelItemInfo(StreamInfo stream)
         {
-            string id = $"{StreamService.StreamPrefix}{stream.StreamId}";
             long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
             ParsedName parsedName = Plugin.Instance.StreamService.ParseName(stream.Name);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
-                Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, id, stream.ContainerExtension)
+                Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, stream.StreamId, stream.ContainerExtension)
             };
 
             return new ChannelItemInfo()
@@ -133,7 +132,7 @@ namespace Jellyfin.Xtream
                 ContentType = ChannelMediaContentType.Movie,
                 DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
                 FolderType = ChannelFolderType.Container,
-                Id = id,
+                Id = $"{StreamService.StreamPrefix}{stream.StreamId}",
                 ImageUrl = stream.StreamIcon,
                 IsLiveStream = false,
                 MediaSources = sources,

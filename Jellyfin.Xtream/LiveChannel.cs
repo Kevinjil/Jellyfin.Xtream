@@ -148,12 +148,11 @@ namespace Jellyfin.Xtream
 
                 foreach (StreamInfo channel in channels)
                 {
-                    string id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     long added = long.Parse(channel.Added, System.Globalization.CultureInfo.InvariantCulture);
                     ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, id)
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channel.StreamId)
                     };
 
                     items.Add(new ChannelItemInfo()
@@ -161,7 +160,7 @@ namespace Jellyfin.Xtream
                         ContentType = ChannelMediaContentType.TvExtra,
                         DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
                         FolderType = ChannelFolderType.Container,
-                        Id = id,
+                        Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),
                         ImageUrl = channel.StreamIcon,
                         IsLiveStream = true,
                         MediaSources = sources,

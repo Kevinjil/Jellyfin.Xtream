@@ -207,11 +207,10 @@ namespace Jellyfin.Xtream
         private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season season, Episode episode)
         {
             Series serie = series.Info;
-            string id = $"{StreamService.EpisodePrefix}{episode.EpisodeId}";
             ParsedName parsedName = Plugin.Instance.StreamService.ParseName(episode.Title);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
-                Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, id, episode.ContainerExtension)
+                Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
             };
 
             string cover = episode.Info.MovieImage;
@@ -230,7 +229,7 @@ namespace Jellyfin.Xtream
                 ContentType = ChannelMediaContentType.Episode,
                 DateCreated = DateTimeOffset.FromUnixTimeSeconds(episode.Added).DateTime,
                 Genres = GetGenres(serie.Genre),
-                Id = id,
+                Id = $"{StreamService.EpisodePrefix}{episode.EpisodeId}",
                 ImageUrl = cover,
                 IsLiveStream = false,
                 MediaSources = sources,
