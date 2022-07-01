@@ -22,16 +22,16 @@ namespace Jellyfin.Xtream.Client.Models
     public class SeriesStreamInfo
     {
         [JsonProperty("seasons")]
-        #pragma warning disable CA2227
+#pragma warning disable CA2227
         public ICollection<Season> Seasons { get; set; } = new List<Season>();
-        #pragma warning restore CA2227
+#pragma warning restore CA2227
 
         [JsonProperty("info")]
-        public Series Info { get; set; } = new Series();
+        public SeriesInfo Info { get; set; } = new SeriesInfo();
 
         [JsonProperty("episodes")]
-        #pragma warning disable CA2227
+#pragma warning disable CA2227
         public Dictionary<int, ICollection<Episode>> Episodes { get; set; } = new Dictionary<int, ICollection<Episode>>();
-        #pragma warning restore CA2227
+#pragma warning restore CA2227
     }
 }

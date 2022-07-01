@@ -123,7 +123,7 @@ namespace Jellyfin.Xtream.Service
         /// <returns>Whether or not the id string has the given prefix.</returns>
         public bool IsId(string id, string prefix)
         {
-            return id.StartsWith(StreamService.CategoryPrefix, StringComparison.InvariantCulture);
+            return id.StartsWith(prefix, StringComparison.InvariantCulture);
         }
 
         /// <summary>
@@ -135,6 +135,11 @@ namespace Jellyfin.Xtream.Service
         public int ParseId(string id, string prefix)
         {
             return int.Parse(id.Substring(prefix.Length), CultureInfo.InvariantCulture);
+        }
+
+        private bool IsConfigured(SerializableDictionary<int, HashSet<int>> config, int category, int id)
+        {
+            return config.ContainsKey(category) && (config[category].Count == 0 || config[category].Contains(id));
         }
 
         /// <summary>
@@ -216,7 +221,7 @@ namespace Jellyfin.Xtream.Service
             using (XtreamClient client = new XtreamClient())
             {
                 List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                return streams.Where((StreamInfo stream) => plugin.Configuration.Vod.ContainsKey(stream.CategoryId));
+                return streams.Where((StreamInfo stream) => IsConfigured(plugin.Configuration.Vod, categoryId, stream.StreamId));
             }
         }
 
@@ -243,7 +248,7 @@ namespace Jellyfin.Xtream.Service
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
         public async Task<IEnumerable<Series>> GetSeries(int categoryId, CancellationToken cancellationToken)
         {
-            if (!plugin.Configuration.Vod.ContainsKey(categoryId))
+            if (!plugin.Configuration.Series.ContainsKey(categoryId))
             {
                 return new List<Series>();
             }
@@ -251,7 +256,7 @@ namespace Jellyfin.Xtream.Service
             using (XtreamClient client = new XtreamClient())
             {
                 List<Series> series = await client.GetSeriesByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                return series.Where((Series series) => plugin.Configuration.Series.ContainsKey(series.CategoryId));
+                return series.Where((Series series) => IsConfigured(plugin.Configuration.Series, series.CategoryId, series.SeriesId));
             }
         }
 
@@ -267,12 +272,12 @@ namespace Jellyfin.Xtream.Service
             {
                 SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
                 int categoryId = series.Info.CategoryId;
-                if (!plugin.Configuration.Series.ContainsKey(categoryId) || !plugin.Configuration.Series[categoryId].Contains(seriesId))
+                if (!IsConfigured(plugin.Configuration.Series, categoryId, seriesId))
                 {
                     return new List<Tuple<SeriesStreamInfo, int>>();
                 }
 
-                Series serie = series.Info;
+                SeriesInfo serie = series.Info;
                 return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
             }
         }
@@ -284,18 +289,13 @@ namespace Jellyfin.Xtream.Service
         /// <param name="seasonId">The Xtream id of the Season.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
         {
             using (XtreamClient client = new XtreamClient())
             {
                 SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
                 Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
-                if (season == null)
-                {
-                    return new List<Tuple<SeriesStreamInfo, Season, Episode>>();
-                }
-
-                return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season, Episode>(series, season, episode));
+                return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
             }
         }
 

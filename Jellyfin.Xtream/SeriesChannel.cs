@@ -166,9 +166,9 @@ namespace Jellyfin.Xtream
             }).ToList();
         }
 
-        private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, int seasonId)
+        private ChannelItemInfo CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
         {
-            Series serie = series.Info;
+            Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
             string name = $"Season {seasonId}";
             string cover = series.Info.Cover;
             string? overview = null;
@@ -194,7 +194,7 @@ namespace Jellyfin.Xtream
                 DateCreated = created,
                 // FolderType = ChannelFolderType.Season,
                 Genres = GetGenres(serie.Genre),
-                Id = $"{StreamService.SeasonPrefix}{serie.SeriesId}-{seasonId}",
+                Id = $"{StreamService.SeasonPrefix}{seriesId}-{seasonId}",
                 ImageUrl = cover,
                 Name = name,
                 Overview = overview,
@@ -204,9 +204,9 @@ namespace Jellyfin.Xtream
             };
         }
 
-        private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season season, Episode episode)
+        private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
         {
-            Series serie = series.Info;
+            Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
             ParsedName parsedName = Plugin.Instance.StreamService.ParseName(episode.Title);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
@@ -270,7 +270,7 @@ namespace Jellyfin.Xtream
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
                 (await Plugin.Instance.StreamService.GetSeasons(seriesId, cancellationToken).ConfigureAwait(false))
-                    .Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2)));
+                    .Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(seriesId, tuple.Item1, tuple.Item2)));
             return new ChannelItemResult()
             {
                 Items = items,
@@ -282,7 +282,7 @@ namespace Jellyfin.Xtream
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
                 (await Plugin.Instance.StreamService.GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false))
-                    .Select((Tuple<SeriesStreamInfo, Season, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3)));
+                    .Select((Tuple<SeriesStreamInfo, Season?, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3)));
             return new ChannelItemResult()
             {
                 Items = items,
