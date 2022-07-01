@@ -6,24 +6,24 @@ export default function (view) {
   ).then((Xtream) => Xtream.default
   ).then((Xtream) => {
     const pluginId = Xtream.pluginConfig.UniqueId;
-    Xtream.setTabs(1);
+    Xtream.setTabs(2);
 
     const getConfig = ApiClient.getPluginConfiguration(pluginId);
     const visible = view.querySelector("#Visible");
-    getConfig.then((config) => visible.checked = config.IsCatchupVisible);
-    const table = view.querySelector('#LiveContent');
+    getConfig.then((config) => visible.checked = config.IsVodVisible);
+    const table = view.querySelector('#VodContent');
     Xtream.populateCategoriesTable(
       table,
-      () => getConfig.then((config) => config.LiveTv),
-      () => Xtream.fetchJson('Xtream/LiveCategories'),
-      (categoryId) => Xtream.fetchJson(`Xtream/LiveCategories/${categoryId}`),
+      () => getConfig.then((config) => config.Vod),
+      () => Xtream.fetchJson('Xtream/VodCategories'),
+      (categoryId) => Xtream.fetchJson(`Xtream/VodCategories/${categoryId}`),
     ).then((data) => {
-      view.querySelector('#XtreamLiveForm').addEventListener('submit', (e) => {
+      view.querySelector('#XtreamVodForm').addEventListener('submit', (e) => {
         Dashboard.showLoadingMsg();
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
-          config.IsCatchupVisible = visible.checked;
-          config.LiveTv = data;
+          config.IsVodVisible = visible.checked;
+          config.Vod = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);
           });

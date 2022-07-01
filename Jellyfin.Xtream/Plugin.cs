@@ -93,38 +93,31 @@ namespace Jellyfin.Xtream
         /// </summary>
         public TaskService TaskService { get; init; }
 
+        private static PluginPageInfo CreateStatic(string name) => new PluginPageInfo
+            {
+                Name = name,
+                EmbeddedResourcePath = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}.Configuration.Web.{1}",
+                    typeof(Plugin).Namespace,
+                    name),
+            };
+
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
         {
-            CultureInfo ci = CultureInfo.InvariantCulture;
-            string? ns = GetType().Namespace;
             return new[]
             {
-                new PluginPageInfo
-                {
-                    Name = "XtreamCredentials.html",
-                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamCredentials.html", ns)
-                },
-                new PluginPageInfo
-                {
-                    Name = "XtreamCredentials.js",
-                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamCredentials.js", ns)
-                },
-                new PluginPageInfo
-                {
-                    Name = "XtreamLive.html",
-                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamLive.html", ns)
-                },
-                new PluginPageInfo
-                {
-                    Name = "XtreamLive.js",
-                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.XtreamLive.js", ns)
-                },
-                new PluginPageInfo
-                {
-                    Name = "Xtream.js",
-                    EmbeddedResourcePath = string.Format(ci, "{0}.Configuration.Web.Xtream.js", ns)
-                }
+                CreateStatic("XtreamCredentials.html"),
+                CreateStatic("XtreamCredentials.js"),
+                CreateStatic("Xtream.css"),
+                CreateStatic("Xtream.js"),
+                CreateStatic("XtreamLive.html"),
+                CreateStatic("XtreamLive.js"),
+                CreateStatic("XtreamSeries.html"),
+                CreateStatic("XtreamSeries.js"),
+                CreateStatic("XtreamVod.html"),
+                CreateStatic("XtreamVod.js"),
             };
         }
 

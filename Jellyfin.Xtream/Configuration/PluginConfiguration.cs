@@ -33,7 +33,12 @@ namespace Jellyfin.Xtream.Configuration
             BaseUrl = "https://example.com";
             Username = string.Empty;
             Password = string.Empty;
+            IsCatchupVisible = false;
+            IsSeriesVisible = false;
+            IsVodVisible = false;
             LiveTv = new SerializableDictionary<int, HashSet<int>>();
+            Vod = new SerializableDictionary<int, HashSet<int>>();
+            Series = new SerializableDictionary<int, HashSet<int>>();
         }
 
         /// <summary>
@@ -52,9 +57,34 @@ namespace Jellyfin.Xtream.Configuration
         public string Password { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the Catch-up channel is visible.
+        /// </summary>
+        public bool IsCatchupVisible { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Series channel is visible.
+        /// </summary>
+        public bool IsSeriesVisible { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Video On-demand channel is visible.
+        /// </summary>
+        public bool IsVodVisible { get; set; }
+
+        /// <summary>
         /// Gets or sets the channels displayed in Live TV.
         /// </summary>
         public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; }
+
+        /// <summary>
+        /// Gets or sets the streams displayed in VOD.
+        /// </summary>
+        public SerializableDictionary<int, HashSet<int>> Vod { get; set; }
+
+        /// <summary>
+        /// Gets or sets the streams displayed in Series.
+        /// </summary>
+        public SerializableDictionary<int, HashSet<int>> Series { get; set; }
     }
 }
 #pragma warning restore CA2227

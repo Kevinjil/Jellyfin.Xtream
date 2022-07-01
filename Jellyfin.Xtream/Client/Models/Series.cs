@@ -61,9 +61,9 @@ namespace Jellyfin.Xtream.Client.Models
         public decimal Rating5Based { get; set; }
 
         [JsonProperty("backdrop_path")]
-        #pragma warning disable CA2227
+#pragma warning disable CA2227
         public ICollection<string> BackdropPaths { get; set; } = new List<string>();
-        #pragma warning restore CA2227
+#pragma warning restore CA2227
 
         [JsonProperty("youtube_trailer")]
         public string YoutubeTrailer { get; set; } = string.Empty;

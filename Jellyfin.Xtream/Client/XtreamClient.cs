@@ -60,25 +60,25 @@ namespace Jellyfin.Xtream.Client
               $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}",
               cancellationToken);
 
-        public Task<List<Series>> GetSeriesByCategoryAsync(ConnectionInfo connectionInfo, string categoryId, CancellationToken cancellationToken) =>
+        public Task<List<Series>> GetSeriesByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
              QueryApi<List<Series>>(
                connectionInfo,
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_series&category_id={categoryId}",
                cancellationToken);
 
-        public Task<SeriesStreamInfo> GetSeriesStreamsBySeriesAsync(ConnectionInfo connectionInfo, string seriesId, CancellationToken cancellationToken) =>
+        public Task<SeriesStreamInfo> GetSeriesStreamsBySeriesAsync(ConnectionInfo connectionInfo, int seriesId, CancellationToken cancellationToken) =>
              QueryApi<SeriesStreamInfo>(
                connectionInfo,
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_series_info&series_id={seriesId}",
                cancellationToken);
 
-        public Task<List<StreamInfo>> GetVodStreamsByCategoryAsync(ConnectionInfo connectionInfo, string categoryId, CancellationToken cancellationToken) =>
+        public Task<List<StreamInfo>> GetVodStreamsByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
              QueryApi<List<StreamInfo>>(
                connectionInfo,
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_vod_streams&category_id={categoryId}",
                cancellationToken);
 
-        public Task<List<StreamInfo>> GetLiveStreamsByCategoryAsync(ConnectionInfo connectionInfo, string categoryId, CancellationToken cancellationToken) =>
+        public Task<List<StreamInfo>> GetLiveStreamsByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
              QueryApi<List<StreamInfo>>(
                connectionInfo,
                $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_live_streams&category_id={categoryId}",

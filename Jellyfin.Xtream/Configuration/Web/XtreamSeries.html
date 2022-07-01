@@ -1,16 +1,16 @@
-<div id="XtreamLivePage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
-  data-require="emby-input,emby-button" data-controller="__plugin/XtreamLive.js">
+<div id="XtreamSeriesPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+  data-require="emby-input,emby-button" data-controller="__plugin/XtreamSeries.js">
   <div data-role="content">
     <div class="content-primary">
-      <form id="XtreamLiveForm">
+      <form id="XtreamSeriesForm">
         <div class="checkboxContainer checkboxContainer-withDescription">
           <label>
             <input is="emby-checkbox" id="Visible" name="Visible" type="checkbox" />
-            <span>Show the catch-up channel to users</span>
+            <span>Show this channel to users</span>
           </label>
         </div>
         <div class="sectionTitleContainer flex align-items-center">
-          <h2 class="sectionTitle">Channel selection</h2>
+          <h2 class="sectionTitle">Series selection</h2>
         </div>
         <div class="inputContainer">
           <table class="categories-table">
@@ -20,7 +20,7 @@
                 <th>Display</th>
               </tr>
             </thead>
-            <tbody id="LiveContent">
+            <tbody id="SeriesContent">
 
             </tbody>
           </table>

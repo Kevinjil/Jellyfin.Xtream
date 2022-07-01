@@ -107,7 +107,7 @@ namespace Jellyfin.Xtream
             }
 
             int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
-            string categoryId = query.FolderId.Substring(0, separator);
+            int categoryId = int.Parse(query.FolderId.Substring(0, separator), CultureInfo.InvariantCulture);
             int channelId = int.Parse(query.FolderId.Substring(separator + 1), CultureInfo.InvariantCulture);
             return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
@@ -143,7 +143,7 @@ namespace Jellyfin.Xtream
             return result;
         }
 
-        private async Task<ChannelItemResult> GetStreams(string categoryId, int channelId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetStreams(int categoryId, int channelId, CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
@@ -156,7 +156,6 @@ namespace Jellyfin.Xtream
                     throw new ArgumentException($"Channel with id {channelId} not found in category {categoryId}");
                 }
 
-                string channelString = channelId.ToString(CultureInfo.InvariantCulture);
                 EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, channelId, cancellationToken).ConfigureAwait(false);
                 List<ChannelItemInfo> items = new List<ChannelItemInfo>();
 
@@ -178,7 +177,7 @@ namespace Jellyfin.Xtream
                                 IsLiveStream = false,
                                 MediaSources = new List<MediaSourceInfo>()
                                 {
-                                    plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: start, durationMinutes: duration)
+                                    plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelId, start: start, durationMinutes: duration)
                                 },
                                 MediaType = ChannelMediaType.Video,
                                 Name = $"No EPG available",
@@ -200,7 +199,7 @@ namespace Jellyfin.Xtream
                     string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                     {
-                        plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelString, start: epg.StartLocalTime, durationMinutes: durationMinutes)
+                        plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelId, start: epg.StartLocalTime, durationMinutes: durationMinutes)
                     };
 
                     items.Add(new ChannelItemInfo()
@@ -232,7 +231,7 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public bool IsEnabledFor(string userId)
         {
-            return true;
+            return Plugin.Instance.Configuration.IsCatchupVisible;
         }
     }
 }

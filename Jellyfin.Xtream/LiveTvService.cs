@@ -225,7 +225,8 @@ namespace Jellyfin.Xtream
             }
 
             Plugin plugin = Plugin.Instance;
-            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channelId, restream: true);
+            int channel = int.Parse(channelId, CultureInfo.InvariantCulture);
+            MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channel, restream: true);
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
             return Task.FromResult(stream);
         }
