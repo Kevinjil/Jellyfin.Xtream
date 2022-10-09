@@ -94,14 +94,14 @@ namespace Jellyfin.Xtream
         public TaskService TaskService { get; init; }
 
         private static PluginPageInfo CreateStatic(string name) => new PluginPageInfo
-            {
-                Name = name,
-                EmbeddedResourcePath = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0}.Configuration.Web.{1}",
-                    typeof(Plugin).Namespace,
-                    name),
-            };
+        {
+            Name = name,
+            EmbeddedResourcePath = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}.Configuration.Web.{1}",
+                typeof(Plugin).Namespace,
+                name),
+        };
 
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
@@ -114,6 +114,8 @@ namespace Jellyfin.Xtream
                 CreateStatic("Xtream.js"),
                 CreateStatic("XtreamLive.html"),
                 CreateStatic("XtreamLive.js"),
+                CreateStatic("XtreamLiveOverrides.html"),
+                CreateStatic("XtreamLiveOverrides.js"),
                 CreateStatic("XtreamSeries.html"),
                 CreateStatic("XtreamSeries.js"),
                 CreateStatic("XtreamVod.html"),

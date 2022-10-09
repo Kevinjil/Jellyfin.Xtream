@@ -26,3 +26,11 @@
   font-size: 1em;
   vertical-align: middle;
 }
+
+.overrides-table {
+  width: 100%;
+}
+
+.overrides-table thead th:first-child {
+  width: 0;
+}

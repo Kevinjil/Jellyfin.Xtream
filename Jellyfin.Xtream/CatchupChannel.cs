@@ -116,7 +116,7 @@ namespace Jellyfin.Xtream
         {
             Plugin plugin = Plugin.Instance;
             List<ChannelItemInfo> items = new List<ChannelItemInfo>();
-            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreams(cancellationToken))
+            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
             {
                 if (!channel.TvArchive)
                 {

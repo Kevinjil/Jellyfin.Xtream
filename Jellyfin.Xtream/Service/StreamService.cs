@@ -169,6 +169,27 @@ namespace Jellyfin.Xtream.Service
         }
 
         /// <summary>
+        /// Gets an async iterator for the configured channels after applying the configured overrides.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
+        public async IAsyncEnumerable<StreamInfo> GetLiveStreamsWithOverrides([EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            PluginConfiguration config = Plugin.Instance.Configuration;
+            await foreach (StreamInfo stream in GetLiveStreams(cancellationToken))
+            {
+                if (config.LiveTvOverrides.TryGetValue(stream.StreamId, out ChannelOverrides? overrides))
+                {
+                    stream.Num = overrides.Number ?? stream.Num;
+                    stream.Name = overrides.Name ?? stream.Name;
+                    stream.StreamIcon = overrides.LogoUrl ?? stream.StreamIcon;
+                }
+
+                yield return stream;
+            }
+        }
+
+        /// <summary>
         /// Gets an channel item info for the category.
         /// </summary>
         /// <param name="category">The Xtream category.</param>

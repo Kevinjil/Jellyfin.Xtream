@@ -68,12 +68,13 @@ namespace Jellyfin.Xtream
         {
             Plugin plugin = Plugin.Instance;
             List<ChannelInfo> items = new List<ChannelInfo>();
-            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreams(cancellationToken))
+            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
             {
                 ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
                 {
-                    Id = channel.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),
+                    Number = channel.Num.ToString(CultureInfo.InvariantCulture),
                     ImageUrl = channel.StreamIcon,
                     Name = parsed.Title,
                     Tags = parsed.Tags,

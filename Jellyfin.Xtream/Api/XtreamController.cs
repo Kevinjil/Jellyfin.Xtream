@@ -71,6 +71,15 @@ namespace Jellyfin.Xtream.Api
                 CatchupDuration = 0,
             };
 
+        private static ChannelResponse CreateChannelResponse(StreamInfo stream) =>
+            new ChannelResponse()
+            {
+                Id = stream.StreamId,
+                LogoUrl = stream.StreamIcon,
+                Name = stream.Name,
+                Number = stream.Num,
+            };
+
         /// <summary>
         /// Get all Live TV categories.
         /// </summary>
@@ -183,6 +192,24 @@ namespace Jellyfin.Xtream.Api
                   cancellationToken).ConfigureAwait(false);
                 return Ok(series.Select((Series s) => CreateItemResponse(s)));
             }
+        }
+
+        /// <summary>
+        /// Get all configured TV channels.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+        /// <returns>An enumerable containing the streams.</returns>
+        [Authorize(Policy = "RequiresElevation")]
+        [HttpGet("LiveTv")]
+        public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveTvChannels(CancellationToken cancellationToken)
+        {
+            List<ChannelResponse> channels = new List<ChannelResponse>();
+            await foreach (StreamInfo stream in Plugin.Instance.StreamService.GetLiveStreams(cancellationToken))
+            {
+                channels.Add(CreateChannelResponse(stream));
+            }
+
+            return Ok(channels);
         }
     }
 }

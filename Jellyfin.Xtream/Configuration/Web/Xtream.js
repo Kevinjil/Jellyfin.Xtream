@@ -180,14 +180,22 @@ const fetchJson = (url) => ApiClient.fetch({
   url: ApiClient.getUrl(url),
 });
 
+const filter = (obj, predicate) => Object.keys(obj)
+  .filter(key => predicate(obj[key]))
+  .reduce((res, key) => (res[key] = obj[key], res), {});
+
 const tabs = [
   {
     href: url('XtreamCredentials.html'),
-    name: 'Xtream Credentials'
+    name: 'Credentials'
   },
   {
     href: url('XtreamLive.html'),
     name: 'Live TV'
+  },
+  {
+    href: url('XtreamLiveOverrides.html'),
+    name: 'TV overrides'
   },
   {
     href: url('XtreamVod.html'),
@@ -210,6 +218,7 @@ const pluginConfig = {
 
 export default {
   fetchJson,
+  filter,
   pluginConfig,
   populateCategoriesTable,
   setTabs,

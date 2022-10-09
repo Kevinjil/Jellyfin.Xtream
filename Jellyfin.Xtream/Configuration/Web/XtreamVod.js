@@ -6,7 +6,7 @@ export default function (view) {
   ).then((Xtream) => Xtream.default
   ).then((Xtream) => {
     const pluginId = Xtream.pluginConfig.UniqueId;
-    Xtream.setTabs(2);
+    Xtream.setTabs(3);
 
     const getConfig = ApiClient.getPluginConfiguration(pluginId);
     const visible = view.querySelector("#Visible");

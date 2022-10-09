@@ -39,6 +39,7 @@ namespace Jellyfin.Xtream.Configuration
             LiveTv = new SerializableDictionary<int, HashSet<int>>();
             Vod = new SerializableDictionary<int, HashSet<int>>();
             Series = new SerializableDictionary<int, HashSet<int>>();
+            LiveTvOverrides = new SerializableDictionary<int, ChannelOverrides>();
         }
 
         /// <summary>
@@ -85,6 +86,11 @@ namespace Jellyfin.Xtream.Configuration
         /// Gets or sets the streams displayed in Series.
         /// </summary>
         public SerializableDictionary<int, HashSet<int>> Series { get; set; }
+
+        /// <summary>
+        /// Gets or sets the channel override configuration for Live TV.
+        /// </summary>
+        public SerializableDictionary<int, ChannelOverrides> LiveTvOverrides { get; set; }
     }
 }
 #pragma warning restore CA2227
