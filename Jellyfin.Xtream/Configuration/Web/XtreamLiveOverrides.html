@@ -1,0 +1,31 @@
+<div id="XtreamLivePage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+  data-require="emby-input,emby-button" data-controller="__plugin/XtreamLiveOverrides.js">
+  <div data-role="content">
+    <div class="content-primary">
+      <form id="XtreamLiveOverridesForm">
+        <div class="sectionTitleContainer flex align-items-center">
+          <h2 class="sectionTitle">TV channel overrides</h2>
+        </div>
+        <div class="inputContainer">
+          <table class="overrides-table">
+            <thead>
+              <tr>
+                <th>Number</th>
+                <th>Name</th>
+                <th>Logo</th>
+              </tr>
+            </thead>
+            <tbody id="LiveChannels">
+
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
