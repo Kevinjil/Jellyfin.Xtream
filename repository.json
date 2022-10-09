@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "This release includes new features to enable much desired customizations.\r\n\r\n## What's Changed\r\n* User control over visibility of libraries, categories, and items by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/29\r\n* Remove the old Live Channel, as Live TV integration has matured. by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/34\r\n* ci(deps): bump actions/download-artifact from 2.1.0 to 3.0.0 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/30\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.5.0 to 1.6.2 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/31\r\n* ci(deps): bump Kevinjil/jellyfin-plugin-repo-action from 0.2.2 to 0.4.1 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/36\r\n* TV channel customization by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/44\r\n\r\n## New Contributors\r\n* @dependabot made their first contribution in https://github.com/Kevinjil/Jellyfin.Xtream/pull/30\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.5.1...v0.6.0",
+        "checksum": "4bcd829e1158f864d49c7b2f4c7f045b",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.6.0/jellyfin-xtream_0.6.0.0.zip",
+        "targetAbi": "10.8.4.0",
+        "timestamp": "2022-10-09T13:30:32Z",
+        "version": "0.6.0.0"
+      },
+      {
         "changelog": "## What's Changed\r\n* Fix accidental random data version. by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/26\r\n* Upgrade to jellyfin 10.8.1 due to breaking change in Jellyfin plugin API. by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/27\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.5.0...v0.5.1",
         "checksum": "57115b85246e422f41b335f9f8526ddb",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.5.1/jellyfin-xtream_0.5.1.0.zip",
