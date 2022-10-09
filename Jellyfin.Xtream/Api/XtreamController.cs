@@ -203,17 +203,13 @@ namespace Jellyfin.Xtream.Api
         [HttpGet("LiveTv")]
         public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveTvChannels(CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
-            using (XtreamClient client = new XtreamClient())
+            List<ChannelResponse> channels = new List<ChannelResponse>();
+            await foreach (StreamInfo stream in Plugin.Instance.StreamService.GetLiveStreams(cancellationToken))
             {
-                List<ChannelResponse> channels = new List<ChannelResponse>();
-                await foreach (StreamInfo stream in Plugin.Instance.StreamService.GetLiveStreams(cancellationToken))
-                {
-                    channels.Add(CreateChannelResponse(stream));
-                }
-
-                return Ok(channels);
+                channels.Add(CreateChannelResponse(stream));
             }
+
+            return Ok(channels);
         }
     }
 }
