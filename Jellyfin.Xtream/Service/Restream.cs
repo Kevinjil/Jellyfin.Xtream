@@ -24,6 +24,7 @@ using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 
@@ -84,7 +85,9 @@ namespace Jellyfin.Xtream.Service
             this.uniqueId = Guid.NewGuid().ToString();
 
             this.uri = mediaSource.Path;
-            MediaSource.Path = appHost.GetApiUrlForLocalAccess() + "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
+            string path = "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
+            MediaSource.Path = appHost.GetSmartApiUrl(IPAddress.Any) + path;
+            MediaSource.EncoderPath = appHost.GetApiUrlForLocalAccess() + path;
             MediaSource.Protocol = MediaProtocol.Http;
         }
 

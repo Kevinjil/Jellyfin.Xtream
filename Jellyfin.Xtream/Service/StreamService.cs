@@ -367,7 +367,7 @@ namespace Jellyfin.Xtream.Service
                 Protocol = MediaProtocol.Http,
                 RequiresClosing = restream,
                 RequiresOpening = restream,
-                SupportsDirectPlay = false,
+                SupportsDirectPlay = true,
                 SupportsDirectStream = true,
                 SupportsProbing = true,
             };
