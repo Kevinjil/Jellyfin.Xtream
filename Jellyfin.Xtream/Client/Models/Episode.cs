@@ -26,7 +26,7 @@ namespace Jellyfin.Xtream.Client.Models
         [JsonProperty("episode_num")]
         public int EpisodeNum { get; set; }
 
-        [JsonProperty("Title")]
+        [JsonProperty("title")]
         public string Title { get; set; } = string.Empty;
 
         [JsonProperty("container_extension")]
