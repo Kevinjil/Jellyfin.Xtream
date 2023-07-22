@@ -148,23 +148,23 @@ namespace Jellyfin.Xtream.Service
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        public async IAsyncEnumerable<StreamInfo> GetLiveStreams([EnumeratorCancellation] CancellationToken cancellationToken)
+        public async Task<IEnumerable<StreamInfo>> GetLiveStreams(CancellationToken cancellationToken)
         {
+            logger.LogInformation("Get live streams");
             PluginConfiguration config = plugin.Configuration;
             using (XtreamClient client = new XtreamClient())
             {
-                foreach (var entry in config.LiveTv)
+                IEnumerable<Task<IEnumerable<StreamInfo>>> tasks = config.LiveTv.Keys.Select(async (int categoryId) =>
                 {
-                    int categoryId = entry.Key;
                     cancellationToken.ThrowIfCancellationRequested();
-
+                    logger.LogInformation("Start live streams {ChannelId}", categoryId);
                     IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                    foreach (StreamInfo channel in channels.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId)))
-                    {
-                        // If the set is empty, include all channels for the category.
-                        yield return channel;
-                    }
-                }
+                    logger.LogInformation("Got live streams {ChannelId}", categoryId);
+                    return channels.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId));
+                });
+
+                IEnumerable<StreamInfo>[] result = await Task.WhenAll(tasks).ConfigureAwait(false);
+                return result.AsEnumerable().SelectMany(x => x);
             }
         }
 
@@ -173,10 +173,11 @@ namespace Jellyfin.Xtream.Service
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-        public async IAsyncEnumerable<StreamInfo> GetLiveStreamsWithOverrides([EnumeratorCancellation] CancellationToken cancellationToken)
+        public async Task<IEnumerable<StreamInfo>> GetLiveStreamsWithOverrides(CancellationToken cancellationToken)
         {
             PluginConfiguration config = Plugin.Instance.Configuration;
-            await foreach (StreamInfo stream in GetLiveStreams(cancellationToken))
+            IEnumerable<StreamInfo> streams = await GetLiveStreams(cancellationToken).ConfigureAwait(false);
+            foreach (StreamInfo stream in streams)
             {
                 if (config.LiveTvOverrides.TryGetValue(stream.StreamId, out ChannelOverrides? overrides))
                 {
@@ -184,9 +185,9 @@ namespace Jellyfin.Xtream.Service
                     stream.Name = overrides.Name ?? stream.Name;
                     stream.StreamIcon = overrides.LogoUrl ?? stream.StreamIcon;
                 }
-
-                yield return stream;
             }
+
+            return streams;
         }
 
         /// <summary>

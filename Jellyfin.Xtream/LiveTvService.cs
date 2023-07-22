@@ -67,21 +67,19 @@ namespace Jellyfin.Xtream
         public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken cancellationToken)
         {
             Plugin plugin = Plugin.Instance;
-            List<ChannelInfo> items = new List<ChannelInfo>();
-            await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
+            IEnumerable<StreamInfo> streams = await plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken).ConfigureAwait(false);
+            return streams.Select((StreamInfo stream) =>
             {
-                ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
-                items.Add(new ChannelInfo()
+                ParsedName parsed = plugin.StreamService.ParseName(stream.Name);
+                return new ChannelInfo()
                 {
-                    Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),
-                    Number = channel.Num.ToString(CultureInfo.InvariantCulture),
-                    ImageUrl = channel.StreamIcon,
+                    Id = stream.StreamId.ToString(CultureInfo.InvariantCulture),
+                    Number = stream.Num.ToString(CultureInfo.InvariantCulture),
+                    ImageUrl = stream.StreamIcon,
                     Name = parsed.Title,
                     Tags = parsed.Tags,
-                });
-            }
-
-            return items;
+                };
+            });
         }
 
         /// <inheritdoc />
