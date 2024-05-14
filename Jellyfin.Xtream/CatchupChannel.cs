@@ -107,8 +107,8 @@ namespace Jellyfin.Xtream
             }
 
             int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
-            int categoryId = int.Parse(query.FolderId.Substring(0, separator), CultureInfo.InvariantCulture);
-            int channelId = int.Parse(query.FolderId.Substring(separator + 1), CultureInfo.InvariantCulture);
+            int categoryId = int.Parse(query.FolderId.AsSpan(0, separator), CultureInfo.InvariantCulture);
+            int channelId = int.Parse(query.FolderId.AsSpan(separator + 1), CultureInfo.InvariantCulture);
             return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
 

@@ -134,7 +134,7 @@ namespace Jellyfin.Xtream.Service
         /// <returns>The parsed it as integer.</returns>
         public int ParseId(string id, string prefix)
         {
-            return int.Parse(id.Substring(prefix.Length), CultureInfo.InvariantCulture);
+            return int.Parse(id.AsSpan(prefix.Length), CultureInfo.InvariantCulture);
         }
 
         private bool IsConfigured(SerializableDictionary<int, HashSet<int>> config, int category, int id)
