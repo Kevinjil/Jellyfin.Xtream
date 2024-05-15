@@ -207,7 +207,7 @@ namespace Jellyfin.Xtream
                 Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
             };
 
-            string cover = episode.Info.MovieImage;
+            string? cover = episode.Info?.MovieImage;
             if (string.IsNullOrEmpty(cover) && season != null)
             {
                 cover = season.Cover;
@@ -229,7 +229,7 @@ namespace Jellyfin.Xtream
                 MediaSources = sources,
                 MediaType = ChannelMediaType.Video,
                 Name = parsedName.Title,
-                Overview = episode.Info.Plot,
+                Overview = episode.Info?.Plot,
                 People = GetPeople(serie.Cast),
                 Tags = new List<string>(parsedName.Tags),
                 Type = ChannelItemType.Media,
