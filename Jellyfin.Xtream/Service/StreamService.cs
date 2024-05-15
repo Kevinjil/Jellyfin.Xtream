@@ -109,7 +109,7 @@ namespace Jellyfin.Xtream.Service
         /// </summary>
         /// <param name="name">The name which should be parsed.</param>
         /// <returns>A <see cref="ParsedName"/> struct containing the cleaned title and parsed tags.</returns>
-        public ParsedName ParseName(string name)
+        public static ParsedName ParseName(string name)
         {
             List<string> tags = new List<string>();
             string title = TagRegex.Replace(

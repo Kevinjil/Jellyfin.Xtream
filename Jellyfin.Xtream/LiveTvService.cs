@@ -70,7 +70,7 @@ namespace Jellyfin.Xtream
             List<ChannelInfo> items = new List<ChannelInfo>();
             await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
             {
-                ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
+                ParsedName parsed = StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
                 {
                     Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),

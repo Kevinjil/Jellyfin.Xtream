@@ -121,7 +121,7 @@ namespace Jellyfin.Xtream
         private ChannelItemInfo CreateChannelItemInfo(StreamInfo stream)
         {
             long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
-            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(stream.Name);
+            ParsedName parsedName = StreamService.ParseName(stream.Name);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
                 Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, stream.StreamId, stream.ContainerExtension)

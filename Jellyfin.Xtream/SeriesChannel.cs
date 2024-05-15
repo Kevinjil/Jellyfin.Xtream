@@ -131,7 +131,7 @@ namespace Jellyfin.Xtream
 
         private ChannelItemInfo CreateChannelItemInfo(Series series)
         {
-            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(series.Name);
+            ParsedName parsedName = StreamService.ParseName(series.Name);
             return new ChannelItemInfo()
             {
                 CommunityRating = (float)series.Rating5Based,
@@ -172,7 +172,7 @@ namespace Jellyfin.Xtream
             Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
             if (season != null)
             {
-                ParsedName parsedName = Plugin.Instance.StreamService.ParseName(season.Name);
+                ParsedName parsedName = StreamService.ParseName(season.Name);
                 name = parsedName.Title;
                 tags.AddRange(parsedName.Tags);
                 created = season.AirDate;
@@ -201,7 +201,7 @@ namespace Jellyfin.Xtream
         private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
         {
             Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
-            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(episode.Title);
+            ParsedName parsedName = StreamService.ParseName(episode.Title);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
                 Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)

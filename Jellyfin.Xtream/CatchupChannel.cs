@@ -123,7 +123,7 @@ namespace Jellyfin.Xtream
                     continue;
                 }
 
-                ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
+                ParsedName parsedName = StreamService.ParseName(channel.Name);
                 items.Add(new ChannelItemInfo()
                 {
                     Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, 0).ToString(),
@@ -193,7 +193,7 @@ namespace Jellyfin.Xtream
                 foreach (EpgInfo epg in epgs.Listings.Where(epg => epg.Start < startBefore && epg.Start >= startAfter))
                 {
                     string id = epg.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    ParsedName parsedName = plugin.StreamService.ParseName(epg.Title);
+                    ParsedName parsedName = StreamService.ParseName(epg.Title);
                     int durationMinutes = (int)Math.Ceiling((epg.End - epg.Start).TotalMinutes);
                     string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
