@@ -32,8 +32,9 @@ namespace Jellyfin.Xtream.Client.Models
         [JsonProperty("container_extension")]
         public string ContainerExtension { get; set; } = string.Empty;
 
+        [JsonConverter(typeof(OnlyObjectConverter<EpisodeInfo>))]
         [JsonProperty("info")]
-        public EpisodeInfo Info { get; set; } = new EpisodeInfo();
+        public EpisodeInfo? Info { get; set; } = new EpisodeInfo();
 
         [JsonProperty("custom_sid")]
         public string CustomSid { get; set; } = string.Empty;

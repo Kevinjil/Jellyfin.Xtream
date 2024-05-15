@@ -101,14 +101,22 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(query.FolderId))
+            try
             {
-                return await GetChannels(cancellationToken).ConfigureAwait(false);
-            }
+                if (string.IsNullOrEmpty(query.FolderId))
+                {
+                    return await GetChannels(cancellationToken).ConfigureAwait(false);
+                }
 
-            Guid guid = Guid.Parse(query.FolderId);
-            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int _);
-            return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
+                Guid guid = Guid.Parse(query.FolderId);
+                StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int _);
+                return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get channel items");
+                throw;
+            }
         }
 
         private async Task<ChannelItemResult> GetChannels(CancellationToken cancellationToken)
