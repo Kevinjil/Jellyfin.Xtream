@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "## What's Changed\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.6.4 to 1.6.5 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/69\r\n* chore(deps): bump StyleCop.Analyzers from 1.2.0-beta.435 to 1.2.0-beta.507 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/66\r\n* Support Jellyfin 10.9 by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/96\r\n* Fix series parsing by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/97\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.6.1...v0.6.2",
+        "checksum": "f62a6f1a0de81985f108c7cac76486cf",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.6.2/jellyfin-xtream_0.6.2.0.zip",
+        "targetAbi": "10.8.4.0",
+        "timestamp": "2024-05-15T18:32:11Z",
+        "version": "0.6.2.0"
+      },
+      {
         "changelog": "This release fixes direct streaming of live TV and bumps some dependencies.\r\n\r\n## What's Changed\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.6.2 to 1.6.3 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/48\r\n* ci(deps): bump actions/download-artifact from 3.0.0 to 3.0.1 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/49\r\n* Use external URL and support direct play from the Restream URL. by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/54\r\n* chore(deps): bump Newtonsoft.Json from 13.0.1 to 13.0.2 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/51\r\n* ci(deps): bump actions/download-artifact from 3.0.1 to 3.0.2 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/55\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.6.3 to 1.6.4 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/62\r\n* chore(deps): bump Newtonsoft.Json from 13.0.2 to 13.0.3 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/59\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.6.0...v0.6.1",
         "checksum": "5cab2bcd4451f6dee053bdd77b06de77",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.6.1/jellyfin-xtream_0.6.1.0.zip",
