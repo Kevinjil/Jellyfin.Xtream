@@ -100,15 +100,15 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
             if (string.IsNullOrEmpty(query.FolderId))
             {
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
-            if (plugin.StreamService.IsId(query.FolderId, StreamService.CategoryPrefix))
+            Guid guid = Guid.Parse(query.FolderId);
+            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int _, out int _);
+            if (prefix == StreamService.VodCategoryPrefix)
             {
-                int categoryId = plugin.StreamService.ParseId(query.FolderId, StreamService.CategoryPrefix);
                 return await GetStreams(categoryId, cancellationToken).ConfigureAwait(false);
             }
 
@@ -147,7 +147,7 @@ namespace Jellyfin.Xtream
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
                 (await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false))
-                    .Select((Category category) => Plugin.Instance.StreamService.CreateChannelItemInfo(category)));
+                    .Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.VodCategoryPrefix, category)));
             return new ChannelItemResult()
             {
                 Items = items,

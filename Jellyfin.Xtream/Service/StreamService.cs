@@ -37,29 +37,49 @@ namespace Jellyfin.Xtream.Service
     public class StreamService
     {
         /// <summary>
-        /// The id prefix for category channel items.
+        /// The id prefix for VOD category channel items.
         /// </summary>
-        public const string CategoryPrefix = "category-";
+        public const int VodCategoryPrefix = 0x5d774c35;
 
         /// <summary>
         /// The id prefix for stream channel items.
         /// </summary>
-        public const string StreamPrefix = "stream-";
+        public const int StreamPrefix = 0x5d774c36;
 
         /// <summary>
-        /// The id prefix for series channel items.
+        /// The id prefix for series category channel items.
         /// </summary>
-        public const string SeriesPrefix = "series-";
+        public const int SeriesCategoryPrefix = 0x5d774c37;
+
+        /// <summary>
+        /// The id prefix for series category channel items.
+        /// </summary>
+        public const int SeriesPrefix = 0x5d774c38;
 
         /// <summary>
         /// The id prefix for season channel items.
         /// </summary>
-        public const string SeasonPrefix = "seasons-";
+        public const int SeasonPrefix = 0x5d774c39;
 
         /// <summary>
         /// The id prefix for season channel items.
         /// </summary>
-        public const string EpisodePrefix = "episode-";
+        public const int EpisodePrefix = 0x5d774c3a;
+
+        /// <summary>
+        /// The id prefix for catchup channel items.
+        /// </summary>
+        public const int CatchupPrefix = 0x5d774c3b;
+
+        /// <summary>
+        /// The id prefix for fallback EPG items.
+        /// </summary>
+        public const int FallbackPrefix = 0x5d774c3c;
+
+        /// <summary>
+        /// The id prefix for media source items.
+        /// </summary>
+        public const int MediaSourcePrefix = 0x5d774c3d;
 
         private static readonly Regex TagRegex = new Regex(@"\[([^\]]+)\]|\|([^\|]+)\|");
 
@@ -113,28 +133,6 @@ namespace Jellyfin.Xtream.Service
                 Title = title.Trim(),
                 Tags = tags.ToArray(),
             };
-        }
-
-        /// <summary>
-        /// Checks if the id string is an id with the given prefix.
-        /// </summary>
-        /// <param name="id">The id string.</param>
-        /// <param name="prefix">The prefix string.</param>
-        /// <returns>Whether or not the id string has the given prefix.</returns>
-        public bool IsId(string id, string prefix)
-        {
-            return id.StartsWith(prefix, StringComparison.InvariantCulture);
-        }
-
-        /// <summary>
-        /// Parses the given id by removing the prefix.
-        /// </summary>
-        /// <param name="id">The id string.</param>
-        /// <param name="prefix">The prefix string.</param>
-        /// <returns>The parsed it as integer.</returns>
-        public int ParseId(string id, string prefix)
-        {
-            return int.Parse(id.AsSpan(prefix.Length), CultureInfo.InvariantCulture);
         }
 
         private bool IsConfigured(SerializableDictionary<int, HashSet<int>> config, int category, int id)
@@ -192,14 +190,15 @@ namespace Jellyfin.Xtream.Service
         /// <summary>
         /// Gets an channel item info for the category.
         /// </summary>
+        /// <param name="prefix">The channel category prefix.</param>
         /// <param name="category">The Xtream category.</param>
         /// <returns>A channel item representing the category.</returns>
-        public ChannelItemInfo CreateChannelItemInfo(Category category)
+        public static ChannelItemInfo CreateChannelItemInfo(int prefix, Category category)
         {
             ParsedName parsedName = ParseName(category.CategoryName);
             return new ChannelItemInfo()
             {
-                Id = $"{CategoryPrefix}{category.CategoryId}",
+                Id = ToGuid(prefix, category.CategoryId, 0, 0).ToString(),
                 Name = category.CategoryName,
                 Tags = new List<string>(parsedName.Tags),
                 Type = ChannelItemType.Folder,
@@ -313,6 +312,63 @@ namespace Jellyfin.Xtream.Service
             }
         }
 
+        private static void StoreBytes(byte[] dst, int offset, int i)
+        {
+            byte[] intBytes = BitConverter.GetBytes(i);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(intBytes);
+            }
+
+            Buffer.BlockCopy(intBytes, 0, dst, offset, 4);
+        }
+
+        /// <summary>
+        /// Gets a GUID representing the four 32-bit integers.
+        /// </summary>
+        /// <param name="i0">Bytes 0-3.</param>
+        /// <param name="i1">Bytes 4-7.</param>
+        /// <param name="i2">Bytes 8-11.</param>
+        /// <param name="i3">Bytes 12-15.</param>
+        /// <returns>Guid.</returns>
+        public static Guid ToGuid(int i0, int i1, int i2, int i3)
+        {
+            byte[] guid = new byte[16];
+            StoreBytes(guid, 0, i0);
+            StoreBytes(guid, 4, i1);
+            StoreBytes(guid, 8, i2);
+            StoreBytes(guid, 12, i3);
+            return new Guid(guid);
+        }
+
+        /// <summary>
+        /// Gets the four 32-bit integers represented in the GUID.
+        /// </summary>
+        /// <param name="guid">The input GUID.</param>
+        /// <param name="i0">Bytes 0-3.</param>
+        /// <param name="i1">Bytes 4-7.</param>
+        /// <param name="i2">Bytes 8-11.</param>
+        /// <param name="i3">Bytes 12-15.</param>
+        public static void FromGuid(Guid guid, out int i0, out int i1, out int i2, out int i3)
+        {
+            byte[] tmp = guid.ToByteArray();
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(tmp);
+                i0 = BitConverter.ToInt32(tmp, 12);
+                i1 = BitConverter.ToInt32(tmp, 8);
+                i2 = BitConverter.ToInt32(tmp, 4);
+                i3 = BitConverter.ToInt32(tmp, 0);
+            }
+            else
+            {
+                i0 = BitConverter.ToInt32(tmp, 0);
+                i1 = BitConverter.ToInt32(tmp, 4);
+                i2 = BitConverter.ToInt32(tmp, 8);
+                i3 = BitConverter.ToInt32(tmp, 12);
+            }
+        }
+
         /// <summary>
         /// Gets the media source information for the given Xtream stream.
         /// </summary>
@@ -359,7 +415,7 @@ namespace Jellyfin.Xtream.Service
             return new MediaSourceInfo()
             {
                 EncoderProtocol = MediaProtocol.Http,
-                Id = id.ToString(CultureInfo.InvariantCulture),
+                Id = ToGuid(MediaSourcePrefix, (int)type, id, 0).ToString(),
                 IsInfiniteStream = isLive,
                 IsRemote = true,
                 Name = "default",

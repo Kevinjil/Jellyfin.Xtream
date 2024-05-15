@@ -106,9 +106,8 @@ namespace Jellyfin.Xtream
                 return await GetChannels(cancellationToken).ConfigureAwait(false);
             }
 
-            int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
-            int categoryId = int.Parse(query.FolderId.AsSpan(0, separator), CultureInfo.InvariantCulture);
-            int channelId = int.Parse(query.FolderId.AsSpan(separator + 1), CultureInfo.InvariantCulture);
+            Guid guid = Guid.Parse(query.FolderId);
+            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int _);
             return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
 
@@ -127,7 +126,7 @@ namespace Jellyfin.Xtream
                 ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
                 items.Add(new ChannelItemInfo()
                 {
-                    Id = $"{channel.CategoryId}-{channel.StreamId}",
+                    Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, 0).ToString(),
                     ImageUrl = channel.StreamIcon,
                     Name = parsedName.Title,
                     Tags = new List<string>(parsedName.Tags),
@@ -173,7 +172,7 @@ namespace Jellyfin.Xtream
                             {
                                 ContentType = ChannelMediaContentType.TvExtra,
                                 FolderType = ChannelFolderType.Container,
-                                Id = $"fallback-{channelId}",
+                                Id = StreamService.ToGuid(StreamService.FallbackPrefix, channelId, 0, 0).ToString(),
                                 IsLiveStream = false,
                                 MediaSources = new List<MediaSourceInfo>()
                                 {

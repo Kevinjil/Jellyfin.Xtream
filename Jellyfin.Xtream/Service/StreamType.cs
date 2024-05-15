@@ -18,26 +18,26 @@ namespace Jellyfin.Xtream.Service
     /// <summary>
     /// An enum describing the Xtream stream types.
     /// </summary>
-    public enum StreamType
+    public enum StreamType : int
     {
         /// <summary>
         /// Live IPTV.
         /// </summary>
-        Live,
+        Live = 0,
 
         /// <summary>
         /// Catch up IPTV.
         /// </summary>
-        CatchUp,
+        CatchUp = 1,
 
         /// <summary>
         /// On-demand series grouped in seasons and episodes.
         /// </summary>
-        Series,
+        Series = 2,
 
         /// <summary>
         /// Video on-demand.
         /// </summary>
-        Vod,
+        Vod = 3,
     }
 }
