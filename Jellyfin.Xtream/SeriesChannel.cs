@@ -101,26 +101,34 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(query.FolderId))
+            try
             {
-                return await GetCategories(cancellationToken).ConfigureAwait(false);
-            }
+                if (string.IsNullOrEmpty(query.FolderId))
+                {
+                    return await GetCategories(cancellationToken).ConfigureAwait(false);
+                }
 
-            Guid guid = Guid.Parse(query.FolderId);
-            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int seriesId, out int seasonId);
-            if (prefix == StreamService.SeriesCategoryPrefix)
-            {
-                return await GetSeries(categoryId, cancellationToken).ConfigureAwait(false);
-            }
+                Guid guid = Guid.Parse(query.FolderId);
+                StreamService.FromGuid(guid, out int prefix, out int categoryId, out int seriesId, out int seasonId);
+                if (prefix == StreamService.SeriesCategoryPrefix)
+                {
+                    return await GetSeries(categoryId, cancellationToken).ConfigureAwait(false);
+                }
 
-            if (prefix == StreamService.SeriesPrefix)
-            {
-                return await GetSeasons(seriesId, cancellationToken).ConfigureAwait(false);
-            }
+                if (prefix == StreamService.SeriesPrefix)
+                {
+                    return await GetSeasons(seriesId, cancellationToken).ConfigureAwait(false);
+                }
 
-            if (prefix == StreamService.SeasonPrefix)
+                if (prefix == StreamService.SeasonPrefix)
+                {
+                    return await GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
             {
-                return await GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false);
+                logger.LogError(ex, "Failed to get channel items");
+                throw;
             }
 
             return new ChannelItemResult()
