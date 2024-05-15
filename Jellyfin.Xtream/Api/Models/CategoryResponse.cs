@@ -13,21 +13,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace Jellyfin.Xtream.Api.Models
+namespace Jellyfin.Xtream.Api.Models;
+
+/// <summary>
+/// A response model for Xtream categories.
+/// </summary>
+public class CategoryResponse
 {
     /// <summary>
-    /// A response model for Xtream categories.
+    /// Gets or sets the Xtream API id of the category.
     /// </summary>
-    public class CategoryResponse
-    {
-        /// <summary>
-        /// Gets or sets the Xtream API id of the category.
-        /// </summary>
-        public int Id { get; set; }
+    public int Id { get; set; }
 
-        /// <summary>
-        /// Gets or sets the name of the category.
-        /// </summary>
-        public string Name { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// Gets or sets the name of the category.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
 }

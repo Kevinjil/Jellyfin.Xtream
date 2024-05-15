@@ -16,17 +16,16 @@
 using Newtonsoft.Json;
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class Category
 {
-    public class Category
-    {
-        [JsonProperty("category_id")]
-        public int CategoryId { get; set; }
+    [JsonProperty("category_id")]
+    public int CategoryId { get; set; }
 
-        [JsonProperty("category_name")]
-        public string CategoryName { get; set; } = string.Empty;
+    [JsonProperty("category_name")]
+    public string CategoryName { get; set; } = string.Empty;
 
-        [JsonProperty("parent_id")]
-        public int ParentId { get; set; }
-    }
+    [JsonProperty("parent_id")]
+    public int ParentId { get; set; }
 }

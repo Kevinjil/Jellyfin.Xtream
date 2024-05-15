@@ -17,30 +17,29 @@ using System;
 using System.Collections.Generic;
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class UserInfo
 {
-    public class UserInfo
-    {
-        public string Username { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
 
-        public string Password { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 
-        public int Auth { get; set; }
+    public int Auth { get; set; }
 
-        public string Status { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
 
-        public DateTime ExpDate { get; set; }
+    public DateTime ExpDate { get; set; }
 
-        public bool IsTrial { get; set; }
+    public bool IsTrial { get; set; }
 
-        public int ActiveCons { get; set; }
+    public int ActiveCons { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-        public int MaxConnections { get; set; }
+    public int MaxConnections { get; set; }
 
-        #pragma warning disable CA2227
-        public ICollection<string> AllowedOutputFormats { get; set; } = new List<string>();
-        #pragma warning restore CA2227
-    }
+    #pragma warning disable CA2227
+    public ICollection<string> AllowedOutputFormats { get; set; } = new List<string>();
+    #pragma warning restore CA2227
 }

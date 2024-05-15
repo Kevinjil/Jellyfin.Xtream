@@ -13,31 +13,30 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace Jellyfin.Xtream.Service
+namespace Jellyfin.Xtream.Service;
+
+/// <summary>
+/// An enum describing the Xtream stream types.
+/// </summary>
+public enum StreamType : int
 {
     /// <summary>
-    /// An enum describing the Xtream stream types.
+    /// Live IPTV.
     /// </summary>
-    public enum StreamType : int
-    {
-        /// <summary>
-        /// Live IPTV.
-        /// </summary>
-        Live = 0,
+    Live = 0,
 
-        /// <summary>
-        /// Catch up IPTV.
-        /// </summary>
-        CatchUp = 1,
+    /// <summary>
+    /// Catch up IPTV.
+    /// </summary>
+    CatchUp = 1,
 
-        /// <summary>
-        /// On-demand series grouped in seasons and episodes.
-        /// </summary>
-        Series = 2,
+    /// <summary>
+    /// On-demand series grouped in seasons and episodes.
+    /// </summary>
+    Series = 2,
 
-        /// <summary>
-        /// Video on-demand.
-        /// </summary>
-        Vod = 3,
-    }
+    /// <summary>
+    /// Video on-demand.
+    /// </summary>
+    Vod = 3,
 }

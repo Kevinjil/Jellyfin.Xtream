@@ -13,33 +13,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace Jellyfin.Xtream.Configuration
+namespace Jellyfin.Xtream.Configuration;
+
+/// <summary>
+/// Override configuration for a Live TV channel.
+/// </summary>
+public class ChannelOverrides
 {
     /// <summary>
-    /// Override configuration for a Live TV channel.
+    /// Initializes a new instance of the <see cref="ChannelOverrides"/> class.
     /// </summary>
-    public class ChannelOverrides
+    public ChannelOverrides()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ChannelOverrides"/> class.
-        /// </summary>
-        public ChannelOverrides()
-        {
-        }
-
-        /// <summary>
-        /// Gets or sets the TV channel number.
-        /// </summary>
-        public int? Number { get; set; }
-
-        /// <summary>
-        /// Gets or sets the TV channel name.
-        /// </summary>
-        public string? Name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the url of the channel logo.
-        /// </summary>
-        public string? LogoUrl { get; set; }
     }
+
+    /// <summary>
+    /// Gets or sets the TV channel number.
+    /// </summary>
+    public int? Number { get; set; }
+
+    /// <summary>
+    /// Gets or sets the TV channel name.
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the url of the channel logo.
+    /// </summary>
+    public string? LogoUrl { get; set; }
 }

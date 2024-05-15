@@ -14,12 +14,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
-{
-    public class PlayerApi
-    {
-        public UserInfo UserInfo { get; set; } = new UserInfo();
+namespace Jellyfin.Xtream.Client.Models;
 
-        public ServerInfo ServerSnfo { get; set; } = new ServerInfo();
-    }
+public class PlayerApi
+{
+    public UserInfo UserInfo { get; set; } = new UserInfo();
+
+    public ServerInfo ServerSnfo { get; set; } = new ServerInfo();
 }

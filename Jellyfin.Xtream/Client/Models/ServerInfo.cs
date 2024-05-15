@@ -16,18 +16,17 @@
 using System;
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class ServerInfo
 {
-    public class ServerInfo
-    {
-        public string Url { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 
-        public string Port { get; set; } = string.Empty;
+    public string Port { get; set; } = string.Empty;
 
-        public string RtmpPort { get; set; } = string.Empty;
+    public string RtmpPort { get; set; } = string.Empty;
 
-        public string Timezone { get; set; } = string.Empty;
+    public string Timezone { get; set; } = string.Empty;
 
-        public DateTime TimeNow { get; set; }
-    }
+    public DateTime TimeNow { get; set; }
 }

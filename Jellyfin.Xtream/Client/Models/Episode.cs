@@ -16,36 +16,35 @@
 using Newtonsoft.Json;
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class Episode
 {
-    public class Episode
-    {
-        [JsonProperty("id")]
-        public int EpisodeId { get; set; }
+    [JsonProperty("id")]
+    public int EpisodeId { get; set; }
 
-        [JsonProperty("episode_num")]
-        public int EpisodeNum { get; set; }
+    [JsonProperty("episode_num")]
+    public int EpisodeNum { get; set; }
 
-        [JsonProperty("title")]
-        public string Title { get; set; } = string.Empty;
+    [JsonProperty("title")]
+    public string Title { get; set; } = string.Empty;
 
-        [JsonProperty("container_extension")]
-        public string ContainerExtension { get; set; } = string.Empty;
+    [JsonProperty("container_extension")]
+    public string ContainerExtension { get; set; } = string.Empty;
 
-        [JsonConverter(typeof(OnlyObjectConverter<EpisodeInfo>))]
-        [JsonProperty("info")]
-        public EpisodeInfo? Info { get; set; } = new EpisodeInfo();
+    [JsonConverter(typeof(OnlyObjectConverter<EpisodeInfo>))]
+    [JsonProperty("info")]
+    public EpisodeInfo? Info { get; set; } = new EpisodeInfo();
 
-        [JsonProperty("custom_sid")]
-        public string CustomSid { get; set; } = string.Empty;
+    [JsonProperty("custom_sid")]
+    public string CustomSid { get; set; } = string.Empty;
 
-        [JsonProperty("added")]
-        public long Added { get; set; }
+    [JsonProperty("added")]
+    public long Added { get; set; }
 
-        [JsonProperty("season")]
-        public int Season { get; set; }
+    [JsonProperty("season")]
+    public int Season { get; set; }
 
-        [JsonProperty("direct_source")]
-        public string DirectSource { get; set; } = string.Empty;
-    }
+    [JsonProperty("direct_source")]
+    public string DirectSource { get; set; } = string.Empty;
 }

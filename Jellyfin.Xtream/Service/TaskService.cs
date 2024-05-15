@@ -18,59 +18,58 @@ using System.Linq;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Xtream.Service
+namespace Jellyfin.Xtream.Service;
+
+/// <summary>
+/// A service for dealing with stream information.
+/// </summary>
+public class TaskService
 {
+    private readonly ILogger logger;
+    private readonly Plugin plugin;
+    private readonly ITaskManager taskManager;
+
     /// <summary>
-    /// A service for dealing with stream information.
+    /// Initializes a new instance of the <see cref="TaskService"/> class.
     /// </summary>
-    public class TaskService
+    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+    /// <param name="plugin">Instance of the <see cref="Plugin"/> class.</param>
+    /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
+    public TaskService(ILogger logger, Plugin plugin, ITaskManager taskManager)
     {
-        private readonly ILogger logger;
-        private readonly Plugin plugin;
-        private readonly ITaskManager taskManager;
+        this.logger = logger;
+        this.plugin = plugin;
+        this.taskManager = taskManager;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TaskService"/> class.
-        /// </summary>
-        /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        /// <param name="plugin">Instance of the <see cref="Plugin"/> class.</param>
-        /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
-        public TaskService(ILogger logger, Plugin plugin, ITaskManager taskManager)
+    private static Type? FindType(string assembly, string fullName)
+    {
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a =>
+                !a.IsDynamic &&
+                (a.FullName?.StartsWith($"{assembly},", StringComparison.InvariantCulture) ?? false))
+            .SelectMany(a => a.GetTypes())
+            .FirstOrDefault(t => t?.FullName == fullName);
+    }
+
+    /// <summary>
+    /// Executes a task from the given assembly and name.
+    /// </summary>
+    /// <param name="assembly">The name of the assembly to search in for the type.</param>
+    /// <param name="fullName">The full name of the task type.</param>
+    /// <exception cref="ArgumentException">If the task type is not found.</exception>
+    public void CancelIfRunningAndQueue(string assembly, string fullName)
+    {
+        Type? refreshType = FindType(assembly, fullName);
+        if (refreshType == null)
         {
-            this.logger = logger;
-            this.plugin = plugin;
-            this.taskManager = taskManager;
+            throw new ArgumentException("Refresh task not found");
         }
 
-        private static Type? FindType(string assembly, string fullName)
-        {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a =>
-                    !a.IsDynamic &&
-                    (a.FullName?.StartsWith($"{assembly},", StringComparison.InvariantCulture) ?? false))
-                .SelectMany(a => a.GetTypes())
-                .FirstOrDefault(t => t?.FullName == fullName);
-        }
-
-        /// <summary>
-        /// Executes a task from the given assembly and name.
-        /// </summary>
-        /// <param name="assembly">The name of the assembly to search in for the type.</param>
-        /// <param name="fullName">The full name of the task type.</param>
-        /// <exception cref="ArgumentException">If the task type is not found.</exception>
-        public void CancelIfRunningAndQueue(string assembly, string fullName)
-        {
-            Type? refreshType = FindType(assembly, fullName);
-            if (refreshType == null)
-            {
-                throw new ArgumentException("Refresh task not found");
-            }
-
-            // As the type is not publicly visible, use reflection.
-            typeof(ITaskManager)
-                .GetMethod(nameof(ITaskManager.CancelIfRunningAndQueue), 1, Array.Empty<Type>())?
-                .MakeGenericMethod(refreshType)?
-                .Invoke(taskManager, Array.Empty<object>());
-        }
+        // As the type is not publicly visible, use reflection.
+        typeof(ITaskManager)
+            .GetMethod(nameof(ITaskManager.CancelIfRunningAndQueue), 1, Array.Empty<Type>())?
+            .MakeGenericMethod(refreshType)?
+            .Invoke(taskManager, Array.Empty<object>());
     }
 }

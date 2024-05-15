@@ -17,26 +17,25 @@ using System;
 using Newtonsoft.Json;
 
 #pragma warning disable CS1591
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class EpisodeInfo
 {
-    public class EpisodeInfo
-    {
-        [JsonProperty("movie_image")]
-        public string MovieImage { get; set; } = string.Empty;
+    [JsonProperty("movie_image")]
+    public string MovieImage { get; set; } = string.Empty;
 
-        [JsonProperty("plot")]
-        public string Plot { get; set; } = string.Empty;
+    [JsonProperty("plot")]
+    public string Plot { get; set; } = string.Empty;
 
-        [JsonProperty("releasedate")]
-        public DateTime ReleaseDate { get; set; }
+    [JsonProperty("releasedate")]
+    public DateTime ReleaseDate { get; set; }
 
-        [JsonProperty("rating")]
-        public int Rating { get; set; }
+    [JsonProperty("rating")]
+    public int Rating { get; set; }
 
-        [JsonProperty("duration_secs")]
-        public int DurationSecs { get; set; }
+    [JsonProperty("duration_secs")]
+    public int DurationSecs { get; set; }
 
-        [JsonProperty("bitrate")]
-        public int Bitrate { get; set; }
-    }
+    [JsonProperty("bitrate")]
+    public int Bitrate { get; set; }
 }

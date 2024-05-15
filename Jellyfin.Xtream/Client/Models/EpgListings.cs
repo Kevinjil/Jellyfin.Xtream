@@ -18,13 +18,12 @@ using Newtonsoft.Json;
 
 #pragma warning disable CS1591
 #pragma warning disable CA2227
-namespace Jellyfin.Xtream.Client.Models
+namespace Jellyfin.Xtream.Client.Models;
+
+public class EpgListings
 {
-    public class EpgListings
-    {
-        [JsonProperty("epg_listings")]
-        public ICollection<EpgInfo> Listings { get; set; } = new List<EpgInfo>();
-    }
+    [JsonProperty("epg_listings")]
+    public ICollection<EpgInfo> Listings { get; set; } = new List<EpgInfo>();
 }
 #pragma warning restore CA2227
 #pragma warning restore CS1591

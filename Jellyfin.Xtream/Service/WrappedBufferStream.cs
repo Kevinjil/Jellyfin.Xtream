@@ -16,109 +16,108 @@
 using System;
 using System.IO;
 
-namespace Jellyfin.Xtream.Service
+namespace Jellyfin.Xtream.Service;
+
+/// <summary>
+/// Stream which writes to a self-overwriting internal buffer.
+/// </summary>
+public class WrappedBufferStream : Stream
 {
+    private readonly byte[] sourceBuffer;
+
+    private long position;
+    private long totalBytesWritten;
+
     /// <summary>
-    /// Stream which writes to a self-overwriting internal buffer.
+    /// Initializes a new instance of the <see cref="WrappedBufferStream"/> class.
     /// </summary>
-    public class WrappedBufferStream : Stream
+    /// <param name="bufferSize">Size in bytes of the internal buffer.</param>
+    public WrappedBufferStream(int bufferSize)
     {
-        private readonly byte[] sourceBuffer;
+        this.sourceBuffer = new byte[bufferSize];
+        this.totalBytesWritten = 0;
+    }
 
-        private long position;
-        private long totalBytesWritten;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="WrappedBufferStream"/> class.
-        /// </summary>
-        /// <param name="bufferSize">Size in bytes of the internal buffer.</param>
-        public WrappedBufferStream(int bufferSize)
-        {
-            this.sourceBuffer = new byte[bufferSize];
-            this.totalBytesWritten = 0;
-        }
-
-        /// <summary>
-        /// Gets the maximal size in bytes of read/write chunks.
-        /// </summary>
-        public int BufferSize { get => sourceBuffer.Length; }
+    /// <summary>
+    /// Gets the maximal size in bytes of read/write chunks.
+    /// </summary>
+    public int BufferSize { get => sourceBuffer.Length; }
 
 #pragma warning disable CA1819
-        /// <summary>
-        /// Gets the internal buffer.
-        /// </summary>
-        public byte[] Buffer { get => sourceBuffer; }
+    /// <summary>
+    /// Gets the internal buffer.
+    /// </summary>
+    public byte[] Buffer { get => sourceBuffer; }
 #pragma warning restore CA1819
 
-        /// <summary>
-        /// Gets the number of bytes that have been written to this stream.
-        /// </summary>
-        public long TotalBytesWritten { get => totalBytesWritten; }
+    /// <summary>
+    /// Gets the number of bytes that have been written to this stream.
+    /// </summary>
+    public long TotalBytesWritten { get => totalBytesWritten; }
 
-        /// <inheritdoc />
-        public override long Position { get => position; set => position = value; }
+    /// <inheritdoc />
+    public override long Position { get => position; set => position = value; }
 
-        /// <inheritdoc />
-        public override bool CanRead => false;
+    /// <inheritdoc />
+    public override bool CanRead => false;
 
-        /// <inheritdoc />
-        public override bool CanWrite => true;
+    /// <inheritdoc />
+    public override bool CanWrite => true;
 
-        /// <inheritdoc />
-        public override bool CanSeek => false;
+    /// <inheritdoc />
+    public override bool CanSeek => false;
 
 #pragma warning disable CA1065
-        /// <inheritdoc />
-        public override long Length { get => throw new NotImplementedException(); }
+    /// <inheritdoc />
+    public override long Length { get => throw new NotImplementedException(); }
 #pragma warning restore CA1065
 
-        /// <inheritdoc />
-        public override int Read(byte[] buffer, int offset, int count)
+    /// <inheritdoc />
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc />
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        // The bytes that still need to be copied.
+        long remaining = count;
+        long remainingOffset = offset;
+
+        // Copy inside a loop to simplify wrapping logic.
+        while (remaining > 0)
         {
-            throw new NotImplementedException();
+            // The amount of bytes that we can directly write from the current position without wrapping.
+            long writable = Math.Min(remaining, BufferSize - Position);
+
+            // Copy the data.
+            Array.Copy(buffer, remainingOffset, sourceBuffer, Position, writable);
+            remaining -= writable;
+            remainingOffset += writable;
+            Position += writable;
+            totalBytesWritten += writable;
+
+            // We might have to wrap the position.
+            Position %= BufferSize;
         }
+    }
 
-        /// <inheritdoc />
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            // The bytes that still need to be copied.
-            long remaining = count;
-            long remainingOffset = offset;
+    /// <inheritdoc />
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        throw new NotImplementedException();
+    }
 
-            // Copy inside a loop to simplify wrapping logic.
-            while (remaining > 0)
-            {
-                // The amount of bytes that we can directly write from the current position without wrapping.
-                long writable = Math.Min(remaining, BufferSize - Position);
+    /// <inheritdoc />
+    public override void SetLength(long value)
+    {
+        throw new NotImplementedException();
+    }
 
-                // Copy the data.
-                Array.Copy(buffer, remainingOffset, sourceBuffer, Position, writable);
-                remaining -= writable;
-                remainingOffset += writable;
-                Position += writable;
-                totalBytesWritten += writable;
-
-                // We might have to wrap the position.
-                Position %= BufferSize;
-            }
-        }
-
-        /// <inheritdoc />
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public override void SetLength(long value)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public override void Flush()
-        {
-            // Do nothing
-        }
+    /// <inheritdoc />
+    public override void Flush()
+    {
+        // Do nothing
     }
 }

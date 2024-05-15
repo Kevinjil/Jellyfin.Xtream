@@ -26,121 +26,120 @@ using MediaBrowser.Model.Serialization;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Xtream
+namespace Jellyfin.Xtream;
+
+/// <summary>
+/// The main plugin.
+/// </summary>
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
+    private static Plugin? instance;
+
+    private readonly ILogger<Plugin> _logger;
+
     /// <summary>
-    /// The main plugin.
+    /// Initializes a new instance of the <see cref="Plugin"/> class.
     /// </summary>
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
+    /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
+    /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
+    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+    /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger, ITaskManager taskManager)
+        : base(applicationPaths, xmlSerializer)
     {
-        private static Plugin? instance;
+        _logger = logger;
+        instance = this;
+        StreamService = new StreamService(logger, this);
+        TaskService = new TaskService(logger, this, taskManager);
+    }
 
-        private readonly ILogger<Plugin> _logger;
+    /// <inheritdoc />
+    public override string Name => "Jellyfin Xtream";
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Plugin"/> class.
-        /// </summary>
-        /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
-        /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
-        /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-        /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger, ITaskManager taskManager)
-            : base(applicationPaths, xmlSerializer)
+    /// <inheritdoc />
+    public override Guid Id => Guid.Parse("5d774c35-8567-46d3-a950-9bb8227a0c5d");
+
+    /// <summary>
+    /// Gets the Xtream connection info with credentials.
+    /// </summary>
+    public ConnectionInfo Creds
+    {
+        get => new ConnectionInfo(this.Configuration.BaseUrl, this.Configuration.Username, this.Configuration.Password);
+    }
+
+    /// <summary>
+    /// Gets the current plugin instance.
+    /// </summary>
+    public static Plugin Instance
+    {
+        get
         {
-            _logger = logger;
-            instance = this;
-            StreamService = new StreamService(logger, this);
-            TaskService = new TaskService(logger, this, taskManager);
-        }
-
-        /// <inheritdoc />
-        public override string Name => "Jellyfin Xtream";
-
-        /// <inheritdoc />
-        public override Guid Id => Guid.Parse("5d774c35-8567-46d3-a950-9bb8227a0c5d");
-
-        /// <summary>
-        /// Gets the Xtream connection info with credentials.
-        /// </summary>
-        public ConnectionInfo Creds
-        {
-            get => new ConnectionInfo(this.Configuration.BaseUrl, this.Configuration.Username, this.Configuration.Password);
-        }
-
-        /// <summary>
-        /// Gets the current plugin instance.
-        /// </summary>
-        public static Plugin Instance
-        {
-            get
+            if (instance == null)
             {
-                if (instance == null)
-                {
-                    throw new InvalidOperationException("Plugin instance not available");
-                }
-
-                return instance;
+                throw new InvalidOperationException("Plugin instance not available");
             }
+
+            return instance;
         }
+    }
 
-        /// <summary>
-        /// Gets the stream service instance.
-        /// </summary>
-        public StreamService StreamService { get; init; }
+    /// <summary>
+    /// Gets the stream service instance.
+    /// </summary>
+    public StreamService StreamService { get; init; }
 
-        /// <summary>
-        /// Gets the task service instance.
-        /// </summary>
-        public TaskService TaskService { get; init; }
+    /// <summary>
+    /// Gets the task service instance.
+    /// </summary>
+    public TaskService TaskService { get; init; }
 
-        private static PluginPageInfo CreateStatic(string name) => new PluginPageInfo
+    private static PluginPageInfo CreateStatic(string name) => new PluginPageInfo
+    {
+        Name = name,
+        EmbeddedResourcePath = string.Format(
+            CultureInfo.InvariantCulture,
+            "{0}.Configuration.Web.{1}",
+            typeof(Plugin).Namespace,
+            name),
+    };
+
+    /// <inheritdoc />
+    public IEnumerable<PluginPageInfo> GetPages()
+    {
+        return new[]
         {
-            Name = name,
-            EmbeddedResourcePath = string.Format(
-                CultureInfo.InvariantCulture,
-                "{0}.Configuration.Web.{1}",
-                typeof(Plugin).Namespace,
-                name),
+            CreateStatic("XtreamCredentials.html"),
+            CreateStatic("XtreamCredentials.js"),
+            CreateStatic("Xtream.css"),
+            CreateStatic("Xtream.js"),
+            CreateStatic("XtreamLive.html"),
+            CreateStatic("XtreamLive.js"),
+            CreateStatic("XtreamLiveOverrides.html"),
+            CreateStatic("XtreamLiveOverrides.js"),
+            CreateStatic("XtreamSeries.html"),
+            CreateStatic("XtreamSeries.js"),
+            CreateStatic("XtreamVod.html"),
+            CreateStatic("XtreamVod.js"),
         };
+    }
 
-        /// <inheritdoc />
-        public IEnumerable<PluginPageInfo> GetPages()
-        {
-            return new[]
-            {
-                CreateStatic("XtreamCredentials.html"),
-                CreateStatic("XtreamCredentials.js"),
-                CreateStatic("Xtream.css"),
-                CreateStatic("Xtream.js"),
-                CreateStatic("XtreamLive.html"),
-                CreateStatic("XtreamLive.js"),
-                CreateStatic("XtreamLiveOverrides.html"),
-                CreateStatic("XtreamLiveOverrides.js"),
-                CreateStatic("XtreamSeries.html"),
-                CreateStatic("XtreamSeries.js"),
-                CreateStatic("XtreamVod.html"),
-                CreateStatic("XtreamVod.js"),
-            };
-        }
+    /// <inheritdoc />
+    public override void UpdateConfiguration(BasePluginConfiguration configuration)
+    {
+        base.UpdateConfiguration(configuration);
 
-        /// <inheritdoc />
-        public override void UpdateConfiguration(BasePluginConfiguration configuration)
-        {
-            base.UpdateConfiguration(configuration);
+        // Force a refresh of TV guide on configuration update.
+        // - This will update the TV channels.
+        // - This will remove channels on credentials change.
+        TaskService.CancelIfRunningAndQueue(
+            "Jellyfin.LiveTv",
+            "Jellyfin.LiveTv.Guide.RefreshGuideScheduledTask");
 
-            // Force a refresh of TV guide on configuration update.
-            // - This will update the TV channels.
-            // - This will remove channels on credentials change.
-            TaskService.CancelIfRunningAndQueue(
-                "Jellyfin.LiveTv",
-                "Jellyfin.LiveTv.Guide.RefreshGuideScheduledTask");
-
-            // Force a refresh of Channels on configuration update.
-            // - This will update the channel entries.
-            // - This will remove channel entries on credentials change.
-            TaskService.CancelIfRunningAndQueue(
-                "Jellyfin.LiveTv",
-                "Jellyfin.LiveTv.Channels.RefreshChannelsScheduledTask");
-        }
+        // Force a refresh of Channels on configuration update.
+        // - This will update the channel entries.
+        // - This will remove channel entries on credentials change.
+        TaskService.CancelIfRunningAndQueue(
+            "Jellyfin.LiveTv",
+            "Jellyfin.LiveTv.Channels.RefreshChannelsScheduledTask");
     }
 }
