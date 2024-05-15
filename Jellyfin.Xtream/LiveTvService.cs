@@ -70,7 +70,7 @@ namespace Jellyfin.Xtream
             List<ChannelInfo> items = new List<ChannelInfo>();
             await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
             {
-                ParsedName parsed = plugin.StreamService.ParseName(channel.Name);
+                ParsedName parsed = StreamService.ParseName(channel.Name);
                 items.Add(new ChannelInfo()
                 {
                     Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),
@@ -170,7 +170,7 @@ namespace Jellyfin.Xtream
         {
             string key = $"xtream-epg-{channelId}";
             ICollection<ProgramInfo>? items = null;
-            if (memoryCache.TryGetValue(key, out ICollection<ProgramInfo> o))
+            if (memoryCache.TryGetValue(key, out ICollection<ProgramInfo>? o))
             {
                 items = o;
             }
@@ -202,12 +202,6 @@ namespace Jellyfin.Xtream
             return from epg in items
                    where epg.EndDate >= startDateUtc && epg.StartDate < endDateUtc
                    select epg;
-        }
-
-        /// <inheritdoc />
-        public Task RecordLiveStream(string id, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc />

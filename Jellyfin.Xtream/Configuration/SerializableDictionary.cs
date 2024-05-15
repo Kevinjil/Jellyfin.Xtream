@@ -49,25 +49,6 @@ namespace Jellyfin.Xtream.Configuration
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="SerializableDictionary&lt;TKey, TValue&gt;"/> class.
-        /// </summary>
-        /// <param name="info">A
-        /// <see cref="System.Runtime.Serialization.SerializationInfo"/> object
-        /// containing the information required to serialize the
-        /// <see cref="System.Collections.Generic.Dictionary{TKey, TValue}"/>.
-        /// </param>
-        /// <param name="context">A
-        /// <see cref="System.Runtime.Serialization.StreamingContext"/> structure
-        /// containing the source and destination of the serialized stream
-        /// associated with the
-        /// <see cref="System.Collections.Generic.Dictionary{TKey, TValue}"/>.
-        /// </param>
-        private SerializableDictionary(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
-
         private string ItemTagName => DefaultItemTag;
 
         private string KeyTagName => DefaultKeyTag;

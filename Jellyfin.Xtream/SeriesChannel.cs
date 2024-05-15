@@ -101,31 +101,25 @@ namespace Jellyfin.Xtream
         /// <inheritdoc />
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
-            Plugin plugin = Plugin.Instance;
             if (string.IsNullOrEmpty(query.FolderId))
             {
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
-            if (plugin.StreamService.IsId(query.FolderId, StreamService.CategoryPrefix))
+            Guid guid = Guid.Parse(query.FolderId);
+            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int seriesId, out int seasonId);
+            if (prefix == StreamService.SeriesCategoryPrefix)
             {
-                int categoryId = plugin.StreamService.ParseId(query.FolderId, StreamService.CategoryPrefix);
                 return await GetSeries(categoryId, cancellationToken).ConfigureAwait(false);
             }
 
-            if (plugin.StreamService.IsId(query.FolderId, StreamService.SeriesPrefix))
+            if (prefix == StreamService.SeriesPrefix)
             {
-                int seriesId = plugin.StreamService.ParseId(query.FolderId, StreamService.SeriesPrefix);
                 return await GetSeasons(seriesId, cancellationToken).ConfigureAwait(false);
             }
 
-            if (plugin.StreamService.IsId(query.FolderId, StreamService.SeasonPrefix))
+            if (prefix == StreamService.SeasonPrefix)
             {
-                string folder = query.FolderId.Substring(StreamService.SeasonPrefix.Length);
-                string[] parts = folder.Split('-');
-                int seriesId = int.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture);
-                int seasonId = int.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture);
-
                 return await GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false);
             }
 
@@ -137,14 +131,14 @@ namespace Jellyfin.Xtream
 
         private ChannelItemInfo CreateChannelItemInfo(Series series)
         {
-            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(series.Name);
+            ParsedName parsedName = StreamService.ParseName(series.Name);
             return new ChannelItemInfo()
             {
                 CommunityRating = (float)series.Rating5Based,
                 DateModified = series.LastModified,
                 // FolderType = ChannelFolderType.Series,
                 Genres = GetGenres(series.Genre),
-                Id = $"{StreamService.SeriesPrefix}{series.SeriesId}",
+                Id = StreamService.ToGuid(StreamService.SeriesPrefix, series.CategoryId, series.SeriesId, 0).ToString(),
                 ImageUrl = series.Cover,
                 Name = parsedName.Title,
                 People = GetPeople(series.Cast),
@@ -178,7 +172,7 @@ namespace Jellyfin.Xtream
             Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
             if (season != null)
             {
-                ParsedName parsedName = Plugin.Instance.StreamService.ParseName(season.Name);
+                ParsedName parsedName = StreamService.ParseName(season.Name);
                 name = parsedName.Title;
                 tags.AddRange(parsedName.Tags);
                 created = season.AirDate;
@@ -194,7 +188,7 @@ namespace Jellyfin.Xtream
                 DateCreated = created,
                 // FolderType = ChannelFolderType.Season,
                 Genres = GetGenres(serie.Genre),
-                Id = $"{StreamService.SeasonPrefix}{seriesId}-{seasonId}",
+                Id = StreamService.ToGuid(StreamService.SeasonPrefix, serie.CategoryId, seriesId, seasonId).ToString(),
                 ImageUrl = cover,
                 Name = name,
                 Overview = overview,
@@ -207,7 +201,7 @@ namespace Jellyfin.Xtream
         private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
         {
             Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
-            ParsedName parsedName = Plugin.Instance.StreamService.ParseName(episode.Title);
+            ParsedName parsedName = StreamService.ParseName(episode.Title);
             List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
             {
                 Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
@@ -229,7 +223,7 @@ namespace Jellyfin.Xtream
                 ContentType = ChannelMediaContentType.Episode,
                 DateCreated = DateTimeOffset.FromUnixTimeSeconds(episode.Added).DateTime,
                 Genres = GetGenres(serie.Genre),
-                Id = $"{StreamService.EpisodePrefix}{episode.EpisodeId}",
+                Id = StreamService.ToGuid(StreamService.EpisodePrefix, 0, 0, episode.EpisodeId).ToString(),
                 ImageUrl = cover,
                 IsLiveStream = false,
                 MediaSources = sources,
@@ -246,7 +240,7 @@ namespace Jellyfin.Xtream
         {
             List<ChannelItemInfo> items = new List<ChannelItemInfo>(
                 (await Plugin.Instance.StreamService.GetSeriesCategories(cancellationToken).ConfigureAwait(false))
-                    .Select((Category category) => Plugin.Instance.StreamService.CreateChannelItemInfo(category)));
+                    .Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.SeriesCategoryPrefix, category)));
             return new ChannelItemResult()
             {
                 Items = items,

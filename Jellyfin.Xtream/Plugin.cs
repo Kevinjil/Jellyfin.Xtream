@@ -132,15 +132,15 @@ namespace Jellyfin.Xtream
             // - This will update the TV channels.
             // - This will remove channels on credentials change.
             TaskService.CancelIfRunningAndQueue(
-                "Emby.Server.Implementations",
-                "Emby.Server.Implementations.LiveTv.RefreshGuideScheduledTask");
+                "Jellyfin.LiveTv",
+                "Jellyfin.LiveTv.Guide.RefreshGuideScheduledTask");
 
             // Force a refresh of Channels on configuration update.
             // - This will update the channel entries.
             // - This will remove channel entries on credentials change.
             TaskService.CancelIfRunningAndQueue(
-                "Emby.Server.Implementations",
-                "Emby.Server.Implementations.Channels.RefreshChannelsScheduledTask");
+                "Jellyfin.LiveTv",
+                "Jellyfin.LiveTv.Channels.RefreshChannelsScheduledTask");
         }
     }
 }

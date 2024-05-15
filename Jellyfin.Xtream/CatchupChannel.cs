@@ -106,9 +106,8 @@ namespace Jellyfin.Xtream
                 return await GetChannels(cancellationToken).ConfigureAwait(false);
             }
 
-            int separator = query.FolderId.IndexOf('-', StringComparison.InvariantCulture);
-            int categoryId = int.Parse(query.FolderId.Substring(0, separator), CultureInfo.InvariantCulture);
-            int channelId = int.Parse(query.FolderId.Substring(separator + 1), CultureInfo.InvariantCulture);
+            Guid guid = Guid.Parse(query.FolderId);
+            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int _);
             return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
         }
 
@@ -124,10 +123,10 @@ namespace Jellyfin.Xtream
                     continue;
                 }
 
-                ParsedName parsedName = plugin.StreamService.ParseName(channel.Name);
+                ParsedName parsedName = StreamService.ParseName(channel.Name);
                 items.Add(new ChannelItemInfo()
                 {
-                    Id = $"{channel.CategoryId}-{channel.StreamId}",
+                    Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, 0).ToString(),
                     ImageUrl = channel.StreamIcon,
                     Name = parsedName.Title,
                     Tags = new List<string>(parsedName.Tags),
@@ -173,7 +172,7 @@ namespace Jellyfin.Xtream
                             {
                                 ContentType = ChannelMediaContentType.TvExtra,
                                 FolderType = ChannelFolderType.Container,
-                                Id = $"fallback-{channelId}",
+                                Id = StreamService.ToGuid(StreamService.FallbackPrefix, channelId, 0, 0).ToString(),
                                 IsLiveStream = false,
                                 MediaSources = new List<MediaSourceInfo>()
                                 {
@@ -194,7 +193,7 @@ namespace Jellyfin.Xtream
                 foreach (EpgInfo epg in epgs.Listings.Where(epg => epg.Start < startBefore && epg.Start >= startAfter))
                 {
                     string id = epg.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    ParsedName parsedName = plugin.StreamService.ParseName(epg.Title);
+                    ParsedName parsedName = StreamService.ParseName(epg.Title);
                     int durationMinutes = (int)Math.Ceiling((epg.End - epg.Start).TotalMinutes);
                     string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
                     List<MediaSourceInfo> sources = new List<MediaSourceInfo>()

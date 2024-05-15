@@ -158,7 +158,7 @@ namespace Jellyfin.Xtream.Service
                 throw new ArgumentNullException("copyTask");
             }
 
-            tokenSource.Cancel();
+            await tokenSource.CancelAsync().ConfigureAwait(false);
             await copyTask.ConfigureAwait(false);
         }
 
