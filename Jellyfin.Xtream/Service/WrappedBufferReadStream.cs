@@ -26,7 +26,7 @@ public class WrappedBufferReadStream : Stream
 {
     private readonly WrappedBufferStream sourceBuffer;
 
-    private long initialReadHead;
+    private readonly long initialReadHead;
     private long readHead;
 
     /// <summary>
