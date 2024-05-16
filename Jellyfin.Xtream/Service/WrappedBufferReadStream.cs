@@ -15,6 +15,7 @@
 
 using System;
 using System.IO;
+using System.Threading;
 
 namespace Jellyfin.Xtream.Service;
 
@@ -73,6 +74,14 @@ public class WrappedBufferReadStream : Stream
     public override int Read(byte[] buffer, int offset, int count)
     {
         long gap = sourceBuffer.TotalBytesWritten - readHead;
+
+        // We cannot return with 0 bytes read, as that indicates the end of the stream has been reached
+        while (gap == 0)
+        {
+            Thread.Sleep(1);
+            gap = sourceBuffer.TotalBytesWritten - readHead;
+        }
+
         if (gap > sourceBuffer.BufferSize)
         {
             // TODO: design good handling method.
