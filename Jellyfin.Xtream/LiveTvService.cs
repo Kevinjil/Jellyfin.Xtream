@@ -73,7 +73,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
             ParsedName parsed = StreamService.ParseName(channel.Name);
             items.Add(new ChannelInfo()
             {
-                Id = channel.StreamId.ToString(CultureInfo.InvariantCulture),
+                Id = StreamService.ToGuid(StreamService.LiveTvPrefix, channel.StreamId, 0, 0).ToString(),
                 Number = channel.Num.ToString(CultureInfo.InvariantCulture),
                 ImageUrl = channel.StreamIcon,
                 Name = parsed.Title,
@@ -168,6 +168,13 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     /// <inheritdoc />
     public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId, DateTime startDateUtc, DateTime endDateUtc, CancellationToken cancellationToken)
     {
+        Guid guid = Guid.Parse(channelId);
+        StreamService.FromGuid(guid, out int prefix, out int streamId, out int _, out int _);
+        if (prefix != StreamService.LiveTvPrefix)
+        {
+            throw new ArgumentException("Unsupported channel");
+        }
+
         string key = $"xtream-epg-{channelId}";
         ICollection<ProgramInfo>? items = null;
         if (memoryCache.TryGetValue(key, out ICollection<ProgramInfo>? o))
@@ -180,13 +187,12 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
             Plugin plugin = Plugin.Instance;
             using (XtreamClient client = new XtreamClient())
             {
-                int streamId = int.Parse(channelId, CultureInfo.InvariantCulture);
                 EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)
                 {
                     items.Add(new ProgramInfo()
                     {
-                        Id = $"epg-{epg.Id}",
+                        Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, epg.Id, 0).ToString(),
                         ChannelId = channelId,
                         StartDate = epg.Start,
                         EndDate = epg.End,
@@ -213,15 +219,21 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     /// <inheritdoc />
     public Task<ILiveStream> GetChannelStreamWithDirectStreamProvider(string channelId, string streamId, List<ILiveStream> currentLiveStreams, CancellationToken cancellationToken)
     {
-        ILiveStream? stream = currentLiveStreams.Find(stream => stream.TunerHostId == Restream.TunerHost && stream.MediaSource.Id == channelId);
+        Guid guid = Guid.Parse(channelId);
+        StreamService.FromGuid(guid, out int prefix, out int channel, out int _, out int _);
+        if (prefix != StreamService.LiveTvPrefix)
+        {
+            throw new ArgumentException("Unsupported channel");
+        }
+
+        Plugin plugin = Plugin.Instance;
+        MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channel, restream: true);
+        ILiveStream? stream = currentLiveStreams.Find(stream => stream.TunerHostId == Restream.TunerHost && stream.MediaSource.Id == mediaSourceInfo.Id);
         if (stream != null)
         {
             return Task.FromResult(stream);
         }
 
-        Plugin plugin = Plugin.Instance;
-        int channel = int.Parse(channelId, CultureInfo.InvariantCulture);
-        MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channel, restream: true);
         stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
         return Task.FromResult(stream);
     }

@@ -81,6 +81,16 @@ public class StreamService
     /// </summary>
     public const int MediaSourcePrefix = 0x5d774c3d;
 
+    /// <summary>
+    /// The id prefix for Live TV items.
+    /// </summary>
+    public const int LiveTvPrefix = 0x5d774c3e;
+
+    /// <summary>
+    /// The id prefix for TV EPG items.
+    /// </summary>
+    public const int EpgPrefix = 0x5d774c3f;
+
     private static readonly Regex TagRegex = new Regex(@"\[([^\]]+)\]|\|([^\|]+)\|");
 
     private readonly ILogger logger;
