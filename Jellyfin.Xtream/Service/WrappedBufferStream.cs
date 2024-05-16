@@ -25,7 +25,6 @@ public class WrappedBufferStream : Stream
 {
     private readonly byte[] sourceBuffer;
 
-    private long position;
     private long totalBytesWritten;
 
     /// <summary>
@@ -56,7 +55,10 @@ public class WrappedBufferStream : Stream
     public long TotalBytesWritten { get => totalBytesWritten; }
 
     /// <inheritdoc />
-    public override long Position { get => position; set => position = value; }
+    public override long Position
+    {
+        get => totalBytesWritten % BufferSize; set { }
+    }
 
     /// <inheritdoc />
     public override bool CanRead => false;
@@ -81,25 +83,18 @@ public class WrappedBufferStream : Stream
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count)
     {
-        // The bytes that still need to be copied.
-        long remaining = count;
-        long remainingOffset = offset;
+        long written = 0;
 
         // Copy inside a loop to simplify wrapping logic.
-        while (remaining > 0)
+        while (written < count)
         {
             // The amount of bytes that we can directly write from the current position without wrapping.
-            long writable = Math.Min(remaining, BufferSize - Position);
+            long writable = Math.Min(count - written, BufferSize - Position);
 
             // Copy the data.
-            Array.Copy(buffer, remainingOffset, sourceBuffer, Position, writable);
-            remaining -= writable;
-            remainingOffset += writable;
-            Position += writable;
+            Array.Copy(buffer, offset + written, sourceBuffer, Position, writable);
+            written += writable;
             totalBytesWritten += writable;
-
-            // We might have to wrap the position.
-            Position %= BufferSize;
         }
     }
 
