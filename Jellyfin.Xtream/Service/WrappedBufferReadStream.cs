@@ -36,8 +36,8 @@ public class WrappedBufferReadStream : Stream
     public WrappedBufferReadStream(WrappedBufferStream sourceBuffer)
     {
         this.sourceBuffer = sourceBuffer;
-        this.initialReadHead = readHead;
         this.readHead = sourceBuffer.TotalBytesWritten;
+        this.initialReadHead = readHead;
     }
 
     /// <summary>
