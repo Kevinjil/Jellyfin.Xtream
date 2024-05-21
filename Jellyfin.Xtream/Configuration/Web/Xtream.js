@@ -1,7 +1,8 @@
 const url = (name) =>
-  ApiClient.getUrl("web/ConfigurationPage", {
+  ApiClient.getUrl("configurationpage", {
     name,
   });
+const tab = (name) => '/configurationpage?name=' + name + '.html';
 
 $(document).ready(() => {
   const style = document.createElement('link');
@@ -186,23 +187,23 @@ const filter = (obj, predicate) => Object.keys(obj)
 
 const tabs = [
   {
-    href: url('XtreamCredentials.html'),
+    href: tab('XtreamCredentials'),
     name: 'Credentials'
   },
   {
-    href: url('XtreamLive.html'),
+    href: tab('XtreamLive'),
     name: 'Live TV'
   },
   {
-    href: url('XtreamLiveOverrides.html'),
+    href: tab('XtreamLiveOverrides'),
     name: 'TV overrides'
   },
   {
-    href: url('XtreamVod.html'),
+    href: tab('XtreamVod'),
     name: 'Video On-Demand',
   },
   {
-    href: url('XtreamSeries.html'),
+    href: tab('XtreamSeries'),
     name: 'Series',
   },
 ];
