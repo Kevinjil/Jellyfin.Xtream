@@ -31,13 +31,41 @@ To install or update the plugin, follow these steps:
 ## Configuration
 
 The plugin requires connection information for an [Xtream-compatible API](https://xtream-ui.org/api-xtreamui-xtreamcode/).
-The following credentials should be set correctly in the plugin configuration on the admin dashboard.
+The following credentials should be set correctly in the `Credentials` plugin configuration tab on the admin dashboard.
 
 | Property | Description                                                                               |
 | -------- | ----------------------------------------------------------------------------------------- |
 | Base URL | The URL of the API endpoint excluding the trailing slash, including protocol (http/https) |
 | Username | The username used to authenticate to the API                                              |
 | Password | The password used to authenticate to the API                                              |
+
+### Live TV
+
+1. Open the `Live TV` configuration tab.
+1. Select the categories, or individual channels within categories, you want to be available.
+1. Click `Save` on the bottom of the page.
+1. Open the `TV Overrides` configuration tab.
+1. Modify the channel numbers, names, and icons if desired.
+1. Click `Save` on the bottom of the page.
+
+### Video On-Demand
+
+1. Open the `Video On-Demand` configuration tab.
+1. Enable `Show this channel to users`.
+1. Select the categories, or individual videos within categories, you want to be available.
+1. Click `Save` on the bottom of the page.
+
+### Series
+
+1. Open the `Series` configuration tab.
+1. Enable `Show this channel to users`.
+1. Select the categories, or individual series within categories, you want to be available.
+1. Click `Save` on the bottom of the page.
+
+### TV Catchup
+1. Open the `Live TV` configuration tab.
+1. Enable `Show the catch-up channel to users`.
+1. Click `Save` on the bottom of the page.
 
 ## Known problems
 
@@ -46,3 +74,11 @@ The following credentials should be set correctly in the plugin configuration on
 Jellyfin publishes the remote paths in the API and in the default user interface.
 As the Xtream format for remote paths includes the username and password, anyone that can access the library will have access to your credentials.
 Use this plugin with caution on shared servers.
+
+## Troubleshooting
+
+Make sure you have correctly configured your [Jellyfin networking](https://jellyfin.org/docs/general/networking/):
+
+1. Open your admin dashboard and navigate to `Networking`.
+2. Correctly configure your `Published server URIs`.
+   For example: `all=https://jellyfin.example.com`
