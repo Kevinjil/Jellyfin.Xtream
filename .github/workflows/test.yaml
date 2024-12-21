@@ -16,3 +16,5 @@ on:
 jobs:
   call:
     uses: jellyfin/jellyfin-meta-plugins/.github/workflows/test.yaml@master
+    with:    
+      dotnet-version: 8.0.x
