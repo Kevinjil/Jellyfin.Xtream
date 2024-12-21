@@ -54,7 +54,7 @@ public class SeriesChannel : IChannel
     public string? Description => "Series streamed from the Xtream-compatible server.";
 
     /// <inheritdoc />
-    public string DataVersion => Plugin.Instance.Creds.ToString();
+    public string DataVersion => Plugin.Instance.DataVersion;
 
     /// <inheritdoc />
     public string HomePageUrl => string.Empty;

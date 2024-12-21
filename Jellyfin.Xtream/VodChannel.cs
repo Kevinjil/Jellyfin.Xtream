@@ -53,7 +53,7 @@ public class VodChannel : IChannel
     public string? Description => "Video On-Demand streamed from the Xtream-compatible server.";
 
     /// <inheritdoc />
-    public string DataVersion => Plugin.Instance.Creds.ToString();
+    public string DataVersion => Plugin.Instance.DataVersion;
 
     /// <inheritdoc />
     public string HomePageUrl => string.Empty;

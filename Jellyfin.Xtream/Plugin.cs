@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Configuration;
 using Jellyfin.Xtream.Service;
@@ -64,8 +65,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// </summary>
     public ConnectionInfo Creds
     {
-        get => new ConnectionInfo(this.Configuration.BaseUrl, this.Configuration.Username, this.Configuration.Password);
+        get => new ConnectionInfo(Configuration.BaseUrl, Configuration.Username, Configuration.Password);
     }
+
+    /// <summary>
+    /// Gets the data version used to trigger a cache invalidation on plugin update or config change.
+    /// </summary>
+    public string DataVersion => Assembly.GetCallingAssembly().GetName().Version?.ToString() + Configuration.GetHashCode();
 
     /// <summary>
     /// Gets the current plugin instance.
