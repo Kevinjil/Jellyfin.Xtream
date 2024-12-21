@@ -26,6 +26,7 @@ using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 
@@ -428,6 +429,21 @@ public class StreamService
             Id = ToGuid(MediaSourcePrefix, (int)type, id, 0).ToString(),
             IsInfiniteStream = isLive,
             IsRemote = true,
+            // Define media sources with unknown index and interlaced to improve compatibility.
+            MediaStreams = new MediaStream[]
+            {
+                new MediaStream
+                {
+                    Type = MediaStreamType.Video,
+                    Index = -1,
+                    IsInterlaced = true
+                },
+                new MediaStream
+                {
+                    Type = MediaStreamType.Audio,
+                    Index = -1
+                }
+            },
             Name = "default",
             Path = uri,
             Protocol = MediaProtocol.Http,
