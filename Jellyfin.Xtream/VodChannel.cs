@@ -33,7 +33,7 @@ namespace Jellyfin.Xtream;
 /// <summary>
 /// The Xtream Codes API channel.
 /// </summary>
-public class VodChannel : IChannel
+public class VodChannel : IChannel, IDisableMediaSourceDisplay
 {
     private readonly ILogger<VodChannel> logger;
 

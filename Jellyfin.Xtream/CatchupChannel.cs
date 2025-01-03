@@ -34,7 +34,7 @@ namespace Jellyfin.Xtream;
 /// <summary>
 /// The Xtream Codes API channel.
 /// </summary>
-public class CatchupChannel : IChannel
+public class CatchupChannel : IChannel, IDisableMediaSourceDisplay
 {
     private readonly ILogger<CatchupChannel> logger;
 
