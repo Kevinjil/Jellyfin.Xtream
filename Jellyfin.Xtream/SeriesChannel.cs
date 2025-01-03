@@ -198,20 +198,19 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
     {
         Client.Models.SeriesInfo serie = series.Info;
         ParsedName parsedName = StreamService.ParseName(episode.Title);
-        List<MediaSourceInfo> sources = [
-            Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
+        List<MediaSourceInfo> sources =
+        [
+            Plugin.Instance.StreamService.GetMediaSourceInfo(
+                StreamType.Series,
+                episode.EpisodeId,
+                episode.ContainerExtension,
+                videoInfo: episode.Info?.Video,
+                audioInfo: episode.Info?.Audio)
         ];
 
         string? cover = episode.Info?.MovieImage;
-        if (string.IsNullOrEmpty(cover) && season != null)
-        {
-            cover = season.Cover;
-        }
-
-        if (string.IsNullOrEmpty(cover))
-        {
-            cover = serie.Cover;
-        }
+        cover ??= season?.Cover;
+        cover ??= serie.Cover;
 
         return new()
         {

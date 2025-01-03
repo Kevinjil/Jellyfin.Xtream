@@ -24,6 +24,7 @@ using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
@@ -367,6 +368,8 @@ public partial class StreamService
     /// <param name="restream">Boolean indicating whether or not restreaming is used.</param>
     /// <param name="start">The datetime representing the start time of catcup TV.</param>
     /// <param name="durationMinutes">The duration in minutes of the catcup TV stream.</param>
+    /// <param name="videoInfo">The Xtream video info if known.</param>
+    /// <param name="audioInfo">The Xtream audio info if known.</param>
     /// <returns>The media source info as <see cref="MediaSourceInfo"/> class.</returns>
     public MediaSourceInfo GetMediaSourceInfo(
         StreamType type,
@@ -374,7 +377,9 @@ public partial class StreamService
         string? extension = null,
         bool restream = false,
         DateTime? start = null,
-        int durationMinutes = 0)
+        int durationMinutes = 0,
+        VideoInfo? videoInfo = null,
+        AudioInfo? audioInfo = null)
     {
         string prefix = string.Empty;
         switch (type)
@@ -403,22 +408,41 @@ public partial class StreamService
         bool isLive = type == StreamType.Live;
         return new MediaSourceInfo()
         {
+            Container = extension,
             EncoderProtocol = MediaProtocol.Http,
             Id = ToGuid(MediaSourcePrefix, (int)type, id, 0).ToString(),
             IsInfiniteStream = isLive,
             IsRemote = true,
-            // Define media sources with unknown index and interlaced to improve compatibility.
-            MediaStreams = [
+            MediaStreams =
+            [
                 new()
                 {
+                    AspectRatio = videoInfo?.AspectRatio,
+                    BitDepth = videoInfo?.BitsPerRawSample,
+                    Codec = videoInfo?.CodecName,
+                    ColorPrimaries = videoInfo?.ColorPrimaries,
+                    ColorRange = videoInfo?.ColorRange,
+                    ColorSpace = videoInfo?.ColorSpace,
+                    ColorTransfer = videoInfo?.ColorTransfer,
+                    Height = videoInfo?.Height,
+                    Index = videoInfo?.Index ?? -1,
+                    IsAVC = videoInfo?.IsAVC,
+                    IsInterlaced = true,
+                    Level = videoInfo?.Level,
+                    PixelFormat = videoInfo?.PixelFormat,
+                    Profile = videoInfo?.Profile,
                     Type = MediaStreamType.Video,
-                    Index = -1,
-                    IsInterlaced = true
                 },
                 new()
                 {
+                    BitRate = audioInfo?.Bitrate,
+                    ChannelLayout = audioInfo?.ChannelLayout,
+                    Channels = audioInfo?.Channels,
+                    Codec = audioInfo?.CodecName,
+                    Index = audioInfo?.Index ?? -1,
+                    Profile = audioInfo?.Profile,
+                    SampleRate = audioInfo?.SampleRate,
                     Type = MediaStreamType.Audio,
-                    Index = -1
                 }
             ],
             Name = "default",
