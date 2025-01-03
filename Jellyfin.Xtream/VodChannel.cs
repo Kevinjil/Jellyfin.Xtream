@@ -19,6 +19,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
@@ -126,13 +127,24 @@ public class VodChannel : IChannel, IDisableMediaSourceDisplay
         }
     }
 
-    private ChannelItemInfo CreateChannelItemInfo(StreamInfo stream)
+    private async Task<ChannelItemInfo> CreateChannelItemInfo(StreamInfo stream)
     {
+        using (XtreamClient client = new XtreamClient())
+        {
         long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
         ParsedName parsedName = StreamService.ParseName(stream.Name);
+
+        logger.LogDebug("Getting VOD info for id {Stream}", stream.StreamId);
+        VodStreamInfo info = await client.GetVodInfoAsync(Plugin.Instance.Creds, stream.StreamId, CancellationToken.None).ConfigureAwait(false);
+
         List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
         {
-            Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, stream.StreamId, stream.ContainerExtension)
+            Plugin.Instance.StreamService.GetMediaSourceInfo(
+                StreamType.Vod,
+                stream.StreamId,
+                stream.ContainerExtension,
+                videoInfo: info?.Info?.Video,
+                audioInfo: info?.Info?.Audio)
         };
 
         return new ChannelItemInfo()
@@ -165,9 +177,8 @@ public class VodChannel : IChannel, IDisableMediaSourceDisplay
 
     private async Task<ChannelItemResult> GetStreams(int categoryId, CancellationToken cancellationToken)
     {
-        List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false))
-                .Select((StreamInfo stream) => CreateChannelItemInfo(stream)));
+        IEnumerable<StreamInfo> streams = await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = [.. await Task.WhenAll(streams.Select(CreateChannelItemInfo)).ConfigureAwait(false)];
         ChannelItemResult result = new ChannelItemResult()
         {
             Items = items,
