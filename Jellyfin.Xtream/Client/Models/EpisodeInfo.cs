@@ -31,7 +31,7 @@ public class EpisodeInfo
     public DateTime ReleaseDate { get; set; }
 
     [JsonProperty("rating")]
-    public int Rating { get; set; }
+    public decimal Rating { get; set; }
 
     [JsonProperty("duration_secs")]
     public int DurationSecs { get; set; }
