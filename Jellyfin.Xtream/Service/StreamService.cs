@@ -139,9 +139,21 @@ public class StreamService
                 return string.Empty;
             });
 
+        // Tag prefixes separated by the a character in the unicode Block Elements range
+        int stripLength = 0;
+        for (int i = 0; i < title.Length; i++)
+        {
+            char c = title[i];
+            if (c >= '\u2580' && c <= '\u259F')
+            {
+                tags.Add(title[stripLength..i].Trim());
+                stripLength = i + 1;
+            }
+        }
+
         return new ParsedName
         {
-            Title = title.Trim(),
+            Title = title[stripLength..].Trim(),
             Tags = tags.ToArray(),
         };
     }
