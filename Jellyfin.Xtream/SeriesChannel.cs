@@ -170,7 +170,7 @@ public class SeriesChannel : IChannel, IDisableMediaSourceDisplay
 
     private ChannelItemInfo CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
     {
-        Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
+        Client.Models.SeriesInfo serie = series.Info;
         string name = $"Season {seasonId}";
         string cover = series.Info.Cover;
         string? overview = null;
@@ -208,23 +208,21 @@ public class SeriesChannel : IChannel, IDisableMediaSourceDisplay
 
     private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
     {
-        Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
+        Client.Models.SeriesInfo serie = series.Info;
         ParsedName parsedName = StreamService.ParseName(episode.Title);
         List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
         {
-            Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
+            Plugin.Instance.StreamService.GetMediaSourceInfo(
+                StreamType.Series,
+                episode.EpisodeId,
+                episode.ContainerExtension,
+                videoInfo: episode.Info?.Video,
+                audioInfo: episode.Info?.Audio)
         };
 
         string? cover = episode.Info?.MovieImage;
-        if (string.IsNullOrEmpty(cover) && season != null)
-        {
-            cover = season.Cover;
-        }
-
-        if (string.IsNullOrEmpty(cover))
-        {
-            cover = serie.Cover;
-        }
+        cover ??= season?.Cover;
+        cover ??= serie.Cover;
 
         return new ChannelItemInfo()
         {

@@ -13,37 +13,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
 using Newtonsoft.Json;
 
 #pragma warning disable CS1591
 namespace Jellyfin.Xtream.Client.Models;
 
-public class EpisodeInfo
+public class AudioInfo
 {
-    [JsonProperty("movie_image")]
-    public string? MovieImage { get; set; }
+    [JsonProperty("index")]
+    public int Index { get; set; }
 
-    [JsonProperty("plot")]
-    public string? Plot { get; set; }
+    [JsonProperty("codec_name")]
+    public string CodecName { get; set; } = string.Empty;
 
-    [JsonProperty("releasedate")]
-    public DateTime? ReleaseDate { get; set; }
+    [JsonProperty("profile")]
+    public string Profile { get; set; } = string.Empty;
 
-    [JsonProperty("rating")]
-    public decimal? Rating { get; set; }
+    [JsonProperty("sample_fmt")]
+    public string SampleFormat { get; set; } = string.Empty;
 
-    [JsonProperty("duration_secs")]
-    public int? DurationSecs { get; set; }
+    [JsonProperty("sample_rate")]
+    public int SampleRate { get; set; }
 
-    [JsonProperty("bitrate")]
-    public int? Bitrate { get; set; }
+    [JsonProperty("channels")]
+    public int Channels { get; set; }
 
-    [JsonProperty("video")]
-    [JsonConverter(typeof(OnlyObjectConverter<VideoInfo>))]
-    public VideoInfo? Video { get; set; }
+    [JsonProperty("channel_layout")]
+    public string ChannelLayout { get; set; } = string.Empty;
 
-    [JsonProperty("audio")]
-    [JsonConverter(typeof(OnlyObjectConverter<AudioInfo>))]
-    public AudioInfo? Audio { get; set; }
+    [JsonProperty("bit_rate")]
+    public int Bitrate { get; set; }
 }
