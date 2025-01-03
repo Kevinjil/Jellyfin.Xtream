@@ -35,7 +35,7 @@ namespace Jellyfin.Xtream;
 /// The Xtream Codes API channel.
 /// </summary>
 /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel
+public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisableMediaSourceDisplay
 {
     private readonly ILogger<CatchupChannel> _logger = logger;
 
