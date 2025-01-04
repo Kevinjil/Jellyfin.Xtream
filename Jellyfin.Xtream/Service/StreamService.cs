@@ -73,9 +73,9 @@ public class StreamService
     public const int CatchupPrefix = 0x5d774c3b;
 
     /// <summary>
-    /// The id prefix for fallback EPG items.
+    /// The id prefix for catchup stream items.
     /// </summary>
-    public const int FallbackPrefix = 0x5d774c3c;
+    public const int CatchupStreamPrefix = 0x5d774c3c;
 
     /// <summary>
     /// The id prefix for media source items.

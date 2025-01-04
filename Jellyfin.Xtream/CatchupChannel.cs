@@ -54,7 +54,7 @@ public class CatchupChannel : IChannel
     public string? Description => "Rewatch IPTV streamed from the Xtream-compatible server.";
 
     /// <inheritdoc />
-    public string DataVersion => Plugin.Instance.DataVersion;
+    public string DataVersion => Plugin.Instance.DataVersion + DateTime.Today.ToShortDateString();
 
     /// <inheritdoc />
     public string HomePageUrl => string.Empty;
@@ -109,8 +109,14 @@ public class CatchupChannel : IChannel
             }
 
             Guid guid = Guid.Parse(query.FolderId);
-            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int _);
-            return await GetStreams(categoryId, channelId, cancellationToken).ConfigureAwait(false);
+            StreamService.FromGuid(guid, out int prefix, out int categoryId, out int channelId, out int date);
+
+            if (date == 0)
+            {
+                return await GetDays(categoryId, channelId, cancellationToken).ConfigureAwait(false);
+            }
+
+            return await GetStreams(categoryId, channelId, date, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -150,8 +156,48 @@ public class CatchupChannel : IChannel
         return result;
     }
 
-    private async Task<ChannelItemResult> GetStreams(int categoryId, int channelId, CancellationToken cancellationToken)
+    private async Task<ChannelItemResult> GetDays(int categoryId, int channelId, CancellationToken cancellationToken)
     {
+        Plugin plugin = Plugin.Instance;
+        using (XtreamClient client = new XtreamClient())
+        {
+            StreamInfo? channel = (
+                await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false)
+            ).FirstOrDefault(s => s.StreamId == channelId);
+            if (channel == null)
+            {
+                throw new ArgumentException($"Channel with id {channelId} not found in category {categoryId}");
+            }
+
+            ParsedName parsedName = StreamService.ParseName(channel.Name);
+            List<ChannelItemInfo> items = new List<ChannelItemInfo>();
+            for (int i = 0; i <= channel.TvArchiveDuration; i++)
+            {
+                DateTime channelDay = DateTime.Today.AddDays(-i);
+                int day = (int)(channelDay - DateTime.UnixEpoch).TotalDays;
+                items.Add(new ChannelItemInfo()
+                {
+                    Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, day).ToString(),
+                    ImageUrl = channel.StreamIcon,
+                    Name = channelDay.ToLocalTime().ToString("ddd dd'-'MM'-'yyyy", CultureInfo.InvariantCulture),
+                    Tags = new List<string>(parsedName.Tags),
+                    Type = ChannelItemType.Folder,
+                });
+            }
+
+            ChannelItemResult result = new ChannelItemResult()
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+            return result;
+        }
+    }
+
+    private async Task<ChannelItemResult> GetStreams(int categoryId, int channelId, int day, CancellationToken cancellationToken)
+    {
+        DateTime start = DateTime.UnixEpoch.AddDays(day);
+        DateTime end = start.AddDays(1);
         Plugin plugin = Plugin.Instance;
         using (XtreamClient client = new XtreamClient())
         {
@@ -169,9 +215,7 @@ public class CatchupChannel : IChannel
             // Create fallback single-stream catch-up if no EPG is available.
             if (epgs.Listings.Count == 0)
             {
-                DateTime now = DateTime.UtcNow;
-                DateTime start = now.AddDays(-channel.TvArchiveDuration);
-                int duration = channel.TvArchiveDuration * 24 * 60;
+                int duration = 24 * 60;
                 return new ChannelItemResult()
                 {
                     Items = new List<ChannelItemInfo>()
@@ -179,8 +223,7 @@ public class CatchupChannel : IChannel
                         new ChannelItemInfo()
                         {
                             ContentType = ChannelMediaContentType.TvExtra,
-                            FolderType = ChannelFolderType.Container,
-                            Id = StreamService.ToGuid(StreamService.FallbackPrefix, channelId, 0, 0).ToString(),
+                            Id = StreamService.ToGuid(StreamService.CatchupStreamPrefix, channelId, 0, day).ToString(),
                             IsLiveStream = false,
                             MediaSources = new List<MediaSourceInfo>()
                             {
@@ -191,19 +234,15 @@ public class CatchupChannel : IChannel
                             Type = ChannelItemType.Media,
                         }
                     },
-                    TotalRecordCount = items.Count
+                    TotalRecordCount = 1
                 };
             }
 
-            // Include all EPGs that start during the maximum cache interval of Jellyfin for channels.
-            DateTime startBefore = DateTime.UtcNow.AddHours(3);
-            DateTime startAfter = DateTime.UtcNow.AddDays(-channel.TvArchiveDuration);
-            foreach (EpgInfo epg in epgs.Listings.Where(epg => epg.Start < startBefore && epg.Start >= startAfter))
+            foreach (EpgInfo epg in epgs.Listings.Where(epg => epg.Start <= end && epg.End >= start))
             {
-                string id = epg.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 ParsedName parsedName = StreamService.ParseName(epg.Title);
                 int durationMinutes = (int)Math.Ceiling((epg.End - epg.Start).TotalMinutes);
-                string dateTitle = epg.Start.ToLocalTime().ToString("ddd HH:mm", CultureInfo.InvariantCulture);
+                string dateTitle = epg.Start.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
                 List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
                 {
                     plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelId, start: epg.StartLocalTime, durationMinutes: durationMinutes)
@@ -213,8 +252,7 @@ public class CatchupChannel : IChannel
                 {
                     ContentType = ChannelMediaContentType.TvExtra,
                     DateCreated = epg.Start,
-                    FolderType = ChannelFolderType.Container,
-                    Id = id,
+                    Id = StreamService.ToGuid(StreamService.CatchupStreamPrefix, channel.StreamId, epg.Id, day).ToString(),
                     IsLiveStream = false,
                     MediaSources = sources,
                     MediaType = ChannelMediaType.Video,
