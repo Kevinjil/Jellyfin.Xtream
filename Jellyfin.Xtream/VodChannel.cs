@@ -133,11 +133,10 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
                 audioInfo: info?.Info?.Audio)
         ];
 
-        return new()
+        ChannelItemInfo result = new ChannelItemInfo()
         {
             ContentType = ChannelMediaContentType.Movie,
             DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
-            FolderType = ChannelFolderType.Container,
             Id = $"{StreamService.StreamPrefix}{stream.StreamId}",
             ImageUrl = stream.StreamIcon,
             IsLiveStream = false,
@@ -147,6 +146,14 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
             Tags = new List<string>(parsedName.Tags),
             Type = ChannelItemType.Media,
         };
+
+        if (info?.Info?.TmdbId is int tmdbId)
+        {
+            logger.LogInformation("TMDB id {Id} for {Stream}", tmdbId, stream.StreamId);
+            result.SetProviderId(MetadataProvider.Tmdb, tmdbId.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return result;
     }
 
     private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
