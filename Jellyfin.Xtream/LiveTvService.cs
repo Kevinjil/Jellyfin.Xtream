@@ -68,7 +68,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     {
         Plugin plugin = Plugin.Instance;
         List<ChannelInfo> items = new List<ChannelInfo>();
-        await foreach (StreamInfo channel in plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken))
+        foreach (StreamInfo channel in await plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken).ConfigureAwait(false))
         {
             ParsedName parsed = StreamService.ParseName(channel.Name);
             items.Add(new ChannelInfo()

@@ -169,24 +169,18 @@ public class StreamService
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-    public async IAsyncEnumerable<StreamInfo> GetLiveStreams([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task<IEnumerable<StreamInfo>> GetLiveStreams(CancellationToken cancellationToken)
     {
         PluginConfiguration config = plugin.Configuration;
-        using (XtreamClient client = new XtreamClient())
-        {
-            foreach (var entry in config.LiveTv)
-            {
-                int categoryId = entry.Key;
-                cancellationToken.ThrowIfCancellationRequested();
+        using XtreamClient client = new XtreamClient();
 
-                IEnumerable<StreamInfo> channels = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-                foreach (StreamInfo channel in channels.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId)))
-                {
-                    // If the set is empty, include all channels for the category.
-                    yield return channel;
-                }
-            }
-        }
+        IEnumerable<Task<IEnumerable<StreamInfo>>> tasks = config.LiveTv.Select(async (entry) =>
+        {
+            int categoryId = entry.Key;
+            var streams = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+            return streams.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId));
+        });
+        return (await Task.WhenAll(tasks).ConfigureAwait(false)).SelectMany(i => i);
     }
 
     /// <summary>
@@ -194,10 +188,11 @@ public class StreamService
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
-    public async IAsyncEnumerable<StreamInfo> GetLiveStreamsWithOverrides([EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task<IEnumerable<StreamInfo>> GetLiveStreamsWithOverrides(CancellationToken cancellationToken)
     {
         PluginConfiguration config = Plugin.Instance.Configuration;
-        await foreach (StreamInfo stream in GetLiveStreams(cancellationToken))
+        IEnumerable<StreamInfo> streams = await GetLiveStreams(cancellationToken).ConfigureAwait(false);
+        return streams.Select((StreamInfo stream) =>
         {
             if (config.LiveTvOverrides.TryGetValue(stream.StreamId, out ChannelOverrides? overrides))
             {
@@ -206,8 +201,8 @@ public class StreamService
                 stream.StreamIcon = overrides.LogoUrl ?? stream.StreamIcon;
             }
 
-            yield return stream;
-        }
+            return stream;
+        });
     }
 
     /// <summary>
