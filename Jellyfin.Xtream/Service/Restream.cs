@@ -39,13 +39,13 @@ public class Restream : ILiveStream, IDisposable
     /// </summary>
     public const string TunerHost = "Xtream-Restream";
 
-    private static readonly HttpStatusCode[] Redirects = new[]
-    {
+    private static readonly HttpStatusCode[] Redirects =
+    [
         HttpStatusCode.Moved,
         HttpStatusCode.MovedPermanently,
         HttpStatusCode.PermanentRedirect,
         HttpStatusCode.Redirect,
-    };
+    ];
 
     private readonly IServerApplicationHost appHost;
     private readonly WrappedBufferStream buffer;
@@ -73,17 +73,18 @@ public class Restream : ILiveStream, IDisposable
     public Restream(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger logger, MediaSourceInfo mediaSource)
     {
         this.appHost = appHost;
-        this.buffer = new WrappedBufferStream(16777216); // 16MiB
         this.httpClientFactory = httpClientFactory;
         this.logger = logger;
-        this.tokenSource = new CancellationTokenSource();
-
         this.mediaSource = mediaSource;
-        this.originalStreamId = mediaSource.Id;
-        this.enableStreamSharing = true;
-        this.uniqueId = Guid.NewGuid().ToString();
 
-        this.uri = mediaSource.Path;
+        buffer = new WrappedBufferStream(16777216); // 16MiB
+        tokenSource = new CancellationTokenSource();
+
+        originalStreamId = mediaSource.Id;
+        enableStreamSharing = true;
+        uniqueId = Guid.NewGuid().ToString();
+
+        uri = mediaSource.Path;
         string path = "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
         MediaSource.Path = appHost.GetSmartApiUrl(IPAddress.Any) + path;
         MediaSource.EncoderPath = appHost.GetApiUrlForLocalAccess() + path;
@@ -118,19 +119,19 @@ public class Restream : ILiveStream, IDisposable
         }
 
         string channelId = mediaSource.Id;
-        this.logger.LogInformation("Starting restream for channel {ChannelId}.", channelId);
+        logger.LogInformation("Starting restream for channel {ChannelId}.", channelId);
 
         // Response stream is disposed manually.
-        HttpResponseMessage response = await this.httpClientFactory.CreateClient(NamedClient.Default)
+        HttpResponseMessage response = await httpClientFactory.CreateClient(NamedClient.Default)
             .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
             .ConfigureAwait(true);
-        this.logger.LogDebug("Stream for channel {ChannelId} using url {Url}", channelId, uri);
+        logger.LogDebug("Stream for channel {ChannelId} using url {Url}", channelId, uri);
 
         // Handle a manual redirect in the case of a HTTPS to HTTP downgrade.
         if (Redirects.Contains(response.StatusCode))
         {
-            this.logger.LogDebug("Stream for channel {ChannelId} redirected to url {Url}", channelId, response.Headers.Location);
-            response = await this.httpClientFactory.CreateClient(NamedClient.Default)
+            logger.LogDebug("Stream for channel {ChannelId} redirected to url {Url}", channelId, response.Headers.Location);
+            response = await httpClientFactory.CreateClient(NamedClient.Default)
                 .GetAsync(response.Headers.Location, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
                 .ConfigureAwait(true);
         }
@@ -140,7 +141,7 @@ public class Restream : ILiveStream, IDisposable
             .ContinueWith(
                 (Task t) =>
                 {
-                    this.logger.LogInformation("Restream for channel {ChannelId} finished with state {Status}", mediaSource.Id, t.Status);
+                    logger.LogInformation("Restream for channel {ChannelId} finished with state {Status}", mediaSource.Id, t.Status);
                     inputStream.Close();
                     inputStream = null;
                 },
@@ -166,13 +167,13 @@ public class Restream : ILiveStream, IDisposable
     {
         if (inputStream == null)
         {
-            this.logger.LogInformation("Restream for channel {ChannelId} was not opened.", mediaSource.Id);
-            Task open = Open(CancellationToken.None);
+            logger.LogInformation("Restream for channel {ChannelId} was not opened.", mediaSource.Id);
+            _ = Open(CancellationToken.None);
         }
 
         consumerCount++;
-        this.logger.LogInformation("Opening restream {Count} for channel {ChannelId}.", consumerCount, mediaSource.Id);
-        return new WrappedBufferReadStream(this.buffer);
+        logger.LogInformation("Opening restream {Count} for channel {ChannelId}.", consumerCount, mediaSource.Id);
+        return new WrappedBufferReadStream(buffer);
     }
 
     /// <summary>
@@ -183,9 +184,9 @@ public class Restream : ILiveStream, IDisposable
     {
         if (disposing)
         {
-            this.inputStream?.Dispose();
-            this.buffer.Dispose();
-            this.tokenSource.Dispose();
+            inputStream?.Dispose();
+            buffer.Dispose();
+            tokenSource.Dispose();
         }
     }
 
