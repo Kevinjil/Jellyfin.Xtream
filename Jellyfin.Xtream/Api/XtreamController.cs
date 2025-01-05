@@ -203,12 +203,8 @@ public class XtreamController : ControllerBase
     [HttpGet("LiveTv")]
     public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveTvChannels(CancellationToken cancellationToken)
     {
-        List<ChannelResponse> channels = new List<ChannelResponse>();
-        await foreach (StreamInfo stream in Plugin.Instance.StreamService.GetLiveStreams(cancellationToken))
-        {
-            channels.Add(CreateChannelResponse(stream));
-        }
-
+        IEnumerable<StreamInfo> streams = await Plugin.Instance.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false);
+        var channels = streams.Select(CreateChannelResponse).ToList();
         return Ok(channels);
     }
 }
