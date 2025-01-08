@@ -59,7 +59,6 @@ public class Restream : ILiveStream, IDisposable
     private Task? copyTask;
     private Stream? inputStream;
 
-    private int consumerCount;
     private string originalStreamId;
     private MediaSourceInfo mediaSource;
 
@@ -92,7 +91,7 @@ public class Restream : ILiveStream, IDisposable
     }
 
     /// <inheritdoc />
-    public int ConsumerCount { get => consumerCount; set => consumerCount = value; }
+    public int ConsumerCount { get; set; }
 
     /// <inheritdoc />
     public string OriginalStreamId { get => originalStreamId; set => originalStreamId = value; }
@@ -171,9 +170,8 @@ public class Restream : ILiveStream, IDisposable
             _ = Open(CancellationToken.None);
         }
 
-        consumerCount++;
-        logger.LogInformation("Opening restream {Count} for channel {ChannelId}.", consumerCount, mediaSource.Id);
         return new WrappedBufferReadStream(buffer);
+        logger.LogInformation("Opening restream {Count} for channel {ChannelId}.", ConsumerCount, mediaSource.Id);
     }
 
     /// <summary>

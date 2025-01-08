@@ -229,12 +229,13 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
         Plugin plugin = Plugin.Instance;
         MediaSourceInfo mediaSourceInfo = plugin.StreamService.GetMediaSourceInfo(StreamType.Live, channel, restream: true);
         ILiveStream? stream = currentLiveStreams.Find(stream => stream.TunerHostId == Restream.TunerHost && stream.MediaSource.Id == mediaSourceInfo.Id);
-        if (stream != null)
+
+        if (stream == null)
         {
-            return Task.FromResult(stream);
+            stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
         }
 
-        stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
+        stream.ConsumerCount++;
         return Task.FromResult(stream);
     }
 }
