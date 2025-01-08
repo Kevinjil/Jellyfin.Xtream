@@ -217,7 +217,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     }
 
     /// <inheritdoc />
-    public Task<ILiveStream> GetChannelStreamWithDirectStreamProvider(string channelId, string streamId, List<ILiveStream> currentLiveStreams, CancellationToken cancellationToken)
+    public async Task<ILiveStream> GetChannelStreamWithDirectStreamProvider(string channelId, string streamId, List<ILiveStream> currentLiveStreams, CancellationToken cancellationToken)
     {
         Guid guid = Guid.Parse(channelId);
         StreamService.FromGuid(guid, out int prefix, out int channel, out int _, out int _);
@@ -233,9 +233,10 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
         if (stream == null)
         {
             stream = new Restream(appHost, httpClientFactory, logger, mediaSourceInfo);
+            await stream.Open(cancellationToken).ConfigureAwait(false);
         }
 
         stream.ConsumerCount++;
-        return Task.FromResult(stream);
+        return stream;
     }
 }

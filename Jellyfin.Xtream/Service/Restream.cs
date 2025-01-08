@@ -32,7 +32,7 @@ namespace Jellyfin.Xtream.Service;
 /// <summary>
 /// A live stream implementation that can be restreamed.
 /// </summary>
-public class Restream : ILiveStream, IDisposable
+public class Restream : ILiveStream, IDirectStreamProvider, IDisposable
 {
     /// <summary>
     /// The global constant for the restream tuner host.
@@ -113,7 +113,7 @@ public class Restream : ILiveStream, IDisposable
     {
         if (inputStream != null)
         {
-            // Channel is already opened.
+            logger.LogWarning("Restream for channel {ChannelId} is already open.", MediaSource.Id);
             return;
         }
 
@@ -122,7 +122,7 @@ public class Restream : ILiveStream, IDisposable
 
         // Response stream is disposed manually.
         HttpResponseMessage response = await httpClientFactory.CreateClient(NamedClient.Default)
-            .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
+            .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, openCancellationToken)
             .ConfigureAwait(true);
         logger.LogDebug("Stream for channel {ChannelId} using url {Url}", channelId, uri);
 
@@ -131,7 +131,7 @@ public class Restream : ILiveStream, IDisposable
         {
             logger.LogDebug("Stream for channel {ChannelId} redirected to url {Url}", channelId, response.Headers.Location);
             response = await httpClientFactory.CreateClient(NamedClient.Default)
-                .GetAsync(response.Headers.Location, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
+                .GetAsync(response.Headers.Location, HttpCompletionOption.ResponseHeadersRead, openCancellationToken)
                 .ConfigureAwait(true);
         }
 
@@ -166,7 +166,7 @@ public class Restream : ILiveStream, IDisposable
     {
         if (inputStream == null)
         {
-            logger.LogInformation("Restream for channel {ChannelId} was not opened.", mediaSource.Id);
+            logger.LogWarning("Restream for channel {ChannelId} was not opened.", mediaSource.Id);
             _ = Open(CancellationToken.None);
         }
 
