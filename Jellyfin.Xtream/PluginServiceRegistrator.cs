@@ -13,10 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using Jellyfin.Xtream.Providers;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
+using MediaBrowser.Controller.Providers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Xtream;
@@ -31,5 +33,6 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<IChannel, CatchupChannel>();
         serviceCollection.AddSingleton<IChannel, SeriesChannel>();
         serviceCollection.AddSingleton<IChannel, VodChannel>();
+        serviceCollection.AddSingleton<IPreRefreshProvider, XtreamVodProvider>();
     }
 }
