@@ -63,7 +63,7 @@
         <!-- disable warning CA1040: Avoid empty interfaces -->
         <Rule Id="CA1040" Action="Info" />
         <!-- disable warning CA1062: Validate arguments of public methods -->
-        <Rule Id="CA1062" Action="Info" />
+        <Rule Id="CA1062" Action="None" />
         <!-- TODO: enable when false positives are fixed -->
         <!-- disable warning CA1508: Avoid dead conditional code -->
         <Rule Id="CA1508" Action="Info" />

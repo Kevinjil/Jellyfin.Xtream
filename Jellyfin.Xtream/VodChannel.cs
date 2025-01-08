@@ -19,7 +19,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Channels;
@@ -114,23 +113,17 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
         }
     }
 
-    private async Task<ChannelItemInfo> CreateChannelItemInfo(StreamInfo stream)
+    private Task<ChannelItemInfo> CreateChannelItemInfo(StreamInfo stream)
     {
-        using XtreamClient client = new XtreamClient();
         long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
         ParsedName parsedName = StreamService.ParseName(stream.Name);
-
-        logger.LogDebug("Getting VOD info for id {Stream}", stream.StreamId);
-        VodStreamInfo info = await client.GetVodInfoAsync(Plugin.Instance.Creds, stream.StreamId, CancellationToken.None).ConfigureAwait(false);
 
         List<MediaSourceInfo> sources =
         [
             Plugin.Instance.StreamService.GetMediaSourceInfo(
                 StreamType.Vod,
                 stream.StreamId,
-                stream.ContainerExtension,
-                videoInfo: info?.Info?.Video,
-                audioInfo: info?.Info?.Audio)
+                stream.ContainerExtension)
         ];
 
         ChannelItemInfo result = new ChannelItemInfo()
@@ -145,15 +138,10 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
             Name = parsedName.Title,
             Tags = new List<string>(parsedName.Tags),
             Type = ChannelItemType.Media,
+            ProviderIds = { { XtreamVodProvider.ProviderName, stream.StreamId.ToString(CultureInfo.InvariantCulture) } },
         };
 
-        if (info?.Info?.TmdbId is int tmdbId)
-        {
-            logger.LogInformation("TMDB id {Id} for {Stream}", tmdbId, stream.StreamId);
-            result.SetProviderId(MetadataProvider.Tmdb, tmdbId.ToString(CultureInfo.InvariantCulture));
-        }
-
-        return result;
+        return Task.FromResult(result);
     }
 
     private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
