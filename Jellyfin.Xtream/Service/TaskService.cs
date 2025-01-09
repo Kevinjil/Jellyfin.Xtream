@@ -16,32 +16,15 @@
 using System;
 using System.Linq;
 using MediaBrowser.Model.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Service;
 
 /// <summary>
 /// A service for dealing with stream information.
 /// </summary>
-public class TaskService
+/// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
+public class TaskService(ITaskManager taskManager)
 {
-    private readonly ILogger logger;
-    private readonly Plugin plugin;
-    private readonly ITaskManager taskManager;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TaskService"/> class.
-    /// </summary>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    /// <param name="plugin">Instance of the <see cref="Plugin"/> class.</param>
-    /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
-    public TaskService(ILogger logger, Plugin plugin, ITaskManager taskManager)
-    {
-        this.logger = logger;
-        this.plugin = plugin;
-        this.taskManager = taskManager;
-    }
-
     private static Type? FindType(string assembly, string fullName)
     {
         return AppDomain.CurrentDomain.GetAssemblies()
@@ -60,16 +43,12 @@ public class TaskService
     /// <exception cref="ArgumentException">If the task type is not found.</exception>
     public void CancelIfRunningAndQueue(string assembly, string fullName)
     {
-        Type? refreshType = FindType(assembly, fullName);
-        if (refreshType == null)
-        {
-            throw new ArgumentException("Refresh task not found");
-        }
+        Type refreshType = FindType(assembly, fullName) ?? throw new ArgumentException("Refresh task not found");
 
         // As the type is not publicly visible, use reflection.
         typeof(ITaskManager)
-            .GetMethod(nameof(ITaskManager.CancelIfRunningAndQueue), 1, Array.Empty<Type>())?
+            .GetMethod(nameof(ITaskManager.CancelIfRunningAndQueue), 1, [])?
             .MakeGenericMethod(refreshType)?
-            .Invoke(taskManager, Array.Empty<object>());
+            .Invoke(taskManager, []);
     }
 }

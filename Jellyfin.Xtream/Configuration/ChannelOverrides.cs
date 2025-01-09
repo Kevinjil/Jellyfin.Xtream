@@ -21,13 +21,6 @@ namespace Jellyfin.Xtream.Configuration;
 public class ChannelOverrides
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ChannelOverrides"/> class.
-    /// </summary>
-    public ChannelOverrides()
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the TV channel number.
     /// </summary>
     public int? Number { get; set; }

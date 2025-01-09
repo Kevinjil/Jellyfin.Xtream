@@ -24,10 +24,9 @@ namespace Jellyfin.Xtream.Service;
 /// </summary>
 public class WrappedBufferReadStream : Stream
 {
-    private readonly WrappedBufferStream sourceBuffer;
+    private readonly WrappedBufferStream _sourceBuffer;
 
-    private readonly long initialReadHead;
-    private long readHead;
+    private readonly long _initialReadHead;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WrappedBufferReadStream"/> class.
@@ -35,25 +34,25 @@ public class WrappedBufferReadStream : Stream
     /// <param name="sourceBuffer">The source buffer to read from.</param>
     public WrappedBufferReadStream(WrappedBufferStream sourceBuffer)
     {
-        this.sourceBuffer = sourceBuffer;
-        this.readHead = sourceBuffer.TotalBytesWritten;
-        this.initialReadHead = readHead;
+        _sourceBuffer = sourceBuffer;
+        _initialReadHead = sourceBuffer.TotalBytesWritten;
+        ReadHead = _initialReadHead;
     }
 
     /// <summary>
     /// Gets the virtual position in the source buffer.
     /// </summary>
-    public long ReadHead { get => readHead; }
+    public long ReadHead { get; private set; }
 
     /// <summary>
     /// Gets the number of bytes that have been written to this stream.
     /// </summary>
-    public long TotalBytesRead { get => readHead - initialReadHead; }
+    public long TotalBytesRead { get => ReadHead - _initialReadHead; }
 
     /// <inheritdoc />
     public override long Position
     {
-        get => readHead % sourceBuffer.BufferSize; set { }
+        get => ReadHead % _sourceBuffer.BufferSize; set { }
     }
 
     /// <inheritdoc />
@@ -73,16 +72,16 @@ public class WrappedBufferReadStream : Stream
     /// <inheritdoc />
     public override int Read(byte[] buffer, int offset, int count)
     {
-        long gap = sourceBuffer.TotalBytesWritten - readHead;
+        long gap = _sourceBuffer.TotalBytesWritten - ReadHead;
 
         // We cannot return with 0 bytes read, as that indicates the end of the stream has been reached
         while (gap == 0)
         {
             Thread.Sleep(1);
-            gap = sourceBuffer.TotalBytesWritten - readHead;
+            gap = _sourceBuffer.TotalBytesWritten - ReadHead;
         }
 
-        if (gap > sourceBuffer.BufferSize)
+        if (gap > _sourceBuffer.BufferSize)
         {
             // TODO: design good handling method.
             // Options:
@@ -99,12 +98,12 @@ public class WrappedBufferReadStream : Stream
         while (read < canCopy)
         {
             // The amount of bytes that we can directly write from the current position without wrapping.
-            long readable = Math.Min(canCopy - read, sourceBuffer.BufferSize - Position);
+            long readable = Math.Min(canCopy - read, _sourceBuffer.BufferSize - Position);
 
             // Copy the data.
-            Array.Copy(sourceBuffer.Buffer, Position, buffer, offset + read, readable);
+            Array.Copy(_sourceBuffer.Buffer, Position, buffer, offset + read, readable);
             read += readable;
-            readHead += readable;
+            ReadHead += readable;
         }
 
         return (int)read;

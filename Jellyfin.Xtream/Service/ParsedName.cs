@@ -20,26 +20,17 @@ namespace Jellyfin.Xtream.Service;
 /// <summary>
 /// A struct which holds information of parsed stream names.
 /// </summary>
-public struct ParsedName
+/// <param name="title">The parsed title.</param>
+/// <param name="tags">The parsed tags.</param>
+public readonly struct ParsedName(string title, string[] tags)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ParsedName"/> struct.
-    /// </summary>
-    /// <param name="title">The parsed title.</param>
-    /// <param name="tags">The parsed tags.</param>
-    public ParsedName(string title, string[] tags)
-    {
-        Title = title;
-        Tags = tags;
-    }
-
     /// <summary>
     /// Gets the parsed title.
     /// </summary>
-    public string Title { get; init; }
+    public string Title { get; init; } = title;
 
     /// <summary>
     /// Gets the parsed tags.
     /// </summary>
-    public string[] Tags { get; init; }
+    public string[] Tags { get; init; } = tags;
 }

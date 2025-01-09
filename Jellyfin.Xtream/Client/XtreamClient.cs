@@ -27,10 +27,12 @@ namespace Jellyfin.Xtream.Client;
 /// <summary>
 /// The Xtream API client implementation.
 /// </summary>
-public class XtreamClient : IDisposable
+/// <remarks>
+/// Initializes a new instance of the <see cref="XtreamClient"/> class.
+/// </remarks>
+/// <param name="client">The HTTP client used.</param>
+public class XtreamClient(HttpClient client) : IDisposable
 {
-    private readonly HttpClient _client;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="XtreamClient"/> class.
     /// </summary>
@@ -38,19 +40,10 @@ public class XtreamClient : IDisposable
     {
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="XtreamClient"/> class.
-    /// </summary>
-    /// <param name="client">The HTTP client used.</param>
-    public XtreamClient(HttpClient client)
-    {
-        _client = client;
-    }
-
     private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
     {
         Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
-        string jsonContent = await _client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+        string jsonContent = await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
         return JsonConvert.DeserializeObject<T>(jsonContent)!;
     }
 
@@ -114,7 +107,7 @@ public class XtreamClient : IDisposable
     /// <param name="b">Unused.</param>
     protected virtual void Dispose(bool b)
     {
-        _client?.Dispose();
+        client?.Dispose();
     }
 
     /// <inheritdoc />

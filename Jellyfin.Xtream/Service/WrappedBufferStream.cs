@@ -21,43 +21,30 @@ namespace Jellyfin.Xtream.Service;
 /// <summary>
 /// Stream which writes to a self-overwriting internal buffer.
 /// </summary>
-public class WrappedBufferStream : Stream
+/// <param name="bufferSize">Size in bytes of the internal buffer.</param>
+public class WrappedBufferStream(int bufferSize) : Stream
 {
-    private readonly byte[] sourceBuffer;
-
-    private long totalBytesWritten;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="WrappedBufferStream"/> class.
-    /// </summary>
-    /// <param name="bufferSize">Size in bytes of the internal buffer.</param>
-    public WrappedBufferStream(int bufferSize)
-    {
-        this.sourceBuffer = new byte[bufferSize];
-        this.totalBytesWritten = 0;
-    }
-
     /// <summary>
     /// Gets the maximal size in bytes of read/write chunks.
     /// </summary>
-    public int BufferSize { get => sourceBuffer.Length; }
+    public int BufferSize { get => Buffer.Length; }
 
 #pragma warning disable CA1819
     /// <summary>
     /// Gets the internal buffer.
     /// </summary>
-    public byte[] Buffer { get => sourceBuffer; }
+    public byte[] Buffer { get; } = new byte[bufferSize];
 #pragma warning restore CA1819
 
     /// <summary>
     /// Gets the number of bytes that have been written to this stream.
     /// </summary>
-    public long TotalBytesWritten { get => totalBytesWritten; }
+    public long TotalBytesWritten { get; private set; }
 
     /// <inheritdoc />
     public override long Position
     {
-        get => totalBytesWritten % BufferSize; set { }
+        get => TotalBytesWritten % BufferSize; set { }
     }
 
     /// <inheritdoc />
@@ -69,16 +56,11 @@ public class WrappedBufferStream : Stream
     /// <inheritdoc />
     public override bool CanSeek => false;
 
-#pragma warning disable CA1065
     /// <inheritdoc />
-    public override long Length { get => throw new NotImplementedException(); }
-#pragma warning restore CA1065
+    public override long Length => throw new NotSupportedException();
 
     /// <inheritdoc />
-    public override int Read(byte[] buffer, int offset, int count)
-    {
-        throw new NotImplementedException();
-    }
+    public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count)
@@ -92,23 +74,17 @@ public class WrappedBufferStream : Stream
             long writable = Math.Min(count - written, BufferSize - Position);
 
             // Copy the data.
-            Array.Copy(buffer, offset + written, sourceBuffer, Position, writable);
+            Array.Copy(buffer, offset + written, Buffer, Position, writable);
             written += writable;
-            totalBytesWritten += writable;
+            TotalBytesWritten += writable;
         }
     }
 
     /// <inheritdoc />
-    public override long Seek(long offset, SeekOrigin origin)
-    {
-        throw new NotImplementedException();
-    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
     /// <inheritdoc />
-    public override void SetLength(long value)
-    {
-        throw new NotImplementedException();
-    }
+    public override void SetLength(long value) => throw new NotSupportedException();
 
     /// <inheritdoc />
     public override void Flush()

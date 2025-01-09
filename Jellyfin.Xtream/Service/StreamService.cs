@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +34,7 @@ namespace Jellyfin.Xtream.Service;
 /// <summary>
 /// A service for dealing with stream information.
 /// </summary>
-public class StreamService
+public partial class StreamService
 {
     /// <summary>
     /// The id prefix for VOD category channel items.
@@ -92,21 +91,7 @@ public class StreamService
     /// </summary>
     public const int EpgPrefix = 0x5d774c3f;
 
-    private static readonly Regex TagRegex = new Regex(@"\[([^\]]+)\]|\|([^\|]+)\|");
-
-    private readonly ILogger logger;
-    private readonly Plugin plugin;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="StreamService"/> class.
-    /// </summary>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    /// <param name="plugin">Instance of the <see cref="Plugin"/> class.</param>
-    public StreamService(ILogger logger, Plugin plugin)
-    {
-        this.logger = logger;
-        this.plugin = plugin;
-    }
+    private static readonly Regex _tagRegex = TagRegex();
 
     /// <summary>
     /// Parses tags in the name of a stream entry.
@@ -122,8 +107,8 @@ public class StreamService
     /// <returns>A <see cref="ParsedName"/> struct containing the cleaned title and parsed tags.</returns>
     public static ParsedName ParseName(string name)
     {
-        List<string> tags = new List<string>();
-        string title = TagRegex.Replace(
+        List<string> tags = [];
+        string title = _tagRegex.Replace(
             name,
             (match) =>
             {
@@ -154,14 +139,13 @@ public class StreamService
         return new ParsedName
         {
             Title = title[stripLength..].Trim(),
-            Tags = tags.ToArray(),
+            Tags = [.. tags],
         };
     }
 
     private bool IsConfigured(SerializableDictionary<int, HashSet<int>> config, int category, int id)
     {
-        HashSet<int>? values;
-        return config.TryGetValue(category, out values) && (values.Count == 0 || values.Contains(id));
+        return config.TryGetValue(category, out var values) && (values.Count == 0 || values.Contains(id));
     }
 
     /// <summary>
@@ -171,13 +155,13 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<StreamInfo>> GetLiveStreams(CancellationToken cancellationToken)
     {
-        PluginConfiguration config = plugin.Configuration;
+        PluginConfiguration config = Plugin.Instance.Configuration;
         using XtreamClient client = new XtreamClient();
 
         IEnumerable<Task<IEnumerable<StreamInfo>>> tasks = config.LiveTv.Select(async (entry) =>
         {
             int categoryId = entry.Key;
-            var streams = await client.GetLiveStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+            var streams = await client.GetLiveStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
             return streams.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId));
         });
         return (await Task.WhenAll(tasks).ConfigureAwait(false)).SelectMany(i => i);
@@ -230,11 +214,9 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Category>> GetVodCategories(CancellationToken cancellationToken)
     {
-        using (XtreamClient client = new XtreamClient())
-        {
-            List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-            return categories.Where((Category category) => plugin.Configuration.Vod.ContainsKey(category.CategoryId));
-        }
+        using XtreamClient client = new XtreamClient();
+        List<Category> categories = await client.GetVodCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        return categories.Where((Category category) => Plugin.Instance.Configuration.Vod.ContainsKey(category.CategoryId));
     }
 
     /// <summary>
@@ -245,16 +227,14 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<StreamInfo>> GetVodStreams(int categoryId, CancellationToken cancellationToken)
     {
-        if (!plugin.Configuration.Vod.ContainsKey(categoryId))
+        if (!Plugin.Instance.Configuration.Vod.ContainsKey(categoryId))
         {
             return new List<StreamInfo>();
         }
 
-        using (XtreamClient client = new XtreamClient())
-        {
-            List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-            return streams.Where((StreamInfo stream) => IsConfigured(plugin.Configuration.Vod, categoryId, stream.StreamId));
-        }
+        using XtreamClient client = new XtreamClient();
+        List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+        return streams.Where((StreamInfo stream) => IsConfigured(Plugin.Instance.Configuration.Vod, categoryId, stream.StreamId));
     }
 
     /// <summary>
@@ -264,12 +244,9 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Category>> GetSeriesCategories(CancellationToken cancellationToken)
     {
-        using (XtreamClient client = new XtreamClient())
-        {
-            List<Category> categories = await client.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
-            return categories
-                .Where((Category category) => plugin.Configuration.Series.ContainsKey(category.CategoryId));
-        }
+        using XtreamClient client = new XtreamClient();
+        List<Category> categories = await client.GetSeriesCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        return categories.Where((Category category) => Plugin.Instance.Configuration.Series.ContainsKey(category.CategoryId));
     }
 
     /// <summary>
@@ -280,16 +257,14 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Series>> GetSeries(int categoryId, CancellationToken cancellationToken)
     {
-        if (!plugin.Configuration.Series.ContainsKey(categoryId))
+        if (!Plugin.Instance.Configuration.Series.ContainsKey(categoryId))
         {
             return new List<Series>();
         }
 
-        using (XtreamClient client = new XtreamClient())
-        {
-            List<Series> series = await client.GetSeriesByCategoryAsync(plugin.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-            return series.Where((Series series) => IsConfigured(plugin.Configuration.Series, series.CategoryId, series.SeriesId));
-        }
+        using XtreamClient client = new XtreamClient();
+        List<Series> series = await client.GetSeriesByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+        return series.Where((Series series) => IsConfigured(Plugin.Instance.Configuration.Series, series.CategoryId, series.SeriesId));
     }
 
     /// <summary>
@@ -300,17 +275,15 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, int>>> GetSeasons(int seriesId, CancellationToken cancellationToken)
     {
-        using (XtreamClient client = new XtreamClient())
+        using XtreamClient client = new XtreamClient();
+        SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        int categoryId = series.Info.CategoryId;
+        if (!IsConfigured(Plugin.Instance.Configuration.Series, categoryId, seriesId))
         {
-            SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
-            int categoryId = series.Info.CategoryId;
-            if (!IsConfigured(plugin.Configuration.Series, categoryId, seriesId))
-            {
-                return new List<Tuple<SeriesStreamInfo, int>>();
-            }
-
-            return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
+            return new List<Tuple<SeriesStreamInfo, int>>();
         }
+
+        return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
     }
 
     /// <summary>
@@ -322,12 +295,10 @@ public class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
     {
-        using (XtreamClient client = new XtreamClient())
-        {
-            SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(plugin.Creds, seriesId, cancellationToken).ConfigureAwait(false);
-            Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
-            return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
-        }
+        using XtreamClient client = new XtreamClient();
+        SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
+        return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
     }
 
     private static void StoreBytes(byte[] dst, int offset, int i)
@@ -362,14 +333,14 @@ public class StreamService
     /// <summary>
     /// Gets the four 32-bit integers represented in the GUID.
     /// </summary>
-    /// <param name="guid">The input GUID.</param>
+    /// <param name="id">The input GUID.</param>
     /// <param name="i0">Bytes 0-3.</param>
     /// <param name="i1">Bytes 4-7.</param>
     /// <param name="i2">Bytes 8-11.</param>
     /// <param name="i3">Bytes 12-15.</param>
-    public static void FromGuid(Guid guid, out int i0, out int i1, out int i2, out int i3)
+    public static void FromGuid(Guid id, out int i0, out int i1, out int i2, out int i3)
     {
-        byte[] tmp = guid.ToByteArray();
+        byte[] tmp = id.ToByteArray();
         if (BitConverter.IsLittleEndian)
         {
             Array.Reverse(tmp);
@@ -416,7 +387,7 @@ public class StreamService
                 break;
         }
 
-        PluginConfiguration config = plugin.Configuration;
+        PluginConfiguration config = Plugin.Instance.Configuration;
         string uri = $"{config.BaseUrl}{prefix}/{config.Username}/{config.Password}/{id}";
         if (!string.IsNullOrEmpty(extension))
         {
@@ -437,20 +408,19 @@ public class StreamService
             IsInfiniteStream = isLive,
             IsRemote = true,
             // Define media sources with unknown index and interlaced to improve compatibility.
-            MediaStreams = new MediaStream[]
-            {
-                new MediaStream
+            MediaStreams = [
+                new()
                 {
                     Type = MediaStreamType.Video,
                     Index = -1,
                     IsInterlaced = true
                 },
-                new MediaStream
+                new()
                 {
                     Type = MediaStreamType.Audio,
                     Index = -1
                 }
-            },
+            ],
             Name = "default",
             Path = uri,
             Protocol = MediaProtocol.Http,
@@ -461,4 +431,7 @@ public class StreamService
             SupportsProbing = true,
         };
     }
+
+    [GeneratedRegex(@"\[([^\]]+)\]|\|([^\|]+)\|")]
+    private static partial Regex TagRegex();
 }

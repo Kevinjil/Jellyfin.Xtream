@@ -34,24 +34,20 @@ namespace Jellyfin.Xtream;
 /// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
-    private static Plugin? instance;
-
-    private readonly ILogger<Plugin> _logger;
+    private static Plugin? _instance;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
     /// </summary>
     /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
     /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger, ITaskManager taskManager)
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager)
         : base(applicationPaths, xmlSerializer)
     {
-        _logger = logger;
-        instance = this;
-        StreamService = new StreamService(logger, this);
-        TaskService = new TaskService(logger, this, taskManager);
+        _instance = this;
+        StreamService = new();
+        TaskService = new(taskManager);
     }
 
     /// <inheritdoc />
@@ -63,10 +59,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <summary>
     /// Gets the Xtream connection info with credentials.
     /// </summary>
-    public ConnectionInfo Creds
-    {
-        get => new ConnectionInfo(Configuration.BaseUrl, Configuration.Username, Configuration.Password);
-    }
+    public ConnectionInfo Creds => new(Configuration.BaseUrl, Configuration.Username, Configuration.Password);
 
     /// <summary>
     /// Gets the data version used to trigger a cache invalidation on plugin update or config change.
@@ -76,18 +69,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <summary>
     /// Gets the current plugin instance.
     /// </summary>
-    public static Plugin Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                throw new InvalidOperationException("Plugin instance not available");
-            }
-
-            return instance;
-        }
-    }
+    public static Plugin Instance => _instance ?? throw new InvalidOperationException("Plugin instance not available");
 
     /// <summary>
     /// Gets the stream service instance.
@@ -99,7 +81,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// </summary>
     public TaskService TaskService { get; init; }
 
-    private static PluginPageInfo CreateStatic(string name) => new PluginPageInfo
+    private static PluginPageInfo CreateStatic(string name) => new()
     {
         Name = name,
         EmbeddedResourcePath = string.Format(

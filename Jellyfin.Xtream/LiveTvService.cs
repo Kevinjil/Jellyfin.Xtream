@@ -35,28 +35,15 @@ namespace Jellyfin.Xtream;
 /// <summary>
 /// Class LiveTvService.
 /// </summary>
-public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
+/// <remarks>
+/// Initializes a new instance of the <see cref="LiveTvService"/> class.
+/// </remarks>
+/// <param name="appHost">Instance of the <see cref="IServerApplicationHost"/> interface.</param>
+/// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
+/// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+/// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
+public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger<LiveTvService> logger, IMemoryCache memoryCache) : ILiveTvService, ISupportsDirectStreamProvider
 {
-    private readonly IServerApplicationHost appHost;
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly ILogger<LiveTvService> logger;
-    private readonly IMemoryCache memoryCache;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="LiveTvService"/> class.
-    /// </summary>
-    /// <param name="appHost">Instance of the <see cref="IServerApplicationHost"/> interface.</param>
-    /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-    public LiveTvService(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger<LiveTvService> logger, IMemoryCache memoryCache)
-    {
-        this.appHost = appHost;
-        this.httpClientFactory = httpClientFactory;
-        this.logger = logger;
-        this.memoryCache = memoryCache;
-    }
-
     /// <inheritdoc />
     public string Name => "Xtream Live";
 
@@ -67,7 +54,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        List<ChannelInfo> items = new List<ChannelInfo>();
+        List<ChannelInfo> items = [];
         foreach (StreamInfo channel in await plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken).ConfigureAwait(false))
         {
             ParsedName parsed = StreamService.ParseName(channel.Name);
@@ -136,7 +123,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
     public async Task<List<MediaSourceInfo>> GetChannelStreamMediaSources(string channelId, CancellationToken cancellationToken)
     {
         MediaSourceInfo source = await GetChannelStream(channelId, string.Empty, cancellationToken).ConfigureAwait(false);
-        return new List<MediaSourceInfo>() { source };
+        return [source];
     }
 
     /// <inheritdoc />
@@ -190,7 +177,7 @@ public class LiveTvService : ILiveTvService, ISupportsDirectStreamProvider
                 EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)
                 {
-                    items.Add(new ProgramInfo()
+                    items.Add(new()
                     {
                         Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, epg.Id, 0).ToString(),
                         ChannelId = channelId,

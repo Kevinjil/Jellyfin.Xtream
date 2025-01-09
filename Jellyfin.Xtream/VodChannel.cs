@@ -33,19 +33,9 @@ namespace Jellyfin.Xtream;
 /// <summary>
 /// The Xtream Codes API channel.
 /// </summary>
-public class VodChannel : IChannel
+/// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+public class VodChannel(ILogger<VodChannel> logger) : IChannel
 {
-    private readonly ILogger<VodChannel> logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="VodChannel"/> class.
-    /// </summary>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    public VodChannel(ILogger<VodChannel> logger)
-    {
-        this.logger = logger;
-    }
-
     /// <inheritdoc />
     public string? Name => "Xtream Video On-Demand";
 
@@ -64,17 +54,14 @@ public class VodChannel : IChannel
     /// <inheritdoc />
     public InternalChannelFeatures GetChannelFeatures()
     {
-        return new InternalChannelFeatures
+        return new()
         {
-            ContentTypes = new List<ChannelMediaContentType>
-            {
+            ContentTypes = [
                 ChannelMediaContentType.Movie,
-            },
-
-            MediaTypes = new List<ChannelMediaType>
-            {
+            ],
+            MediaTypes = [
                 ChannelMediaType.Video
-            },
+            ],
         };
     }
 
@@ -130,12 +117,11 @@ public class VodChannel : IChannel
     {
         long added = long.Parse(stream.Added, CultureInfo.InvariantCulture);
         ParsedName parsedName = StreamService.ParseName(stream.Name);
-        List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
-        {
+        List<MediaSourceInfo> sources = [
             Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Vod, stream.StreamId, stream.ContainerExtension)
-        };
+        ];
 
-        return new ChannelItemInfo()
+        return new()
         {
             ContentType = ChannelMediaContentType.Movie,
             DateCreated = DateTimeOffset.FromUnixTimeSeconds(added).DateTime,
@@ -153,10 +139,10 @@ public class VodChannel : IChannel
 
     private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
     {
+        IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false))
-                .Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.VodCategoryPrefix, category)));
-        return new ChannelItemResult()
+            categories.Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.VodCategoryPrefix, category)));
+        return new()
         {
             Items = items,
             TotalRecordCount = items.Count
@@ -165,10 +151,9 @@ public class VodChannel : IChannel
 
     private async Task<ChannelItemResult> GetStreams(int categoryId, CancellationToken cancellationToken)
     {
-        List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false))
-                .Select((StreamInfo stream) => CreateChannelItemInfo(stream)));
-        ChannelItemResult result = new ChannelItemResult()
+        IEnumerable<StreamInfo> streams = await Plugin.Instance.StreamService.GetVodStreams(categoryId, cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new List<ChannelItemInfo>(streams.Select(CreateChannelItemInfo));
+        ChannelItemResult result = new()
         {
             Items = items,
             TotalRecordCount = items.Count

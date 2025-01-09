@@ -25,37 +25,19 @@ namespace Jellyfin.Xtream.Configuration;
 public class PluginConfiguration : BasePluginConfiguration
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PluginConfiguration"/> class.
-    /// </summary>
-    public PluginConfiguration()
-    {
-        // set default options here
-        BaseUrl = "https://example.com";
-        Username = string.Empty;
-        Password = string.Empty;
-        IsCatchupVisible = false;
-        IsSeriesVisible = false;
-        IsVodVisible = false;
-        LiveTv = new SerializableDictionary<int, HashSet<int>>();
-        Vod = new SerializableDictionary<int, HashSet<int>>();
-        Series = new SerializableDictionary<int, HashSet<int>>();
-        LiveTvOverrides = new SerializableDictionary<int, ChannelOverrides>();
-    }
-
-    /// <summary>
     /// Gets or sets the base url including protocol and trailing slash.
     /// </summary>
-    public string BaseUrl { get; set; }
+    public string BaseUrl { get; set; } = "https://example.com";
 
     /// <summary>
     /// Gets or sets the username.
     /// </summary>
-    public string Username { get; set; }
+    public string Username { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the password.
     /// </summary>
-    public string Password { get; set; }
+    public string Password { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether the Catch-up channel is visible.
@@ -75,21 +57,21 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets the channels displayed in Live TV.
     /// </summary>
-    public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; }
+    public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the streams displayed in VOD.
     /// </summary>
-    public SerializableDictionary<int, HashSet<int>> Vod { get; set; }
+    public SerializableDictionary<int, HashSet<int>> Vod { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the streams displayed in Series.
     /// </summary>
-    public SerializableDictionary<int, HashSet<int>> Series { get; set; }
+    public SerializableDictionary<int, HashSet<int>> Series { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the channel override configuration for Live TV.
     /// </summary>
-    public SerializableDictionary<int, ChannelOverrides> LiveTvOverrides { get; set; }
+    public SerializableDictionary<int, ChannelOverrides> LiveTvOverrides { get; set; } = [];
 }
 #pragma warning restore CA2227

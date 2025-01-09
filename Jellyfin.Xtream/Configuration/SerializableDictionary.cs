@@ -32,15 +32,15 @@ namespace Jellyfin.Xtream.Configuration;
 public sealed class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IXmlSerializable
 where TKey : notnull
 {
-    private const string DefaultItemTag = "Item";
+    private const string ItemTag = "Item";
 
-    private const string DefaultKeyTag = "Key";
+    private const string KeyTag = "Key";
 
-    private const string DefaultValueTag = "Value";
+    private const string ValueTag = "Value";
 
-    private static readonly XmlSerializer KeySerializer = new XmlSerializer(typeof(TKey));
+    private static readonly XmlSerializer _keySerializer = new(typeof(TKey));
 
-    private static readonly XmlSerializer ValueSerializer = new XmlSerializer(typeof(TValue));
+    private static readonly XmlSerializer _valueSerializer = new(typeof(TValue));
 
     /// <summary>Initializes a new instance of the
     /// <see cref="SerializableDictionary&lt;TKey, TValue&gt;"/> class.
@@ -48,12 +48,6 @@ where TKey : notnull
     public SerializableDictionary()
     {
     }
-
-    private string ItemTagName => DefaultItemTag;
-
-    private string KeyTagName => DefaultKeyTag;
-
-    private string ValueTagName => DefaultValueTag;
 
     /// <inheritdoc />
     public XmlSchema? GetSchema()
@@ -91,7 +85,7 @@ where TKey : notnull
     {
         foreach (var keyValuePair in this)
         {
-            WriteItem(writer, keyValuePair);
+            SerializableDictionary<TKey, TValue>.WriteItem(writer, keyValuePair);
         }
     }
 
@@ -101,10 +95,10 @@ where TKey : notnull
     /// <param name="reader">The XML representation of the object.</param>
     private void ReadItem(XmlReader reader)
     {
-        reader.ReadStartElement(ItemTagName);
+        reader.ReadStartElement(ItemTag);
         try
         {
-            Add(ReadKey(reader), ReadValue(reader));
+            Add(SerializableDictionary<TKey, TValue>.ReadKey(reader), SerializableDictionary<TKey, TValue>.ReadValue(reader));
         }
         finally
         {
@@ -117,17 +111,12 @@ where TKey : notnull
     /// </summary>
     /// <param name="reader">The XML representation of the object.</param>
     /// <returns>The dictionary item's key.</returns>
-    private TKey ReadKey(XmlReader reader)
+    private static TKey ReadKey(XmlReader reader)
     {
-        reader.ReadStartElement(KeyTagName);
+        reader.ReadStartElement(KeyTag);
         try
         {
-            TKey? deserialized = (TKey?)KeySerializer.Deserialize(reader);
-            if (deserialized == null)
-            {
-                throw new SerializationException("Key cannot be null");
-            }
-
+            TKey deserialized = (TKey?)_keySerializer.Deserialize(reader) ?? throw new SerializationException("Key cannot be null");
             return deserialized;
         }
         finally
@@ -141,17 +130,12 @@ where TKey : notnull
     /// </summary>
     /// <param name="reader">The XML representation of the object.</param>
     /// <returns>The dictionary item's value.</returns>
-    private TValue ReadValue(XmlReader reader)
+    private static TValue ReadValue(XmlReader reader)
     {
-        reader.ReadStartElement(ValueTagName);
+        reader.ReadStartElement(ValueTag);
         try
         {
-            TValue? deserialized = (TValue?)ValueSerializer.Deserialize(reader);
-            if (deserialized == null)
-            {
-                throw new SerializationException("Value cannot be null");
-            }
-
+            TValue deserialized = (TValue?)_valueSerializer.Deserialize(reader) ?? throw new SerializationException("Value cannot be null");
             return deserialized;
         }
         finally
@@ -165,13 +149,13 @@ where TKey : notnull
     /// </summary>
     /// <param name="writer">The XML writer to serialize to.</param>
     /// <param name="keyValuePair">The key/value pair.</param>
-    private void WriteItem(XmlWriter writer, KeyValuePair<TKey, TValue> keyValuePair)
+    private static void WriteItem(XmlWriter writer, KeyValuePair<TKey, TValue> keyValuePair)
     {
-        writer.WriteStartElement(ItemTagName);
+        writer.WriteStartElement(ItemTag);
         try
         {
-            WriteKey(writer, keyValuePair.Key);
-            WriteValue(writer, keyValuePair.Value);
+            SerializableDictionary<TKey, TValue>.WriteKey(writer, keyValuePair.Key);
+            SerializableDictionary<TKey, TValue>.WriteValue(writer, keyValuePair.Value);
         }
         finally
         {
@@ -184,12 +168,12 @@ where TKey : notnull
     /// </summary>
     /// <param name="writer">The XML writer to serialize to.</param>
     /// <param name="key">The dictionary item's key.</param>
-    private void WriteKey(XmlWriter writer, TKey key)
+    private static void WriteKey(XmlWriter writer, TKey key)
     {
-        writer.WriteStartElement(KeyTagName);
+        writer.WriteStartElement(KeyTag);
         try
         {
-            KeySerializer.Serialize(writer, key);
+            _keySerializer.Serialize(writer, key);
         }
         finally
         {
@@ -202,12 +186,12 @@ where TKey : notnull
     /// </summary>
     /// <param name="writer">The XML writer to serialize to.</param>
     /// <param name="value">The dictionary item's value.</param>
-    private void WriteValue(XmlWriter writer, TValue value)
+    private static void WriteValue(XmlWriter writer, TValue value)
     {
-        writer.WriteStartElement(ValueTagName);
+        writer.WriteStartElement(ValueTag);
         try
         {
-            ValueSerializer.Serialize(writer, value);
+            _valueSerializer.Serialize(writer, value);
         }
         finally
         {
