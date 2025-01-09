@@ -34,19 +34,9 @@ namespace Jellyfin.Xtream;
 /// <summary>
 /// The Xtream Codes API channel.
 /// </summary>
-public class SeriesChannel : IChannel
+/// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel
 {
-    private readonly ILogger<SeriesChannel> logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SeriesChannel"/> class.
-    /// </summary>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    public SeriesChannel(ILogger<SeriesChannel> logger)
-    {
-        this.logger = logger;
-    }
-
     /// <inheritdoc />
     public string? Name => "Xtream Series";
 
@@ -67,15 +57,13 @@ public class SeriesChannel : IChannel
     {
         return new InternalChannelFeatures
         {
-            ContentTypes = new List<ChannelMediaContentType>
-            {
+            ContentTypes = [
                 ChannelMediaContentType.Episode,
-            },
+            ],
 
-            MediaTypes = new List<ChannelMediaType>
-            {
+            MediaTypes = [
                 ChannelMediaType.Video
-            },
+            ],
         };
     }
 
@@ -155,12 +143,12 @@ public class SeriesChannel : IChannel
         };
     }
 
-    private List<string> GetGenres(string genreString)
+    private static List<string> GetGenres(string genreString)
     {
-        return new List<string>(genreString.Split(',').Select(genre => genre.Trim()));
+        return new(genreString.Split(',').Select(genre => genre.Trim()));
     }
 
-    private List<PersonInfo> GetPeople(string cast)
+    private static List<PersonInfo> GetPeople(string cast)
     {
         return cast.Split(',').Select(name => new PersonInfo()
         {
@@ -170,12 +158,12 @@ public class SeriesChannel : IChannel
 
     private ChannelItemInfo CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
     {
-        Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
+        Client.Models.SeriesInfo serie = series.Info;
         string name = $"Season {seasonId}";
         string cover = series.Info.Cover;
         string? overview = null;
         DateTime? created = null;
-        List<string> tags = new List<string>();
+        List<string> tags = [];
 
         Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
         if (season != null)
@@ -191,7 +179,7 @@ public class SeriesChannel : IChannel
             }
         }
 
-        return new ChannelItemInfo()
+        return new()
         {
             DateCreated = created,
             // FolderType = ChannelFolderType.Season,
@@ -208,12 +196,11 @@ public class SeriesChannel : IChannel
 
     private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
     {
-        Jellyfin.Xtream.Client.Models.SeriesInfo serie = series.Info;
+        Client.Models.SeriesInfo serie = series.Info;
         ParsedName parsedName = StreamService.ParseName(episode.Title);
-        List<MediaSourceInfo> sources = new List<MediaSourceInfo>()
-        {
+        List<MediaSourceInfo> sources = [
             Plugin.Instance.StreamService.GetMediaSourceInfo(StreamType.Series, episode.EpisodeId, episode.ContainerExtension)
-        };
+        ];
 
         string? cover = episode.Info?.MovieImage;
         if (string.IsNullOrEmpty(cover) && season != null)
@@ -226,7 +213,7 @@ public class SeriesChannel : IChannel
             cover = serie.Cover;
         }
 
-        return new ChannelItemInfo()
+        return new()
         {
             ContentType = ChannelMediaContentType.Episode,
             DateCreated = DateTimeOffset.FromUnixTimeSeconds(episode.Added).DateTime,
@@ -239,17 +226,17 @@ public class SeriesChannel : IChannel
             Name = parsedName.Title,
             Overview = episode.Info?.Plot,
             People = GetPeople(serie.Cast),
-            Tags = new List<string>(parsedName.Tags),
+            Tags = new(parsedName.Tags),
             Type = ChannelItemType.Media,
         };
     }
 
     private async Task<ChannelItemResult> GetCategories(CancellationToken cancellationToken)
     {
-        List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetSeriesCategories(cancellationToken).ConfigureAwait(false))
-                .Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.SeriesCategoryPrefix, category)));
-        return new ChannelItemResult()
+        IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetSeriesCategories(cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new(
+            categories.Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.SeriesCategoryPrefix, category)));
+        return new()
         {
             Items = items,
             TotalRecordCount = items.Count
@@ -258,10 +245,9 @@ public class SeriesChannel : IChannel
 
     private async Task<ChannelItemResult> GetSeries(int categoryId, CancellationToken cancellationToken)
     {
-        List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetSeries(categoryId, cancellationToken).ConfigureAwait(false))
-                .Select((Series series) => CreateChannelItemInfo(series)));
-        return new ChannelItemResult()
+        IEnumerable<Series> series = await Plugin.Instance.StreamService.GetSeries(categoryId, cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new(series.Select(CreateChannelItemInfo));
+        return new()
         {
             Items = items,
             TotalRecordCount = items.Count
@@ -270,10 +256,10 @@ public class SeriesChannel : IChannel
 
     private async Task<ChannelItemResult> GetSeasons(int seriesId, CancellationToken cancellationToken)
     {
-        List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetSeasons(seriesId, cancellationToken).ConfigureAwait(false))
-                .Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(seriesId, tuple.Item1, tuple.Item2)));
-        return new ChannelItemResult()
+        IEnumerable<Tuple<SeriesStreamInfo, int>> seasons = await Plugin.Instance.StreamService.GetSeasons(seriesId, cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new(
+            seasons.Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(seriesId, tuple.Item1, tuple.Item2)));
+        return new()
         {
             Items = items,
             TotalRecordCount = items.Count
@@ -282,10 +268,10 @@ public class SeriesChannel : IChannel
 
     private async Task<ChannelItemResult> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
     {
+        IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>> episodes = await Plugin.Instance.StreamService.GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            (await Plugin.Instance.StreamService.GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false))
-                .Select((Tuple<SeriesStreamInfo, Season?, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3)));
-        return new ChannelItemResult()
+            episodes.Select((Tuple<SeriesStreamInfo, Season?, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3)));
+        return new()
         {
             Items = items,
             TotalRecordCount = items.Count

@@ -39,8 +39,7 @@ public class Restream : ILiveStream, IDirectStreamProvider, IDisposable
     /// </summary>
     public const string TunerHost = "Xtream-Restream";
 
-    private static readonly HttpStatusCode[] _redirects =
-    [
+    private static readonly HttpStatusCode[] _redirects = [
         HttpStatusCode.Moved,
         HttpStatusCode.MovedPermanently,
         HttpStatusCode.PermanentRedirect,
