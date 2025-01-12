@@ -35,7 +35,7 @@ namespace Jellyfin.Xtream;
 /// The Xtream Codes API channel.
 /// </summary>
 /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel
+public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMediaSourceDisplay
 {
     /// <inheritdoc />
     public string? Name => "Xtream Series";
@@ -132,11 +132,12 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel
         {
             CommunityRating = (float)series.Rating5Based,
             DateModified = series.LastModified,
-            // FolderType = ChannelFolderType.Series,
+            FolderType = ChannelFolderType.Series,
             Genres = GetGenres(series.Genre),
             Id = StreamService.ToGuid(StreamService.SeriesPrefix, series.CategoryId, series.SeriesId, 0).ToString(),
             ImageUrl = series.Cover,
             Name = parsedName.Title,
+            SeriesName = parsedName.Title,
             People = GetPeople(series.Cast),
             Tags = new List<string>(parsedName.Tags),
             Type = ChannelItemType.Folder,
@@ -182,10 +183,11 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel
         return new()
         {
             DateCreated = created,
-            // FolderType = ChannelFolderType.Season,
+            FolderType = ChannelFolderType.Season,
             Genres = GetGenres(serie.Genre),
             Id = StreamService.ToGuid(StreamService.SeasonPrefix, serie.CategoryId, seriesId, seasonId).ToString(),
             ImageUrl = cover,
+            IndexNumber = seasonId,
             Name = name,
             Overview = overview,
             People = GetPeople(serie.Cast),
@@ -220,11 +222,13 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel
             Genres = GetGenres(serie.Genre),
             Id = StreamService.ToGuid(StreamService.EpisodePrefix, 0, 0, episode.EpisodeId).ToString(),
             ImageUrl = cover,
+            IndexNumber = episode.EpisodeNum,
             IsLiveStream = false,
             MediaSources = sources,
             MediaType = ChannelMediaType.Video,
-            Name = parsedName.Title,
+            Name = $"Episode {episode.EpisodeNum}",
             Overview = episode.Info?.Plot,
+            ParentIndexNumber = episode.Season,
             People = GetPeople(serie.Cast),
             Tags = new(parsedName.Tags),
             Type = ChannelItemType.Media,
