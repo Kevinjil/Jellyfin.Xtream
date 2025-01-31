@@ -14,16 +14,19 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
+using Jellyfin.Xtream.Service;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Providers;
@@ -32,7 +35,8 @@ namespace Jellyfin.Xtream.Providers;
 /// The Xtream Codes VOD metadata provider.
 /// </summary>
 /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-public class XtreamVodProvider(ILogger<VodChannel> logger) : ICustomMetadataProvider<Movie>, IPreRefreshProvider
+/// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
+public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager providerManager) : ICustomMetadataProvider<Movie>, IPreRefreshProvider
 {
     /// <summary>
     /// The name of the provider.
@@ -75,6 +79,34 @@ public class XtreamVodProvider(ILogger<VodChannel> logger) : ICustomMetadataProv
                 {
                     options.ReplaceAllMetadata = true;
                     item.SetProviderId(MetadataProvider.Tmdb, tmdbId.ToString(CultureInfo.InvariantCulture));
+                }
+                else if (Plugin.Instance.Configuration.IsTmdbVodOverride)
+                {
+                    MovieInfo queryInfo = new()
+                    {
+                        Name = StreamService.ParseName(vod.MovieData?.Name ?? string.Empty).Title,
+                        Year = item.PremiereDate?.Year,
+                    };
+                    // Try to fetch the TMDB id to get proper metadata.
+                    RemoteSearchQuery<MovieInfo> query = new()
+                    {
+                        SearchInfo = queryInfo,
+                        SearchProviderName = "TheMovieDb",
+                    };
+                    IEnumerable<RemoteSearchResult> results = await providerManager.GetRemoteSearchResults<Movie, MovieInfo>(query, cancellationToken).ConfigureAwait(false);
+                    if (results.Any())
+                    {
+                        RemoteSearchResult tmdbMovie = results.First();
+                        if (tmdbMovie.HasProviderId(MetadataProvider.Tmdb))
+                        {
+                            string? queryId = tmdbMovie.GetProviderId(MetadataProvider.Tmdb);
+                            if (queryId is not null)
+                            {
+                                options.ReplaceAllMetadata = true;
+                                item.SetProviderId(MetadataProvider.Tmdb, queryId);
+                            }
+                        }
+                    }
                 }
             }
         }

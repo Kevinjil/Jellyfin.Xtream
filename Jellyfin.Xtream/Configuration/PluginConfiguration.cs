@@ -55,6 +55,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool IsVodVisible { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the Video On-demand channel is visible.
+    /// </summary>
+    public bool IsTmdbVodOverride { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the channels displayed in Live TV.
     /// </summary>
     public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; } = [];
