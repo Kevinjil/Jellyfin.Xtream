@@ -11,6 +11,8 @@ export default function (view) {
     const getConfig = ApiClient.getPluginConfiguration(pluginId);
     const visible = view.querySelector("#Visible");
     getConfig.then((config) => visible.checked = config.IsVodVisible);
+    const tmdbOverride = view.querySelector("#TmdbOverride");
+    getConfig.then((config) => TmdbOverride.checked = config.IsTmdbVodOverride);
     const table = view.querySelector('#VodContent');
     Xtream.populateCategoriesTable(
       table,
@@ -23,6 +25,7 @@ export default function (view) {
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
           config.IsVodVisible = visible.checked;
+          config.IsTmdbVodOverride = tmdbOverride.checked;
           config.Vod = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);
