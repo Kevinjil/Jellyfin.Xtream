@@ -16,6 +16,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client.Models;
@@ -36,8 +38,19 @@ public class XtreamClient(HttpClient client) : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="XtreamClient"/> class.
     /// </summary>
-    public XtreamClient() : this(new HttpClient())
+    public XtreamClient() : this(CreateDefaultClient())
     {
+    }
+
+    private static HttpClient CreateDefaultClient()
+    {
+        HttpClient client = new HttpClient();
+
+        ProductHeaderValue header = new ProductHeaderValue("Jellyfin.Xtream", Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+        ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue(header);
+        client.DefaultRequestHeaders.UserAgent.Add(userAgent);
+
+        return client;
     }
 
     private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
