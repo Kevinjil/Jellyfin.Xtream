@@ -39,7 +39,7 @@ jobs:
       - upload
     steps:
       - name: Jellyfin plugin repo
-        uses: Kevinjil/jellyfin-plugin-repo-action@v0.4.1
+        uses: Kevinjil/jellyfin-plugin-repo-action@v0.4.2
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
