@@ -90,6 +90,12 @@ public class XtreamClient(HttpClient client) : IDisposable
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_vod_info&vod_id={streamId}",
            cancellationToken);
 
+    public Task<List<StreamInfo>> GetLiveStreamsAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>
+         QueryApi<List<StreamInfo>>(
+           connectionInfo,
+           $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_live_streams",
+           cancellationToken);
+
     public Task<List<StreamInfo>> GetLiveStreamsByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
          QueryApi<List<StreamInfo>>(
            connectionInfo,

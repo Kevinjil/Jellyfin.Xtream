@@ -42,7 +42,7 @@ public class StreamInfo
     public string Added { get; set; } = string.Empty;
 
     [JsonProperty("category_id")]
-    public int CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     [JsonProperty("container_extension")]
     public string ContainerExtension { get; set; } = string.Empty;
