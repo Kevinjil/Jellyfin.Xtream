@@ -159,13 +159,8 @@ public partial class StreamService
         PluginConfiguration config = Plugin.Instance.Configuration;
         using XtreamClient client = new XtreamClient();
 
-        IEnumerable<Task<IEnumerable<StreamInfo>>> tasks = config.LiveTv.Select(async (entry) =>
-        {
-            int categoryId = entry.Key;
-            var streams = await client.GetLiveStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-            return streams.Where((StreamInfo channel) => IsConfigured(config.LiveTv, categoryId, channel.StreamId));
-        });
-        return (await Task.WhenAll(tasks).ConfigureAwait(false)).SelectMany(i => i);
+        IEnumerable<StreamInfo> streams = await client.GetLiveStreamsAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        return streams.Where((StreamInfo channel) => channel.CategoryId.HasValue && IsConfigured(config.LiveTv, channel.CategoryId.Value, channel.StreamId));
     }
 
     /// <summary>

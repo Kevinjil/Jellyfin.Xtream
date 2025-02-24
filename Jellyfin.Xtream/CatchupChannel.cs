@@ -126,7 +126,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisable
             ParsedName parsedName = StreamService.ParseName(channel.Name);
             items.Add(new ChannelItemInfo()
             {
-                Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, 0).ToString(),
+                Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId ?? 0, channel.StreamId, 0).ToString(),
                 ImageUrl = channel.StreamIcon,
                 Name = parsedName.Title,
                 Tags = new List<string>(parsedName.Tags),
@@ -159,7 +159,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisable
             int day = (int)(channelDay - DateTime.UnixEpoch).TotalDays;
             items.Add(new()
             {
-                Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId, channel.StreamId, day).ToString(),
+                Id = StreamService.ToGuid(StreamService.CatchupPrefix, channel.CategoryId ?? 0, channel.StreamId, day).ToString(),
                 ImageUrl = channel.StreamIcon,
                 Name = channelDay.ToLocalTime().ToString("ddd dd'-'MM'-'yyyy", CultureInfo.InvariantCulture),
                 Tags = new List<string>(parsedName.Tags),
