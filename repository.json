@@ -8,6 +8,14 @@
     "owner": "Kevinjil",
     "versions": [
       {
+        "changelog": "## What's Changed\r\n* Add a user agent to the Xtream client by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/159\r\n* Filter categories on the client to prevent rate limits by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/162\r\n* Update Jellyfin to `v10.10.6` to fix upstream issues in `jellyfin-web` based clients in https://github.com/jellyfin/jellyfin-web/releases/tag/v10.10.6\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.7.0...v0.7.1",
+        "checksum": "13b8bf29a6e47522793b00988186b21a",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.7.1/jellyfin-xtream_0.7.1.0.zip",
+        "targetAbi": "10.10.6.0",
+        "timestamp": "2025-02-26T20:55:14Z",
+        "version": "0.7.1.0"
+      },
+      {
         "changelog": "A big release which features metadata for VOD items. To make use of this feature for existing libraries, you might have to remove them first and re-add them after cleaning the DB and cache. The metadata for series and episodes is coming, but it depends on [this upstream PR](https://github.com/jellyfin/jellyfin/pull/13356).\r\n\r\n## What's Changed\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.7.5 to 1.7.8 by @dependabot in https://github.com/Kevinjil/Jellyfin.Xtream/pull/134\r\n* Allow decimal ratings for episodes by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/143\r\n* Tag prefixes separated by a unicode Block Elements character by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/144\r\n* Catchup day folders by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/145\r\n* Fix code quality scanning issue by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/146\r\n* Fix stream closing with consumer count by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/148\r\n* Solve most code style warnings by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/149\r\n* Fetch media info and provide metadata by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/153\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.6.4...v0.7.0",
         "checksum": "03e084993838c60d36c1686153f5d8a3",
         "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.7.0/jellyfin-xtream_0.7.0.0.zip",
