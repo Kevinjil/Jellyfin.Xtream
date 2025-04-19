@@ -156,27 +156,23 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         }).ToList();
     }
 
-    private ChannelItemInfo CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
+    private ChannelItemInfo? CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
     {
         Client.Models.SeriesInfo serie = series.Info;
-        string name = $"Season {seasonId}";
-        string cover = series.Info.Cover;
-        string? overview = null;
-        DateTime? created = null;
-        List<string> tags = [];
-
         Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
-        if (season != null)
+        if (season == null || season.AirDate == null)
         {
-            ParsedName parsedName = StreamService.ParseName(season.Name);
-            name = parsedName.Title;
-            tags.AddRange(parsedName.Tags);
-            created = season.AirDate;
-            overview = season.Overview;
-            if (!string.IsNullOrEmpty(season.Cover))
-            {
-                cover = season.Cover;
-            }
+            return null;
+        }
+
+        string cover = series.Info.Cover;
+        ParsedName parsedName = StreamService.ParseName(season.Name);
+        string name = parsedName.Title;
+        DateTime? created = season.AirDate;
+        string overview = season.Overview;
+        if (!string.IsNullOrEmpty(season.Cover))
+        {
+            cover = season.Cover;
         }
 
         return new()
@@ -189,7 +185,7 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
             Name = name,
             Overview = overview,
             People = GetPeople(serie.Cast),
-            Tags = tags,
+            Tags = [.. parsedName.Tags],
             Type = ChannelItemType.Folder,
         };
     }
@@ -256,8 +252,10 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
     private async Task<ChannelItemResult> GetSeasons(int seriesId, CancellationToken cancellationToken)
     {
         IEnumerable<Tuple<SeriesStreamInfo, int>> seasons = await Plugin.Instance.StreamService.GetSeasons(seriesId, cancellationToken).ConfigureAwait(false);
-        List<ChannelItemInfo> items = new(
-            seasons.Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(seriesId, tuple.Item1, tuple.Item2)));
+        List<ChannelItemInfo> items = new(seasons
+            .Select((Tuple<SeriesStreamInfo, int> tuple) => CreateChannelItemInfo(seriesId, tuple.Item1, tuple.Item2))
+            .Where(s => s != null)
+            .Select(s => s!));
         return new()
         {
             Items = items,
