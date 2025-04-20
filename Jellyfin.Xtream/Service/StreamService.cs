@@ -419,6 +419,7 @@ public partial class StreamService
                     ColorRange = videoInfo?.ColorRange,
                     ColorSpace = videoInfo?.ColorSpace,
                     ColorTransfer = videoInfo?.ColorTransfer,
+                    Width = videoInfo?.Width,
                     Height = videoInfo?.Height,
                     Index = videoInfo?.Index ?? -1,
                     IsAVC = videoInfo?.IsAVC,
