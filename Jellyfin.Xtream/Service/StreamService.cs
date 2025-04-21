@@ -419,7 +419,6 @@ public partial class StreamService
                     ColorRange = videoInfo?.ColorRange,
                     ColorSpace = videoInfo?.ColorSpace,
                     ColorTransfer = videoInfo?.ColorTransfer,
-                    Width = videoInfo?.Width,
                     Height = videoInfo?.Height,
                     Index = videoInfo?.Index ?? -1,
                     IsAVC = videoInfo?.IsAVC,
@@ -428,6 +427,7 @@ public partial class StreamService
                     PixelFormat = videoInfo?.PixelFormat,
                     Profile = videoInfo?.Profile,
                     Type = MediaStreamType.Video,
+                    Width = videoInfo?.Width,
                 },
                 new()
                 {
