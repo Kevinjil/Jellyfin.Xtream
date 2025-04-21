@@ -427,6 +427,7 @@ public partial class StreamService
                     PixelFormat = videoInfo?.PixelFormat,
                     Profile = videoInfo?.Profile,
                     Type = MediaStreamType.Video,
+                    Width = videoInfo?.Width,
                 },
                 new()
                 {
