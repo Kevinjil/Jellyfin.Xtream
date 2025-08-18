@@ -60,6 +60,7 @@ public class Series
     [JsonProperty("rating_5based")]
     public decimal Rating5Based { get; set; }
 
+    [JsonConverter(typeof(SingularToListConverter<string>))]
     [JsonProperty("backdrop_path")]
 #pragma warning disable CA2227
     public ICollection<string> BackdropPaths { get; set; } = new List<string>();
