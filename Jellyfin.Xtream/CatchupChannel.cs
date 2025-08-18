@@ -191,7 +191,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisable
         // Create fallback single-stream catch-up if no EPG is available.
         if (epgs.Listings.Count == 0)
         {
-            int duration = 24 * 60;
+            int durationMinutes = 24 * 60;
             return new()
             {
                 Items = new List<ChannelItemInfo>()
@@ -202,10 +202,11 @@ public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisable
                             Id = StreamService.ToGuid(StreamService.CatchupStreamPrefix, channelId, 0, day).ToString(),
                             IsLiveStream = false,
                             MediaSources = [
-                                plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelId, start: start, durationMinutes: duration)
+                                plugin.StreamService.GetMediaSourceInfo(StreamType.CatchUp, channelId, start: start, durationMinutes: durationMinutes)
                             ],
                             MediaType = ChannelMediaType.Video,
                             Name = $"No EPG available",
+                            RunTimeTicks = durationMinutes * TimeSpan.TicksPerMinute,
                             Type = ChannelItemType.Media,
                         }
                     },
@@ -233,6 +234,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger) : IChannel, IDisable
                 Name = $"{dateTitle} - {parsedName.Title}",
                 Overview = epg.Description,
                 PremiereDate = epg.Start,
+                RunTimeTicks = durationMinutes * TimeSpan.TicksPerMinute,
                 Tags = new List<string>(parsedName.Tags),
                 Type = ChannelItemType.Media,
             });
