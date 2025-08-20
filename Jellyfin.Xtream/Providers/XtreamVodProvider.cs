@@ -65,7 +65,7 @@ public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager prov
 
             item.Overview ??= i.Plot;
             item.PremiereDate ??= i.ReleaseDate;
-            item.RunTimeTicks ??= i.DurationSecs is not null ? TimeSpan.TicksPerSecond * i.DurationSecs : null;
+            item.RunTimeTicks ??= i.DurationSecs * TimeSpan.TicksPerSecond;
             item.TotalBitrate ??= i.Bitrate;
 
             if (i.Genre is string genres)
@@ -82,15 +82,14 @@ public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager prov
                 }
                 else if (Plugin.Instance.Configuration.IsTmdbVodOverride)
                 {
-                    MovieInfo queryInfo = new()
-                    {
-                        Name = StreamService.ParseName(vod.MovieData?.Name ?? string.Empty).Title,
-                        Year = item.PremiereDate?.Year,
-                    };
                     // Try to fetch the TMDB id to get proper metadata.
                     RemoteSearchQuery<MovieInfo> query = new()
                     {
-                        SearchInfo = queryInfo,
+                        SearchInfo = new()
+                        {
+                            Name = StreamService.ParseName(vod.MovieData?.Name ?? string.Empty).Title,
+                            Year = item.PremiereDate?.Year,
+                        },
                         SearchProviderName = "TheMovieDb",
                     };
                     IEnumerable<RemoteSearchResult> results = await providerManager.GetRemoteSearchResults<Movie, MovieInfo>(query, cancellationToken).ConfigureAwait(false);
