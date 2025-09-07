@@ -53,6 +53,8 @@ public class SingularToListConverter<T> : JsonConverter
                 }
 
                 goto default;
+            case JsonToken.Null:
+                return [];
             default:
                 throw new JsonReaderException("The JsonReader points to an unexpected point.");
         }
