@@ -95,6 +95,32 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
+            if (query.FolderId == "FilmeFolder")
+            {
+                IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false);
+                var allStreams = new List<StreamInfo>();
+                var seenStreamIds = new HashSet<int>();
+                foreach (var category in categories)
+                {
+                    var streams = await Plugin.Instance.StreamService.GetVodStreams(category.CategoryId, cancellationToken).ConfigureAwait(false);
+                    foreach (var stream in streams)
+                    {
+                        if (seenStreamIds.Add(stream.StreamId))
+                        {
+                            allStreams.Add(stream);
+                        }
+                    }
+                }
+
+                var movieItems = await Task.WhenAll(allStreams.Select(CreateChannelItemInfo).ToList()).ConfigureAwait(false);
+
+                return new ChannelItemResult()
+                {
+                    Items = movieItems.ToList(),
+                    TotalRecordCount = movieItems.Length
+                };
+            }
+
             Guid guid = Guid.Parse(query.FolderId);
             StreamService.FromGuid(guid, out int prefix, out int categoryId, out int _, out int _);
             if (prefix == StreamService.VodCategoryPrefix)
@@ -150,6 +176,21 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
         IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new List<ChannelItemInfo>(
             categories.Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.VodCategoryPrefix, category)));
+
+        if (Plugin.Instance.Configuration.CreateMainFolder)
+        {
+            var mainFolderName = string.IsNullOrWhiteSpace(Plugin.Instance.Configuration.MainFolderName)
+                ? "Filme"
+                : Plugin.Instance.Configuration.MainFolderName;
+            var mainFolder = new ChannelItemInfo()
+            {
+                Id = "FilmeFolder",
+                Name = mainFolderName,
+                Type = ChannelItemType.Folder,
+            };
+            items.Insert(0, mainFolder); // Hauptordner ganz oben
+        }
+
         return new()
         {
             Items = items,

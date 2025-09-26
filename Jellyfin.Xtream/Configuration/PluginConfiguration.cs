@@ -25,6 +25,16 @@ namespace Jellyfin.Xtream.Configuration;
 public class PluginConfiguration : BasePluginConfiguration
 {
     /// <summary>
+    /// Gets or sets a value indicating whether a main folder with flat structure should be created for VOD.
+    /// </summary>
+    public bool CreateMainFolder { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the main folder for VOD.
+    /// </summary>
+    public string MainFolderName { get; set; } = "Filme";
+
+    /// <summary>
     /// Gets or sets the base url including protocol and trailing slash.
     /// </summary>
     public string BaseUrl { get; set; } = "https://example.com";

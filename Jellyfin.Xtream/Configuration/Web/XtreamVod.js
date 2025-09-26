@@ -14,6 +14,14 @@ export default function (view) {
     const tmdbOverride = view.querySelector("#TmdbOverride");
     getConfig.then((config) => TmdbOverride.checked = config.IsTmdbVodOverride);
     const table = view.querySelector('#VodContent');
+    const createMainFolder = view.querySelector('#CreateMainFolder');
+    const mainFolderName = view.querySelector('#MainFolderName');
+
+    getConfig.then((config) => {
+      createMainFolder.checked = config.CreateMainFolder || false;
+      mainFolderName.value = config.MainFolderName || "Filme";
+    });
+
     Xtream.populateCategoriesTable(
       table,
       () => getConfig.then((config) => config.Vod),
@@ -27,6 +35,8 @@ export default function (view) {
           config.IsVodVisible = visible.checked;
           config.IsTmdbVodOverride = tmdbOverride.checked;
           config.Vod = data;
+          config.CreateMainFolder = createMainFolder.checked;
+          config.MainFolderName = mainFolderName.value || "Filme";
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);
           });

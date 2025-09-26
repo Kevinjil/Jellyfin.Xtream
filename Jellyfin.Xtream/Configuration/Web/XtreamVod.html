@@ -31,6 +31,13 @@
             </tbody>
           </table>
         </div>
+        <div class="inputContainer">
+          <label style="display: flex; align-items: center; gap: 1em; margin-top: 2em;">
+            <input is="emby-checkbox" id="CreateMainFolder" name="CreateMainFolder" type="checkbox" />
+            <span>Hauptordner erstellen</span>
+            <input is="emby-input" id="MainFolderName" name="MainFolderName" type="text" placeholder="Name des Hauptordners" style="width: 200px; margin-left: 1em;" />
+          </label>
+        </div>
         <div>
           <button is="emby-button" type="submit" class="raised button-submit block emby-button">
             <span>Save</span>
