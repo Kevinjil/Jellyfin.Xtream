@@ -29,7 +29,7 @@ jobs:
           done
           ls -l
       - name: Upload GitHub Release assets
-        uses: shogo82148/actions-upload-release-asset@v1.9.0
+        uses: shogo82148/actions-upload-release-asset@v1.9.1
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./*
