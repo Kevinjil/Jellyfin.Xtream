@@ -35,7 +35,7 @@ public class WrappedBufferReadStream : Stream
     public WrappedBufferReadStream(WrappedBufferStream sourceBuffer)
     {
         _sourceBuffer = sourceBuffer;
-        _initialReadHead = sourceBuffer.TotalBytesWritten;
+        _initialReadHead = Math.Max(0, sourceBuffer.TotalBytesWritten - (sourceBuffer.BufferSize / 2));
         ReadHead = _initialReadHead;
     }
 
