@@ -13,7 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 #pragma warning disable CS1591
 namespace Jellyfin.Xtream.Client.Models;
@@ -39,8 +41,9 @@ public class Episode
     [JsonProperty("custom_sid")]
     public string CustomSid { get; set; } = string.Empty;
 
+    [JsonConverter(typeof(UnixDateTimeConverter))]
     [JsonProperty("added")]
-    public long Added { get; set; }
+    public DateTime Added { get; set; }
 
     [JsonProperty("season")]
     public int Season { get; set; }
