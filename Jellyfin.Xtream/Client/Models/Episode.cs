@@ -43,7 +43,7 @@ public class Episode
 
     [JsonConverter(typeof(UnixDateTimeConverter))]
     [JsonProperty("added")]
-    public DateTime Added { get; set; }
+    public DateTime? Added { get; set; }
 
     [JsonProperty("season")]
     public int Season { get; set; }
