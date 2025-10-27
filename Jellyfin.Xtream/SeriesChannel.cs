@@ -227,6 +227,7 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
             Overview = episode.Info?.Plot,
             ParentIndexNumber = episode.Season,
             People = GetPeople(serie.Cast),
+            RunTimeTicks = episode.Info?.DurationSecs * TimeSpan.TicksPerSecond,
             Tags = new(parsedName.Tags),
             Type = ChannelItemType.Media,
         };
