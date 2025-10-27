@@ -42,7 +42,8 @@ namespace Jellyfin.Xtream;
 /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
 /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
 /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger<LiveTvService> logger, IMemoryCache memoryCache) : ILiveTvService, ISupportsDirectStreamProvider
+/// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
+public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory httpClientFactory, ILogger<LiveTvService> logger, IMemoryCache memoryCache, IXtreamClient xtreamClient) : ILiveTvService, ISupportsDirectStreamProvider
 {
     /// <inheritdoc />
     public string Name => "Xtream Live";
@@ -172,9 +173,8 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
         {
             items = new List<ProgramInfo>();
             Plugin plugin = Plugin.Instance;
-            using (XtreamClient client = new XtreamClient())
             {
-                EpgListings epgs = await client.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
+                EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)
                 {
                     items.Add(new()

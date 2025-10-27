@@ -36,7 +36,8 @@ namespace Jellyfin.Xtream.Providers;
 /// </summary>
 /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
 /// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
-public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager providerManager) : ICustomMetadataProvider<Movie>, IPreRefreshProvider
+/// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
+public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager providerManager, IXtreamClient xtreamClient) : ICustomMetadataProvider<Movie>, IPreRefreshProvider
 {
     /// <summary>
     /// The name of the provider.
@@ -54,8 +55,7 @@ public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager prov
         {
             logger.LogDebug("Getting metadata for movie {Id}", idStr);
             int id = int.Parse(idStr, CultureInfo.InvariantCulture);
-            using XtreamClient client = new();
-            VodStreamInfo vod = await client.GetVodInfoAsync(Plugin.Instance.Creds, id, cancellationToken).ConfigureAwait(false);
+            VodStreamInfo vod = await xtreamClient.GetVodInfoAsync(Plugin.Instance.Creds, id, cancellationToken).ConfigureAwait(false);
             VodInfo? i = vod.Info;
 
             if (i is null)
