@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -22,6 +23,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 #pragma warning disable CS1591
 namespace Jellyfin.Xtream.Client;
@@ -35,6 +37,11 @@ namespace Jellyfin.Xtream.Client;
 /// <param name="client">The HTTP client used.</param>
 public class XtreamClient(HttpClient client) : IDisposable
 {
+    private readonly JsonSerializerSettings _serializerSettings = new()
+    {
+        Error = NullableEventHandler,
+    };
+
     /// <summary>
     /// Initializes a new instance of the <see cref="XtreamClient"/> class.
     /// </summary>
@@ -53,11 +60,48 @@ public class XtreamClient(HttpClient client) : IDisposable
         return client;
     }
 
+    /// <summary>
+    /// Ignores error events if the target property is nullable.
+    /// </summary>
+    /// <param name="sender">The object which emitted the event.</param>
+    /// <param name="args">The event arguments containing the error context.</param>
+    public static void NullableEventHandler(object? sender, ErrorEventArgs args)
+    {
+        if (args.ErrorContext.OriginalObject?.GetType() is Type type && args.ErrorContext.Member is string jsonName)
+        {
+            PropertyInfo? property = type.GetProperties().FirstOrDefault((p) =>
+            {
+                CustomAttributeData? attribute = p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(JsonPropertyAttribute));
+                if (attribute == null)
+                {
+                    return false;
+                }
+
+                if (attribute.ConstructorArguments.Count > 0)
+                {
+                    // Attribute contains a `propertyName`.
+                    string? value = attribute.ConstructorArguments.First().Value as string;
+                    return jsonName.Equals(value, StringComparison.Ordinal);
+                }
+                else
+                {
+                    // Attribute does not contain a `propertyName`, compare with the name of the property itself.
+                    return jsonName.Equals(p.Name, StringComparison.Ordinal);
+                }
+            });
+
+            if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
+            {
+                args.ErrorContext.Handled = true;
+            }
+        }
+    }
+
     private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
     {
         Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
         string jsonContent = await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
-        return JsonConvert.DeserializeObject<T>(jsonContent)!;
+        return JsonConvert.DeserializeObject<T>(jsonContent, _serializerSettings)!;
     }
 
     public Task<PlayerApi> GetUserAndServerInfoAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>
