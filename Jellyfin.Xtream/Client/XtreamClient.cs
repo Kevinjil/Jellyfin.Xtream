@@ -98,7 +98,7 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
                 if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
                 {
                     logger.LogDebug("Property `{0}` (`{1}` in JSON) is nullable, ignoring parsing error!", property.Name, jsonName);
-                    logger.LogDebug("Parsing error event: {0}", args);
+                    logger.LogDebug("Stack trace: {0}", new System.Diagnostics.StackTrace());
                     args.ErrorContext.Handled = true;
                 }
             }
