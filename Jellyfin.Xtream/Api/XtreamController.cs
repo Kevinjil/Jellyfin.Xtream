@@ -70,6 +70,29 @@ public class XtreamController(IXtreamClient xtreamClient) : ControllerBase
         };
 
     /// <summary>
+    /// Test the configured provider.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
+    /// <returns>An enumerable containing the categories.</returns>
+    [Authorize(Policy = "RequiresElevation")]
+    [HttpGet("TestProvider")]
+    public async Task<ActionResult<ProviderTestResponse>> TestProvider(CancellationToken cancellationToken)
+    {
+        Plugin plugin = Plugin.Instance;
+        PlayerApi info = await xtreamClient.GetUserAndServerInfoAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+        return Ok(new ProviderTestResponse()
+        {
+            ActiveConnections = info.UserInfo.ActiveCons,
+            ExpiryDate = info.UserInfo.ExpDate,
+            MaxConnections = info.UserInfo.MaxConnections,
+            ServerTime = info.ServerInfo.TimeNow,
+            ServerTimezone = info.ServerInfo.Timezone,
+            Status = info.UserInfo.Status,
+            SupportsMpegTs = info.UserInfo.AllowedOutputFormats.Contains("ts"),
+        });
+    }
+
+    /// <summary>
     /// Get all Live TV categories.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token for cancelling requests.</param>
