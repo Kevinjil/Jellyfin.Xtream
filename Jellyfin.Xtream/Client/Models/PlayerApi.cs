@@ -14,11 +14,15 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma warning disable CS1591
+using Newtonsoft.Json;
+
 namespace Jellyfin.Xtream.Client.Models;
 
 public class PlayerApi
 {
+    [JsonProperty("user_info")]
     public UserInfo UserInfo { get; set; } = new UserInfo();
 
-    public ServerInfo ServerSnfo { get; set; } = new ServerInfo();
+    [JsonProperty("server_info")]
+    public ServerInfo ServerInfo { get; set; } = new ServerInfo();
 }
