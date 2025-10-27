@@ -42,11 +42,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager)
+    /// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager, IXtreamClient xtreamClient)
         : base(applicationPaths, xmlSerializer)
     {
         _instance = this;
-        StreamService = new();
+        StreamService = new(xtreamClient);
         TaskService = new(taskManager);
     }
 

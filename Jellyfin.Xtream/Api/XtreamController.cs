@@ -33,7 +33,7 @@ namespace Jellyfin.Xtream.Api;
 [ApiController]
 [Route("[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
-public class XtreamController : ControllerBase
+public class XtreamController(IXtreamClient xtreamClient) : ControllerBase
 {
     private static CategoryResponse CreateCategoryResponse(Category category) =>
         new()
@@ -79,8 +79,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetLiveCategories(CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<Category> categories = await client.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+        List<Category> categories = await xtreamClient.GetLiveCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
         return Ok(categories.Select(CreateCategoryResponse));
     }
 
@@ -95,8 +94,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<StreamInfo>>> GetLiveStreams(int categoryId, CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<StreamInfo> streams = await client.GetLiveStreamsByCategoryAsync(
+        List<StreamInfo> streams = await xtreamClient.GetLiveStreamsByCategoryAsync(
           plugin.Creds,
           categoryId,
           cancellationToken).ConfigureAwait(false);
@@ -113,8 +111,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetVodCategories(CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<Category> categories = await client.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+        List<Category> categories = await xtreamClient.GetVodCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
         return Ok(categories.Select(CreateCategoryResponse));
     }
 
@@ -129,8 +126,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<StreamInfo>>> GetVodStreams(int categoryId, CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(
+        List<StreamInfo> streams = await xtreamClient.GetVodStreamsByCategoryAsync(
           plugin.Creds,
           categoryId,
           cancellationToken).ConfigureAwait(false);
@@ -147,8 +143,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetSeriesCategories(CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<Category> categories = await client.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
+        List<Category> categories = await xtreamClient.GetSeriesCategoryAsync(plugin.Creds, cancellationToken).ConfigureAwait(false);
         return Ok(categories.Select(CreateCategoryResponse));
     }
 
@@ -163,8 +158,7 @@ public class XtreamController : ControllerBase
     public async Task<ActionResult<IEnumerable<StreamInfo>>> GetSeriesStreams(int categoryId, CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        using XtreamClient client = new XtreamClient();
-        List<Series> series = await client.GetSeriesByCategoryAsync(
+        List<Series> series = await xtreamClient.GetSeriesByCategoryAsync(
           plugin.Creds,
           categoryId,
           cancellationToken).ConfigureAwait(false);

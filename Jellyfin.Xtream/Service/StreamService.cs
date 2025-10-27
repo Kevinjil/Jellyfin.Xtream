@@ -24,18 +24,17 @@ using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Configuration;
 using MediaBrowser.Controller.Channels;
-using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Service;
 
 /// <summary>
 /// A service for dealing with stream information.
 /// </summary>
-public partial class StreamService
+/// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
+public partial class StreamService(IXtreamClient xtreamClient)
 {
     /// <summary>
     /// The id prefix for VOD category channel items.
@@ -157,9 +156,8 @@ public partial class StreamService
     public async Task<IEnumerable<StreamInfo>> GetLiveStreams(CancellationToken cancellationToken)
     {
         PluginConfiguration config = Plugin.Instance.Configuration;
-        using XtreamClient client = new XtreamClient();
 
-        IEnumerable<StreamInfo> streams = await client.GetLiveStreamsAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        IEnumerable<StreamInfo> streams = await xtreamClient.GetLiveStreamsAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
         return streams.Where((StreamInfo channel) => channel.CategoryId.HasValue && IsConfigured(config.LiveTv, channel.CategoryId.Value, channel.StreamId));
     }
 
@@ -210,8 +208,7 @@ public partial class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Category>> GetVodCategories(CancellationToken cancellationToken)
     {
-        using XtreamClient client = new XtreamClient();
-        List<Category> categories = await client.GetVodCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        List<Category> categories = await xtreamClient.GetVodCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
         return categories.Where((Category category) => Plugin.Instance.Configuration.Vod.ContainsKey(category.CategoryId));
     }
 
@@ -228,8 +225,7 @@ public partial class StreamService
             return new List<StreamInfo>();
         }
 
-        using XtreamClient client = new XtreamClient();
-        List<StreamInfo> streams = await client.GetVodStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+        List<StreamInfo> streams = await xtreamClient.GetVodStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
         return streams.Where((StreamInfo stream) => IsConfigured(Plugin.Instance.Configuration.Vod, categoryId, stream.StreamId));
     }
 
@@ -240,8 +236,7 @@ public partial class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Category>> GetSeriesCategories(CancellationToken cancellationToken)
     {
-        using XtreamClient client = new XtreamClient();
-        List<Category> categories = await client.GetSeriesCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
+        List<Category> categories = await xtreamClient.GetSeriesCategoryAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
         return categories.Where((Category category) => Plugin.Instance.Configuration.Series.ContainsKey(category.CategoryId));
     }
 
@@ -258,8 +253,7 @@ public partial class StreamService
             return new List<Series>();
         }
 
-        using XtreamClient client = new XtreamClient();
-        List<Series> series = await client.GetSeriesByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
+        List<Series> series = await xtreamClient.GetSeriesByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
         return series.Where((Series series) => IsConfigured(Plugin.Instance.Configuration.Series, series.CategoryId, series.SeriesId));
     }
 
@@ -271,8 +265,7 @@ public partial class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, int>>> GetSeasons(int seriesId, CancellationToken cancellationToken)
     {
-        using XtreamClient client = new XtreamClient();
-        SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        SeriesStreamInfo series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
         int categoryId = series.Info.CategoryId;
         if (!IsConfigured(Plugin.Instance.Configuration.Series, categoryId, seriesId))
         {
@@ -291,8 +284,7 @@ public partial class StreamService
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
     {
-        using XtreamClient client = new XtreamClient();
-        SeriesStreamInfo series = await client.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        SeriesStreamInfo series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
         Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
         return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
     }
