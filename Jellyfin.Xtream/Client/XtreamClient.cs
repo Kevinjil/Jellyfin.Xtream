@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Xtream.Client.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -35,17 +36,19 @@ namespace Jellyfin.Xtream.Client;
 /// Initializes a new instance of the <see cref="XtreamClient"/> class.
 /// </remarks>
 /// <param name="client">The HTTP client used.</param>
-public class XtreamClient(HttpClient client) : IDisposable, IXtreamClient
+/// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDisposable, IXtreamClient
 {
     private readonly JsonSerializerSettings _serializerSettings = new()
     {
-        Error = NullableEventHandler,
+        Error = NullableEventHandler(logger),
     };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="XtreamClient"/> class.
     /// </summary>
-    public XtreamClient() : this(CreateDefaultClient())
+    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+    public XtreamClient(ILogger<XtreamClient> logger) : this(CreateDefaultClient(), logger)
     {
     }
 
@@ -63,38 +66,43 @@ public class XtreamClient(HttpClient client) : IDisposable, IXtreamClient
     /// <summary>
     /// Ignores error events if the target property is nullable.
     /// </summary>
-    /// <param name="sender">The object which emitted the event.</param>
-    /// <param name="args">The event arguments containing the error context.</param>
-    public static void NullableEventHandler(object? sender, ErrorEventArgs args)
+    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+    /// <returns>An event handler using the given logger.</returns>
+    public static EventHandler<ErrorEventArgs> NullableEventHandler(ILogger<XtreamClient> logger)
     {
-        if (args.ErrorContext.OriginalObject?.GetType() is Type type && args.ErrorContext.Member is string jsonName)
+        return (object? sender, ErrorEventArgs args) =>
         {
-            PropertyInfo? property = type.GetProperties().FirstOrDefault((p) =>
+            if (args.ErrorContext.OriginalObject?.GetType() is Type type && args.ErrorContext.Member is string jsonName)
             {
-                CustomAttributeData? attribute = p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(JsonPropertyAttribute));
-                if (attribute == null)
+                PropertyInfo? property = type.GetProperties().FirstOrDefault((p) =>
                 {
-                    return false;
-                }
+                    CustomAttributeData? attribute = p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(JsonPropertyAttribute));
+                    if (attribute == null)
+                    {
+                        return false;
+                    }
 
-                if (attribute.ConstructorArguments.Count > 0)
-                {
-                    // Attribute contains a `propertyName`.
-                    string? value = attribute.ConstructorArguments.First().Value as string;
-                    return jsonName.Equals(value, StringComparison.Ordinal);
-                }
-                else
-                {
-                    // Attribute does not contain a `propertyName`, compare with the name of the property itself.
-                    return jsonName.Equals(p.Name, StringComparison.Ordinal);
-                }
-            });
+                    if (attribute.ConstructorArguments.Count > 0)
+                    {
+                        // Attribute contains a `propertyName`.
+                        string? value = attribute.ConstructorArguments.First().Value as string;
+                        return jsonName.Equals(value, StringComparison.Ordinal);
+                    }
+                    else
+                    {
+                        // Attribute does not contain a `propertyName`, compare with the name of the property itself.
+                        return jsonName.Equals(p.Name, StringComparison.Ordinal);
+                    }
+                });
 
-            if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
-            {
-                args.ErrorContext.Handled = true;
+                if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
+                {
+                    logger.LogDebug("Property `{0}` (`{1}` in JSON) is nullable, ignoring parsing error!", property.Name, jsonName);
+                    logger.LogDebug("Parsing error event: {0}", args);
+                    args.ErrorContext.Handled = true;
+                }
             }
-        }
+        };
     }
 
     private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
