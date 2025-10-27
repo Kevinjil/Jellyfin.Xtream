@@ -35,7 +35,7 @@ namespace Jellyfin.Xtream.Client;
 /// Initializes a new instance of the <see cref="XtreamClient"/> class.
 /// </remarks>
 /// <param name="client">The HTTP client used.</param>
-public class XtreamClient(HttpClient client) : IDisposable
+public class XtreamClient(HttpClient client) : IDisposable, IXtreamClient
 {
     private readonly JsonSerializerSettings _serializerSettings = new()
     {
