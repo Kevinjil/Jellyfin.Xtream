@@ -30,7 +30,7 @@ public class ProviderTestResponse
     /// <summary>
     /// Gets or sets the account expiry date.
     /// </summary>
-    public DateTime ExpiryDate { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 
     /// <summary>
     /// Gets or sets the current simultaneous connections to the provider.
