@@ -37,7 +37,7 @@ public class UserInfo
 
     [JsonConverter(typeof(UnixDateTimeConverter))]
     [JsonProperty("exp_date")]
-    public DateTime ExpDate { get; set; }
+    public DateTime? ExpDate { get; set; }
 
     [JsonConverter(typeof(StringBoolConverter))]
     [JsonProperty("is_trial")]
