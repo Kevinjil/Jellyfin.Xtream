@@ -60,6 +60,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool IsTmdbVodOverride { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the format for the catch-up URL.
+    /// </summary>
+    public string CatchupUrlFormat { get; set; } = "{0}/streaming/timeshift.php?username={1}&password={2}&stream={3}&start={4}&duration={5}";
+
+    /// <summary>
     /// Gets or sets the channels displayed in Live TV.
     /// </summary>
     public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; } = [];
