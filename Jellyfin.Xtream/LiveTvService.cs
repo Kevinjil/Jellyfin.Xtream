@@ -325,7 +325,7 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                     }
                 }
             }
-            else
+            else if (!plugin.Configuration.UseXmlTv)
             {
                 EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)
