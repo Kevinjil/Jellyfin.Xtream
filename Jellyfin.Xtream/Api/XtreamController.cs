@@ -48,7 +48,18 @@ public class XtreamController : ControllerBase
     [AllowAnonymous]
     public ActionResult LogConfigChange([FromBody] LogConfigChangeRequest request)
     {
-        _logger.LogInformation("Xtream plugin configuration changed: {Page} settings updated", request.Page);
+        _logger.LogInformation(
+            "Xtream plugin configuration changed: {Page} settings updated. RemoteIp: {RemoteIp}",
+            request.Page,
+            HttpContext?.Connection?.RemoteIpAddress);
+
+        // Log the current plugin configuration state
+        var plugin = Plugin.Instance;
+        _logger.LogDebug(
+            "Current plugin configuration state - UseXmlTv: {UseXmlTv}, XmlTvUrl: {XmlTvUrl}",
+            plugin.Configuration.UseXmlTv,
+            plugin.Configuration.XmlTvUrl);
+
         return NoContent();
     }
 

@@ -35,6 +35,7 @@ namespace Jellyfin.Xtream;
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     private static Plugin? _instance;
+    private readonly ILogger<Plugin> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -43,10 +44,17 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
     /// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager, IXtreamClient xtreamClient)
+    /// <param name="logger">Instance of the <see cref="ILogger{Plugin}"/> interface.</param>
+    public Plugin(
+        IApplicationPaths applicationPaths,
+        IXmlSerializer xmlSerializer,
+        ITaskManager taskManager,
+        IXtreamClient xtreamClient,
+        ILogger<Plugin> logger)
         : base(applicationPaths, xmlSerializer)
     {
         _instance = this;
+        _logger = logger;
         StreamService = new(xtreamClient);
         TaskService = new(taskManager);
     }
@@ -117,6 +125,14 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public override void UpdateConfiguration(BasePluginConfiguration configuration)
     {
+        if (configuration is PluginConfiguration xtreamConfig)
+        {
+            _logger.LogInformation(
+                "Updating Xtream plugin configuration - UseXmlTv: {UseXmlTv}, XmlTvUrl: {XmlTvUrl}",
+                xtreamConfig.UseXmlTv,
+                xtreamConfig.XmlTvUrl);
+        }
+
         base.UpdateConfiguration(configuration);
 
         // Force a refresh of TV guide on configuration update.
