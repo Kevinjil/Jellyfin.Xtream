@@ -44,7 +44,7 @@ public class XtreamController : ControllerBase
     /// <response code="204">Configuration change logged successfully.</response>
     [HttpPost("LogConfigChange")]
     [ProducesResponseType(204)]
-    [Authorize(Policy = "DefaultAuthorization")]
+    [Authorize(Policy = "RequiresElevation")]
     public ActionResult LogConfigChange([FromBody] LogConfigChangeRequest request)
     {
         _logger.LogInformation("Xtream plugin configuration changed: {Page} settings updated", request.Page);

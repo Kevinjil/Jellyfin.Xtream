@@ -1,8 +1,17 @@
-// Copyright (C) 2022  Kevin Jilissen
-
 export default function (view) {
-    view.addEventListener('viewshow', function () {
-        ApiClient.getPluginConfiguration('Xtream').then(function (config) {
+    let Xtream;
+    let pluginId;
+
+    view.addEventListener('viewshow', () => {
+        import(window.ApiClient.getUrl("web/ConfigurationPage", {
+            name: "Xtream.js",
+        }))
+        .then((module) => {
+            Xtream = module.default;
+            pluginId = Xtream.pluginConfig.UniqueId;
+            return ApiClient.getPluginConfiguration(pluginId);
+        })
+        .then((config) => {
             view.querySelector('#UseXmlTv').checked = config.UseXmlTv;
             view.querySelector('#XmlTvUrl').value = config.XmlTvUrl;
             view.querySelector('#XmlTvHistoricalDays').value = config.XmlTvHistoricalDays;
@@ -31,7 +40,7 @@ export default function (view) {
             return false;
         }
 
-        ApiClient.getPluginConfiguration('Xtream').then(function (config) {
+        ApiClient.getPluginConfiguration(pluginId).then(function (config) {
             config.UseXmlTv = useXmlTv;
             config.XmlTvUrl = xmlTvUrl;
             config.XmlTvHistoricalDays = historicalDays;
@@ -40,7 +49,10 @@ export default function (view) {
             config.XmlTvDiskCache = diskCache;
             config.XmlTvCachePath = cachePath;
 
-            ApiClient.updatePluginConfiguration('Xtream', config).then(Dashboard.processPluginConfigurationUpdateResult);
+            ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
+                Xtream.logConfigurationChange('XMLTV');
+                Dashboard.processPluginConfigurationUpdateResult(result);
+            });
         });
 
         return false;
