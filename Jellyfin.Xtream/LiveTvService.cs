@@ -185,12 +185,20 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
             if (plugin.Configuration.UseXmlTv)
             {
                 logger.LogInformation("Using XMLTV for EPG data (streamId: {StreamId})", streamId);
-                // Try to find the stream to get the EPG channel id
-                StreamInfo? streamInfo = (await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false)).FirstOrDefault(s => s.StreamId == streamId);
-                if (streamInfo != null)
+
+                // Cache the live streams list to avoid repeated API calls
+                string streamsCacheKey = $"xtream-liveStreams-{plugin.DataVersion}";
+                if (!memoryCache.TryGetValue(streamsCacheKey, out IEnumerable<StreamInfo>? allStreams))
                 {
-                    // Get all live streams to build channel mapping
-                    var allStreams = await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false);
+                    allStreams = await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false);
+                    memoryCache.Set(streamsCacheKey, allStreams, TimeSpan.FromMinutes(plugin.Configuration.XmlTvCacheMinutes));
+                }
+
+                // Try to find the stream to get the EPG channel id
+                StreamInfo? streamInfo = allStreams?.FirstOrDefault(s => s.StreamId == streamId);
+                if (streamInfo != null && allStreams != null)
+                {
+                    // Build channel mapping
                     var channelMapping = XmlTvValidation.BuildChannelMapping(allStreams);
 
                     string xmlCacheKey = $"xtream-xmltv-{plugin.DataVersion}";
