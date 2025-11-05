@@ -30,11 +30,19 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     /// <inheritdoc />
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
+        // Core services
         serviceCollection.AddSingleton<IXtreamClient, XtreamClient>();
         serviceCollection.AddSingleton<ILiveTvService, LiveTvService>();
+
+        // API Controllers
+        serviceCollection.AddScoped<Api.XtreamController>();
+
+        // Channels
         serviceCollection.AddSingleton<IChannel, CatchupChannel>();
         serviceCollection.AddSingleton<IChannel, SeriesChannel>();
         serviceCollection.AddSingleton<IChannel, VodChannel>();
+
+        // Providers
         serviceCollection.AddSingleton<IPreRefreshProvider, XtreamVodProvider>();
     }
 }

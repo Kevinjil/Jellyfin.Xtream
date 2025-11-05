@@ -3,35 +3,30 @@ export default function (view) {
     let pluginId;
 
     view.addEventListener('viewshow', () => {
-        const moduleUrl = ApiClient.getUrl("configurationpage", {
-            name: "Xtream.js",
+        const moduleUrl = ApiClient.getUrl("web/ConfigurationPage", {
+            name: "Xtream.js"
         });
         
-        // Load the shared module
-        return import(moduleUrl)
-        .then((module) => {
-            console.log("Xtream module loaded");
-            Xtream = module.default;
+        // Use traditional script loading since dynamic import is failing
+        const script = document.createElement('script');
+        script.src = moduleUrl;
+        script.type = 'module';
+        
+        script.onload = () => {
+            // Access the module through the global namespace
+            Xtream = window.Xtream;
             pluginId = Xtream.pluginConfig.UniqueId;
-            console.log("Plugin ID:", pluginId);
             return ApiClient.getPluginConfiguration(pluginId);
-        })
-        .catch(err => {
-            console.error("Error loading Xtream module:", err);
+        };
+        
+        script.onerror = (err) => {
+            console.error('Failed to load Xtream module:', err);
             Dashboard.alert({
-                message: "Failed to load configuration module. Please check the browser console for details."
+                message: 'Failed to load plugin configuration module. Please try refreshing the page.'
             });
-        })
-        .then((config) => {
-            view.querySelector('#UseXmlTv').checked = config.UseXmlTv;
-            view.querySelector('#XmlTvUrl').value = config.XmlTvUrl;
-            view.querySelector('#XmlTvHistoricalDays').value = config.XmlTvHistoricalDays;
-            view.querySelector('#XmlTvCacheMinutes').value = config.XmlTvCacheMinutes;
-            view.querySelector('#XmlTvSupportsTimeshift').checked = config.XmlTvSupportsTimeshift;
-            view.querySelector('#XmlTvDiskCache').checked = config.XmlTvDiskCache;
-            view.querySelector('#XmlTvCachePath').value = config.XmlTvCachePath;
-        });
-    });
+        };
+        
+        document.head.appendChild(script);
 
     view.querySelector('#XtreamXmlTvForm').addEventListener('submit', function (e) {
         e.preventDefault();

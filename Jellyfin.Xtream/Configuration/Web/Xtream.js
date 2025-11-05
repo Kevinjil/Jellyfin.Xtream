@@ -230,11 +230,16 @@ const pluginConfig = {
   UniqueId: '5d774c35-8567-46d3-a950-9bb8227a0c5d'
 };
 
-export default {
+const Xtream = {
   fetchJson,
   filter,
   pluginConfig,
   populateCategoriesTable,
   setTabs,
   logConfigurationChange,
-}
+};
+
+// Expose to global scope for traditional script loading
+window.Xtream = Xtream;
+
+export default Xtream;
