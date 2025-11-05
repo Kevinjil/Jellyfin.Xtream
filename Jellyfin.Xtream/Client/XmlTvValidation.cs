@@ -122,14 +122,15 @@ public static class XmlTvValidation
         }
         else
         {
-            // Use plugin data directory
-            string dataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "jellyfin",
-                "plugins",
-                "xtream");
+            // Use plugin's data directory from Plugin.Instance
+            var plugin = Plugin.Instance;
+            string dataPath = plugin.DataFolderPath;
 
-            Directory.CreateDirectory(dataPath);
+            if (!Directory.Exists(dataPath))
+            {
+                Directory.CreateDirectory(dataPath);
+            }
+
             path = Path.Combine(dataPath, "xmltv_cache.xml");
         }
 
