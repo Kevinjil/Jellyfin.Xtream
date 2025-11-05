@@ -109,20 +109,31 @@ public static class XmlTvValidation
     /// <returns>The absolute path to use for caching.</returns>
     public static string GetCachePath(string configPath)
     {
+        string path;
         if (!string.IsNullOrWhiteSpace(configPath))
         {
-            return configPath;
+            path = configPath;
+            // Create all directories in the configured path
+            string? dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+        }
+        else
+        {
+            // Use plugin data directory
+            string dataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "jellyfin",
+                "plugins",
+                "xtream");
+
+            Directory.CreateDirectory(dataPath);
+            path = Path.Combine(dataPath, "xmltv_cache.xml");
         }
 
-        // Use plugin data directory
-        string dataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "jellyfin",
-            "plugins",
-            "xtream");
-
-        Directory.CreateDirectory(dataPath);
-        return Path.Combine(dataPath, "xmltv_cache.xml");
+        return path;
     }
 
     /// <summary>
