@@ -389,7 +389,7 @@ public partial class StreamService(IXtreamClient xtreamClient)
         if (type == StreamType.CatchUp)
         {
             string? startString = start?.ToString("yyyy'-'MM'-'dd':'HH'-'mm", CultureInfo.InvariantCulture);
-            uri = $"{config.BaseUrl}/streaming/timeshift.php?username={config.Username}&password={config.Password}&stream={id}&start={startString}&duration={durationMinutes}";
+            uri = string.Format(CultureInfo.InvariantCulture, config.CatchupUrlFormat, config.BaseUrl, config.Username, config.Password, id, startString, durationMinutes);
         }
 
         bool isLive = type == StreamType.Live;

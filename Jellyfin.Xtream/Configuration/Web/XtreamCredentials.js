@@ -13,6 +13,7 @@ export default function (view) {
       view.querySelector('#BaseUrl').value = config.BaseUrl;
       view.querySelector('#Username').value = config.Username;
       view.querySelector('#Password').value = config.Password;
+      view.querySelector('#CatchupUrlFormat').value = config.CatchupUrlFormat || '{0}/streaming/timeshift.php?username={1}&password={2}&stream={3}&start={4}&duration={5}';
       Dashboard.hideLoadingMsg();
     });
 
@@ -52,6 +53,7 @@ export default function (view) {
         config.BaseUrl = view.querySelector('#BaseUrl').value;
         config.Username = view.querySelector('#Username').value;
         config.Password = view.querySelector('#Password').value;
+        config.CatchupUrlFormat = view.querySelector('#CatchupUrlFormat').value;
         ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
           reloadStatus();
           Dashboard.processPluginConfigurationUpdateResult(result);
