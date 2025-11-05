@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -35,7 +36,12 @@ public static class XmlTvValidation
                 {
                     try
                     {
-                        s = s.Replace(" ", string.Empty);
+                        if (s is null)
+                        {
+                            return DateTime.MinValue;
+                        }
+
+                        s = s.Replace(" ", string.Empty, StringComparison.Ordinal);
                         if (s.Length > 14)
                         {
                             string zone = s[^5..];
@@ -46,13 +52,12 @@ public static class XmlTvValidation
                             }
                         }
 
-                        if (DateTime.TryParseExact(s, "yyyyMMddHHmmsszzz", System.Globalization.CultureInfo.InvariantCulture,
-                            System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var dt))
+                        if (DateTime.TryParseExact(s, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt))
                         {
                             return dt.ToUniversalTime();
                         }
-                        return DateTime.Parse(s, System.Globalization.CultureInfo.InvariantCulture,
-                            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+
+                        return DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
                     }
                     catch
                     {
@@ -62,7 +67,7 @@ public static class XmlTvValidation
                 .Where(dt => dt != DateTime.MinValue)
                 .ToList();
 
-            if (!programmes.Any())
+            if (programmes.Count == 0)
             {
                 logger.LogError("XMLTV validation failed: No valid programme entries found");
                 return false;
@@ -75,13 +80,19 @@ public static class XmlTvValidation
 
             if (historicalDays < requiredHistoricalDays)
             {
-                logger.LogError("XMLTV validation failed: Only {HistoricalDays:F1} days of historical data found, {RequiredDays} days required",
-                    historicalDays, requiredHistoricalDays);
+                logger.LogError(
+                    "XMLTV validation failed: Only {HistoricalDays:F1} days of historical data found, {RequiredDays} days required",
+                    historicalDays,
+                    requiredHistoricalDays);
+
                 return false;
             }
 
-            logger.LogInformation("XMLTV validation passed: {HistoricalDays:F1} days of historical data, {TotalDays:F1} days total coverage",
-                historicalDays, daysCovered);
+            logger.LogInformation(
+                "XMLTV validation passed: {HistoricalDays:F1} days of historical data, {TotalDays:F1} days total coverage",
+                historicalDays,
+                daysCovered);
+
             return true;
         }
         catch (Exception ex)
@@ -125,8 +136,8 @@ public static class XmlTvValidation
         foreach (var stream in streams)
         {
             // Use EPG channel ID if available, otherwise use stream ID
-            string epgId = string.IsNullOrWhiteSpace(stream.EpgChannelId) 
-                ? stream.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture) 
+            string epgId = string.IsNullOrWhiteSpace(stream.EpgChannelId)
+                ? stream.StreamId.ToString(System.Globalization.CultureInfo.InvariantCulture)
                 : stream.EpgChannelId;
 
             if (!mapping.TryGetValue(epgId, out var streamIds))
@@ -137,6 +148,7 @@ public static class XmlTvValidation
 
             streamIds.Add(stream.StreamId);
         }
+
         return mapping;
     }
 }

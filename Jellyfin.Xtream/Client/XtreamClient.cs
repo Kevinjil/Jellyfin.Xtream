@@ -208,7 +208,7 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
         {
             string fromDate = DateTime.UtcNow.AddDays(-historicalDays).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             string toDate = DateTime.UtcNow.AddDays(2).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-            urlPath += (urlPath.Contains('?') ? "&" : "?") + $"timeshift=1&from={fromDate}&to={toDate}";
+            urlPath += (urlPath.Contains('?', StringComparison.Ordinal) ? "&" : "?") + $"timeshift=1&from={fromDate}&to={toDate}";
         }
 
         Uri uri = new Uri(urlPath);

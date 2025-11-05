@@ -16,10 +16,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Client.Models;
 using Jellyfin.Xtream.Service;
@@ -55,7 +57,7 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
     public async Task<IEnumerable<ChannelInfo>> GetChannelsAsync(CancellationToken cancellationToken)
     {
         Plugin plugin = Plugin.Instance;
-        List<ChannelInfo> items = [];
+        List<ChannelInfo> items = new List<ChannelInfo>();
         foreach (StreamInfo channel in await plugin.StreamService.GetLiveStreamsWithOverrides(cancellationToken).ConfigureAwait(false))
         {
             ParsedName parsed = StreamService.ParseName(channel.Name);
@@ -124,7 +126,7 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
     public async Task<List<MediaSourceInfo>> GetChannelStreamMediaSources(string channelId, CancellationToken cancellationToken)
     {
         MediaSourceInfo source = await GetChannelStream(channelId, string.Empty, cancellationToken).ConfigureAwait(false);
-        return [source];
+        return new List<MediaSourceInfo> { source };
     }
 
     /// <inheritdoc />
@@ -184,9 +186,9 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                     var channelMapping = XmlTvValidation.BuildChannelMapping(allStreams);
 
                     string xmlCacheKey = $"xtream-xmltv-{plugin.DataVersion}";
-                    if (!memoryCache.TryGetValue(xmlCacheKey, out Dictionary<string, List<(DateTime start, DateTime end, string title, string desc)>>? mapping))
+                    if (!memoryCache.TryGetValue(xmlCacheKey, out Dictionary<string, List<(DateTime Start, DateTime End, string Title, string Description)>>? mapping))
                     {
-                        mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
+                        mapping = new Dictionary<string, List<(DateTime Start, DateTime End, string Title, string Description)>>();
                         try
                         {
                             string xml;
@@ -219,8 +221,8 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                             {
                                 throw new InvalidDataException("XMLTV content validation failed - check logs for details");
                             }
-                            string xml = await xtreamClient.GetXmlTvAsync(plugin.Creds, plugin.Configuration.XmlTvUrl, cancellationToken).ConfigureAwait(false);
-                            var doc = System.Xml.Linq.XDocument.Parse(xml);
+
+                            var doc = XDocument.Parse(xml);
                             foreach (var prog in doc.Descendants("programme"))
                             {
                                 string? ch = prog.Attribute("channel")?.Value ?? string.Empty;
@@ -229,36 +231,38 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
 
                                 DateTime start;
                                 DateTime stop;
-                                try
+
+                                // Local helper to parse XMLTV date/time formats used by providers (handles timezone like +0000 -> +00:00)
+                                static DateTime ParseXmlTvDate(string raw)
                                 {
-                                    static DateTime ParseXmlTvDate(string raw)
+                                    if (string.IsNullOrWhiteSpace(raw))
                                     {
-                                        if (string.IsNullOrWhiteSpace(raw))
-                                        {
-                                            return DateTime.MinValue;
-                                        }
-
-                                        string s = raw.Replace(" ", string.Empty);
-                                        // If timezone is in form +0000 convert to +00:00 for parsing with 'zzz'
-                                        if (s.Length > 14)
-                                        {
-                                            string zone = s[^5..];
-                                            if ((zone[0] == '+' || zone[0] == '-') && int.TryParse(zone[1..], out _))
-                                            {
-                                                string zoneWithColon = zone.Insert(3, ":");
-                                                s = s[..^5] + zoneWithColon;
-                                            }
-                                        }
-
-                                        if (DateTime.TryParseExact(s, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var dt))
-                                        {
-                                            return dt.ToUniversalTime();
-                                        }
-
-                                        // Fallback
-                                        return DateTime.Parse(s, CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+                                        return DateTime.MinValue;
                                     }
 
+                                    string s = raw.Replace(" ", string.Empty, StringComparison.Ordinal);
+                                    // If timezone is in form +0000 convert to +00:00 for parsing with 'zzz'
+                                    if (s.Length > 14)
+                                    {
+                                        string zone = s[^5..];
+                                        if ((zone[0] == '+' || zone[0] == '-') && int.TryParse(zone[1..], out _))
+                                        {
+                                            string zoneWithColon = zone.Insert(3, ":");
+                                            s = s[..^5] + zoneWithColon;
+                                        }
+                                    }
+
+                                    if (DateTime.TryParseExact(s, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt))
+                                    {
+                                        return dt.ToUniversalTime();
+                                    }
+
+                                    // Fallback
+                                    return DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+                                }
+
+                                try
+                                {
                                     start = ParseXmlTvDate(startRaw);
                                 }
                                 catch
@@ -268,24 +272,7 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
 
                                 try
                                 {
-                                    static DateTime ParseXmlTvDate2(string raw) => DateTime.MinValue; // placeholder
-                                    // Reuse parsing above by calling the same logic
-                                    string stopTemp = stopRaw;
-                                    string sstop = stopTemp.Replace(" ", string.Empty);
-                                    if (sstop.Length > 14)
-                                    {
-                                        string zone = sstop[^5..];
-                                        if ((zone[0] == '+' || zone[0] == '-') && int.TryParse(zone[1..], out _))
-                                        {
-                                            string zoneWithColon = zone.Insert(3, ":");
-                                            sstop = sstop[..^5] + zoneWithColon;
-                                        }
-                                    }
-
-                                    if (!DateTime.TryParseExact(sstop, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out stop))
-                                    {
-                                        stop = DateTime.Parse(sstop, CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
-                                    }
+                                    stop = ParseXmlTvDate(stopRaw);
                                 }
                                 catch
                                 {
@@ -297,11 +284,11 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
 
                                 if (!mapping.TryGetValue(ch, out var list))
                                 {
-                                    list = new List<(DateTime, DateTime, string, string)>();
+                                    list = new List<(DateTime Start, DateTime End, string Title, string Description)>();
                                     mapping[ch] = list;
                                 }
 
-                                list.Add((start, stop, title, desc));
+                                list.Add((Start: start, End: stop, Title: title, Description: desc));
                             }
 
                             memoryCache.Set(xmlCacheKey, mapping, DateTimeOffset.Now.AddMinutes(plugin.Configuration.XmlTvCacheMinutes));
@@ -316,7 +303,10 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                     // Find all possible EPG keys for this stream
                     foreach (var kvp in channelMapping)
                     {
-                        if (kvp.Value.Contains(streamId) && mapping.TryGetValue(kvp.Key, out var progsForChannel))
+                        if (kvp.Value != null && mapping != null &&
+                            kvp.Value.Contains(streamId) &&
+                            mapping.TryGetValue(kvp.Key, out var progsForChannel) &&
+                            progsForChannel != null)
                         {
                             int localId = 1;
                             foreach (var p in progsForChannel)
@@ -325,10 +315,10 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                                 {
                                     Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, localId++, 0).ToString(),
                                     ChannelId = channelId,
-                                    StartDate = p.start,
-                                    EndDate = p.end,
-                                    Name = p.title,
-                                    Overview = p.desc,
+                                    StartDate = p.Start,
+                                    EndDate = p.End,
+                                    Name = p.Title,
+                                    Overview = p.Description,
                                 });
                             }
                         }
