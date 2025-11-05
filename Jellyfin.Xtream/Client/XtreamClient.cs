@@ -193,7 +193,7 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
 
         if (string.IsNullOrWhiteSpace(xmlTvUrl))
         {
-            urlPath = $"/xmltv.php?username={connectionInfo.UserName}&password={connectionInfo.Password}";
+            urlPath = $"{connectionInfo.BaseUrl}/xmltv.php?username={connectionInfo.UserName}&password={connectionInfo.Password}";
         }
         else if (xmlTvUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
         {
