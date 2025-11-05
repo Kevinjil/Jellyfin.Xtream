@@ -3,13 +3,24 @@ export default function (view) {
     let pluginId;
 
     view.addEventListener('viewshow', () => {
-        import(window.ApiClient.getUrl("web/ConfigurationPage", {
+        const moduleUrl = ApiClient.getUrl("configurationpage", {
             name: "Xtream.js",
-        }))
+        });
+        
+        // Load the shared module
+        return import(moduleUrl)
         .then((module) => {
+            console.log("Xtream module loaded");
             Xtream = module.default;
             pluginId = Xtream.pluginConfig.UniqueId;
+            console.log("Plugin ID:", pluginId);
             return ApiClient.getPluginConfiguration(pluginId);
+        })
+        .catch(err => {
+            console.error("Error loading Xtream module:", err);
+            Dashboard.alert({
+                message: "Failed to load configuration module. Please check the browser console for details."
+            });
         })
         .then((config) => {
             view.querySelector('#UseXmlTv').checked = config.UseXmlTv;
@@ -49,10 +60,27 @@ export default function (view) {
             config.XmlTvDiskCache = diskCache;
             config.XmlTvCachePath = cachePath;
 
-            ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
-                Xtream.logConfigurationChange('XMLTV');
-                Dashboard.processPluginConfigurationUpdateResult(result);
-            });
+            console.log("Updating configuration:", config);
+            return ApiClient.updatePluginConfiguration(pluginId, config)
+                .then((result) => {
+                    console.log("Configuration updated successfully");
+                    return Xtream.logConfigurationChange('XMLTV')
+                        .then(() => {
+                            console.log("Configuration change logged");
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        })
+                        .catch(err => {
+                            console.error("Error logging configuration change:", err);
+                            // Still show success since the config was saved
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                })
+                .catch(err => {
+                    console.error("Error updating configuration:", err);
+                    Dashboard.alert({
+                        message: "Failed to save configuration. Check the browser console for details."
+                    });
+                });
         });
 
         return false;
