@@ -1,14 +1,14 @@
 <!-- Copyright (C) 2022  Kevin Jilissen -->
 <div id="XtreamXmlTvPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
-  data-require="emby-input,emby-button,emby-checkbox,emby-tabs-button" data-controller="__plugin/XtreamXmlTv.js">
+  data-require="emby-input,emby-button,emby-checkbox" data-controller="__plugin/XtreamXmlTv.js">
   <div class="pageTabContent">
-    <div is="emby-tabs-button" class="emby-tabs-button">
-      <button is="emby-button" class="raised button-alt emby-button" data-index="0">Credentials</button>
-      <button is="emby-button" class="raised button-alt emby-button" data-index="1">Live TV</button>
-      <button is="emby-button" class="raised button-alt emby-button" data-index="2">TV Overrides</button>
-      <button is="emby-button" class="raised button-alt emby-button" data-index="3">Video On-Demand</button>
-      <button is="emby-button" class="raised button-alt emby-button" data-index="4">Series</button>
-      <button is="emby-button" class="raised button-alt emby-button" data-index="5">XMLTV</button>
+    <div class="tabLinks">
+      <a href="configurationpage?name=XtreamCredentials.html">Credentials</a>
+      <a href="configurationpage?name=XtreamLive.html">Live TV</a>
+      <a href="configurationpage?name=XtreamLiveOverrides.html">TV Overrides</a>
+      <a href="configurationpage?name=XtreamVod.html">Video On-Demand</a>
+      <a href="configurationpage?name=XtreamSeries.html">Series</a>
+      <a href="configurationpage?name=XtreamXmlTv.html" class="selected">XMLTV</a>
     </div>
   </div>
   <div data-role="content">

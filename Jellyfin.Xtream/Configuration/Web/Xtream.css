@@ -34,3 +34,26 @@
 .overrides-table thead th:first-child {
   width: 0;
 }
+
+.tabLinks {
+  margin-bottom: 2em;
+  padding: 0.5em;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.tabLinks a {
+  margin: 0 1em;
+  padding: 0.5em 0;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.tabLinks a:hover {
+  opacity: 1;
+}
+
+.tabLinks a.selected {
+  opacity: 1;
+  border-bottom: 2px solid #00a4dc;
+}
