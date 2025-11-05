@@ -181,6 +181,15 @@ const fetchJson = (url) => ApiClient.fetch({
   url: ApiClient.getUrl(url),
 });
 
+const logConfigurationChange = (pageName) => {
+  ApiClient.fetch({
+    type: 'POST',
+    url: ApiClient.getUrl('Xtream/LogConfigChange'),
+    data: JSON.stringify({ page: pageName }),
+    contentType: 'application/json'
+  });
+};
+
 const filter = (obj, predicate) => Object.keys(obj)
   .filter(key => predicate(obj[key]))
   .reduce((res, key) => (res[key] = obj[key], res), {});
@@ -227,4 +236,5 @@ export default {
   pluginConfig,
   populateCategoriesTable,
   setTabs,
+  logConfigurationChange,
 }

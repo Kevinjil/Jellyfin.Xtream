@@ -67,6 +67,7 @@ export default function (view) {
         config.CatchupUrlFormat = view.querySelector('#CatchupUrlFormat').value;
         ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
           reloadStatus();
+          Xtream.logConfigurationChange('Credentials');
           Dashboard.processPluginConfigurationUpdateResult(result);
         });
       });
