@@ -212,6 +212,11 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
         }
 
         Uri uri = new Uri(urlPath);
+        logger.LogInformation(
+            "Fetching XMLTV from URL: {Url} (historicalDays: {Days}, supportsTimeshift: {Timeshift})",
+            uri.ToString().Replace(connectionInfo.Password, "***", StringComparison.Ordinal),
+            historicalDays,
+            plugin.Configuration.XmlTvSupportsTimeshift);
         return await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
     }
 

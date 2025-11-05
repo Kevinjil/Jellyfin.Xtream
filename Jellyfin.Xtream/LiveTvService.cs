@@ -175,8 +175,16 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
         {
             items = new List<ProgramInfo>();
             Plugin plugin = Plugin.Instance;
+            logger.LogInformation(
+                "GetProgramsAsync for channel {ChannelId}, streamId {StreamId}. UseXmlTv: {UseXmlTv}, XmlTvUrl: '{XmlTvUrl}'",
+                channelId,
+                streamId,
+                plugin.Configuration.UseXmlTv,
+                plugin.Configuration.XmlTvUrl ?? "(default)");
+
             if (plugin.Configuration.UseXmlTv)
             {
+                logger.LogInformation("Using XMLTV for EPG data (streamId: {StreamId})", streamId);
                 // Try to find the stream to get the EPG channel id
                 StreamInfo? streamInfo = (await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false)).FirstOrDefault(s => s.StreamId == streamId);
                 if (streamInfo != null)
@@ -327,6 +335,7 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
             }
             else if (!plugin.Configuration.UseXmlTv)
             {
+                logger.LogInformation("Using per-channel EPG API call for streamId: {StreamId}", streamId);
                 EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)
                 {
