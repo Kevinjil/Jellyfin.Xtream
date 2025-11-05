@@ -180,17 +180,32 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
 
     public async Task<string> GetXmlTvAsync(ConnectionInfo connectionInfo, string? xmlTvUrl, CancellationToken cancellationToken)
     {
-        string urlPath;
+        ArgumentNullException.ThrowIfNull(connectionInfo);
+
         Plugin plugin = Plugin.Instance;
         int historicalDays = plugin.Configuration.XmlTvHistoricalDays;
 
+        // Auto-detect historical days if not configured
         if (historicalDays <= 0)
         {
-            // Auto-detect from channel archive durations
-            List<StreamInfo> streams = await GetLiveStreamsAsync(connectionInfo, cancellationToken).ConfigureAwait(false);
-            historicalDays = streams.Where(s => s.TvArchive).Select(s => s.TvArchiveDuration).DefaultIfEmpty(7).Max();
+            try
+            {
+                List<StreamInfo> streams = await GetLiveStreamsAsync(connectionInfo, cancellationToken).ConfigureAwait(false);
+                historicalDays = streams
+                    .Where(s => s.TvArchive)
+                    .Select(s => s.TvArchiveDuration)
+                    .DefaultIfEmpty(7)
+                    .Max();
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to auto-detect historical days, defaulting to 7");
+                historicalDays = 7;
+            }
         }
 
+        // Build XMLTV URL
+        string urlPath;
         if (string.IsNullOrWhiteSpace(xmlTvUrl))
         {
             urlPath = $"{connectionInfo.BaseUrl}/xmltv.php?username={connectionInfo.UserName}&password={connectionInfo.Password}";
@@ -204,20 +219,37 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
             urlPath = connectionInfo.BaseUrl + xmlTvUrl;
         }
 
+        // Add timeshift parameters if supported
         if (plugin.Configuration.XmlTvSupportsTimeshift)
         {
             string fromDate = DateTime.UtcNow.AddDays(-historicalDays).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             string toDate = DateTime.UtcNow.AddDays(2).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-            urlPath += (urlPath.Contains('?', StringComparison.Ordinal) ? "&" : "?") + $"timeshift=1&from={fromDate}&to={toDate}";
+            char separator = urlPath.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+            urlPath += $"{separator}timeshift=1&from={fromDate}&to={toDate}";
         }
 
-        Uri uri = new Uri(urlPath);
+        Uri uri = new(urlPath);
+        string sanitizedUrl = uri.ToString().Replace(connectionInfo.Password, "***", StringComparison.Ordinal);
+
         logger.LogInformation(
-            "Fetching XMLTV from URL: {Url} (historicalDays: {Days}, supportsTimeshift: {Timeshift})",
-            uri.ToString().Replace(connectionInfo.Password, "***", StringComparison.Ordinal),
+            "Fetching XMLTV from {Url} (historicalDays: {Days}, timeshift: {Timeshift})",
+            sanitizedUrl,
             historicalDays,
             plugin.Configuration.XmlTvSupportsTimeshift);
-        return await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to download XMLTV from {Url}. Status: {StatusCode}",
+                sanitizedUrl,
+                ex.StatusCode);
+            throw;
+        }
     }
 
     /// <summary>

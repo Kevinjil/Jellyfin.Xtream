@@ -239,11 +239,23 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                             }
 
                             var doc = XDocument.Parse(xml);
-                            foreach (var prog in doc.Descendants("programme"))
+                            var programmes = doc.Descendants("programme");
+
+                            foreach (var prog in programmes)
                             {
-                                string? ch = prog.Attribute("channel")?.Value ?? string.Empty;
-                                string? startRaw = prog.Attribute("start")?.Value ?? string.Empty;
-                                string? stopRaw = prog.Attribute("stop")?.Value ?? string.Empty;
+                                string? ch = prog.Attribute("channel")?.Value;
+                                if (string.IsNullOrEmpty(ch))
+                                {
+                                    continue; // Skip programmes without channel ID
+                                }
+
+                                string? startRaw = prog.Attribute("start")?.Value;
+                                string? stopRaw = prog.Attribute("stop")?.Value;
+
+                                if (string.IsNullOrEmpty(startRaw) || string.IsNullOrEmpty(stopRaw))
+                                {
+                                    continue; // Skip programmes without valid time range
+                                }
 
                                 DateTime start;
                                 DateTime stop;
@@ -280,23 +292,20 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                                 try
                                 {
                                     start = ParseXmlTvDate(startRaw);
-                                }
-                                catch
-                                {
-                                    start = DateTime.MinValue;
-                                }
-
-                                try
-                                {
                                     stop = ParseXmlTvDate(stopRaw);
+
+                                    if (start == DateTime.MinValue || stop == DateTime.MinValue || start >= stop)
+                                    {
+                                        continue; // Skip programmes with invalid dates
+                                    }
                                 }
                                 catch
                                 {
-                                    stop = DateTime.MinValue;
+                                    continue; // Skip programmes with unparseable dates
                                 }
 
-                                string title = prog.Elements("title").FirstOrDefault()?.Value ?? string.Empty;
-                                string desc = prog.Elements("desc").FirstOrDefault()?.Value ?? string.Empty;
+                                string title = prog.Element("title")?.Value ?? string.Empty;
+                                string desc = prog.Element("desc")?.Value ?? string.Empty;
 
                                 if (!mapping.TryGetValue(ch, out var list))
                                 {
@@ -309,9 +318,23 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
 
                             memoryCache.Set(xmlCacheKey, mapping, DateTimeOffset.Now.AddMinutes(plugin.Configuration.XmlTvCacheMinutes));
                         }
+                        catch (HttpRequestException ex)
+                        {
+                            logger.LogError(
+                                ex,
+                                "Failed to download XMLTV feed from {Url}. Status: {StatusCode}",
+                                plugin.Configuration.XmlTvUrl ?? "default",
+                                ex.StatusCode);
+                            mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
+                        }
+                        catch (Exception ex) when (ex is System.Xml.XmlException || ex is InvalidDataException)
+                        {
+                            logger.LogError(ex, "Failed to parse XMLTV feed. The XML data may be invalid or corrupted");
+                            mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
+                        }
                         catch (Exception ex)
                         {
-                            logger.LogWarning(ex, "Failed to download or parse XMLTV feed");
+                            logger.LogError(ex, "Unexpected error processing XMLTV feed");
                             mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
                         }
                     }
@@ -341,25 +364,52 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                     }
                 }
             }
-            else if (!plugin.Configuration.UseXmlTv)
+            else
             {
-                logger.LogInformation("Using per-channel EPG API call for streamId: {StreamId}", streamId);
-                EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
-                foreach (EpgInfo epg in epgs.Listings)
+                logger.LogDebug("Using per-channel EPG API for streamId: {StreamId}", streamId);
+                try
                 {
-                    items.Add(new()
+                    EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
+
+                    if (epgs?.Listings == null)
                     {
-                        Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, epg.Id, 0).ToString(),
-                        ChannelId = channelId,
-                        StartDate = epg.Start,
-                        EndDate = epg.End,
-                        Name = epg.Title,
-                        Overview = epg.Description,
-                    });
+                        logger.LogWarning("No EPG data returned for streamId: {StreamId}", streamId);
+                        memoryCache.Set(key, items, DateTimeOffset.Now.AddMinutes(30));
+                        return items;
+                    }
+
+                    foreach (EpgInfo epg in epgs.Listings)
+                    {
+                        items.Add(new()
+                        {
+                            Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, epg.Id, 0).ToString(),
+                            ChannelId = channelId,
+                            StartDate = epg.Start,
+                            EndDate = epg.End,
+                            Name = epg.Title,
+                            Overview = epg.Description,
+                        });
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Failed to fetch per-channel EPG for streamId {StreamId}. Status: {StatusCode}",
+                        streamId,
+                        ex.StatusCode);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Unexpected error fetching EPG for streamId {StreamId}", streamId);
                 }
             }
 
-            memoryCache.Set(key, items, DateTimeOffset.Now.AddMinutes(10));
+            // Cache the results
+            if (items.Count > 0)
+            {
+                memoryCache.Set(key, items, DateTimeOffset.Now.AddMinutes(30));
+            }
         }
 
         return from epg in items
