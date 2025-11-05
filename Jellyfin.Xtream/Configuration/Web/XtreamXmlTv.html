@@ -1,6 +1,37 @@
 <!-- Copyright (C) 2022  Kevin Jilissen -->
 <div id="XtreamXmlTvPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
   data-require="emby-input,emby-button,emby-checkbox" data-controller="__plugin/XtreamXmlTv.js">
+  <div class="verticalSection verticalSection">
+    <div class="sectionTitleContainer sectionTitleContainer-cards">
+      <h2 class="sectionTitle sectionTitle-cards">Xtream Configuration</h2>
+    </div>
+  </div>
+  <div class="pageTabContent">
+    <div class="emby-tabs-slider tabs-top emby-tabs-slider-initialized" style="white-space: nowrap;">
+      <div is="emby-tabs" class="emby-tabs emby-tabs-initialized">
+        <div class="emby-tabs-tabpanel">
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamCredentials.html" class="emby-tab-button emby-button">
+            <div class="emby-button-foreground">Credentials</div>
+          </a>
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamLive.html" class="emby-tab-button emby-button">
+            <div class="emby-button-foreground">Live TV</div>
+          </a>
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamLiveOverrides.html" class="emby-tab-button emby-button">
+            <div class="emby-button-foreground">TV Overrides</div>
+          </a>
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamSeries.html" class="emby-tab-button emby-button">
+            <div class="emby-button-foreground">Series</div>
+          </a>
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamVod.html" class="emby-tab-button emby-button">
+            <div class="emby-button-foreground">Video On-Demand</div>
+          </a>
+          <a is="emby-linkbutton" href="configurationpage?name=XtreamXmlTv.html" class="emby-tab-button emby-button active">
+            <div class="emby-button-foreground">XMLTV Settings</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
   <div data-role="content">
     <div class="content-primary">
       <form id="XtreamXmlTvForm">
