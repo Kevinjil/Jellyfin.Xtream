@@ -1,0 +1,77 @@
+<!-- Copyright (C) 2022  Kevin Jilissen -->
+<div id="XtreamXmlTvPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
+  data-require="emby-input,emby-button,emby-checkbox" data-controller="__plugin/XtreamXmlTv.js">
+  <div data-role="content">
+    <div class="content-primary">
+      <form id="XtreamXmlTvForm">
+        <div class="checkboxContainer checkboxContainer-withDescription">
+          <label>
+            <input is="emby-checkbox" id="UseXmlTv" name="UseXmlTv" type="checkbox" />
+            <span>Use XMLTV endpoint instead of per-channel EPG API calls</span>
+          </label>
+          <div class="fieldDescription">
+            Some providers offer a single XMLTV endpoint that contains all EPG data. This is usually more efficient than making separate API calls for each channel.
+          </div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel inputLabelUnfocused" for="XmlTvUrl">XMLTV URL Override</label>
+          <input id="XmlTvUrl" name="XmlTvUrl" type="url" is="emby-input" />
+          <div class="fieldDescription">
+            Optional. If empty, the default path '/xmltv.php?username=...&amp;password=...' will be used.
+          </div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel inputLabelUnfocused" for="XmlTvHistoricalDays">Historical EPG Days</label>
+          <input id="XmlTvHistoricalDays" name="XmlTvHistoricalDays" type="number" min="0" is="emby-input" />
+          <div class="fieldDescription">
+            Number of days of historical EPG data to fetch. If 0, will use the maximum archive duration of all channels.
+          </div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel inputLabelUnfocused" for="XmlTvCacheMinutes">Cache Duration (minutes)</label>
+          <input id="XmlTvCacheMinutes" name="XmlTvCacheMinutes" type="number" min="1" is="emby-input" />
+          <div class="fieldDescription">
+            How long to cache the downloaded XMLTV file in memory.
+          </div>
+        </div>
+
+        <div class="checkboxContainer">
+          <label>
+            <input is="emby-checkbox" id="XmlTvSupportsTimeshift" name="XmlTvSupportsTimeshift" type="checkbox" />
+            <span>XMLTV endpoint supports timeshift parameters</span>
+          </label>
+          <div class="fieldDescription">
+            When enabled, appends time range parameters to XMLTV URL (timeshift=1&amp;from=...&amp;to=...).
+          </div>
+        </div>
+
+        <div class="checkboxContainer">
+          <label>
+            <input is="emby-checkbox" id="XmlTvDiskCache" name="XmlTvDiskCache" type="checkbox" />
+            <span>Cache XMLTV file to disk</span>
+          </label>
+          <div class="fieldDescription">
+            Store the downloaded XMLTV file on disk to reduce server load.
+          </div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel inputLabelUnfocused" for="XmlTvCachePath">Cache File Path</label>
+          <input id="XmlTvCachePath" name="XmlTvCachePath" type="text" is="emby-input" />
+          <div class="fieldDescription">
+            Optional. Location where the XMLTV cache file will be stored. If empty, uses the plugin's data directory.
+          </div>
+        </div>
+
+        <div>
+          <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
