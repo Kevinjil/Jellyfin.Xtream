@@ -173,6 +173,133 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
         {
             items = new List<ProgramInfo>();
             Plugin plugin = Plugin.Instance;
+            if (plugin.Configuration.UseXmlTv)
+            {
+                // Try to find the stream to get the EPG channel id
+                StreamInfo? streamInfo = (await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false)).FirstOrDefault(s => s.StreamId == streamId);
+                if (streamInfo != null)
+                {
+                    string epgChannelKey = string.IsNullOrWhiteSpace(streamInfo.EpgChannelId) ? streamInfo.StreamId.ToString(CultureInfo.InvariantCulture) : streamInfo.EpgChannelId;
+
+                    string xmlCacheKey = $"xtream-xmltv-{plugin.DataVersion}";
+                    if (!memoryCache.TryGetValue(xmlCacheKey, out Dictionary<string, List<(DateTime start, DateTime end, string title, string desc)>>? mapping))
+                    {
+                        mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
+                        try
+                        {
+                            string xml = await xtreamClient.GetXmlTvAsync(plugin.Creds, plugin.Configuration.XmlTvUrl, cancellationToken).ConfigureAwait(false);
+                            var doc = System.Xml.Linq.XDocument.Parse(xml);
+                            foreach (var prog in doc.Descendants("programme"))
+                            {
+                                string? ch = prog.Attribute("channel")?.Value ?? string.Empty;
+                                string? startRaw = prog.Attribute("start")?.Value ?? string.Empty;
+                                string? stopRaw = prog.Attribute("stop")?.Value ?? string.Empty;
+
+                                DateTime start;
+                                DateTime stop;
+                                try
+                                {
+                                    static DateTime ParseXmlTvDate(string raw)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(raw))
+                                        {
+                                            return DateTime.MinValue;
+                                        }
+
+                                        string s = raw.Replace(" ", string.Empty);
+                                        // If timezone is in form +0000 convert to +00:00 for parsing with 'zzz'
+                                        if (s.Length > 14)
+                                        {
+                                            string zone = s[^5..];
+                                            if ((zone[0] == '+' || zone[0] == '-') && int.TryParse(zone[1..], out _))
+                                            {
+                                                string zoneWithColon = zone.Insert(3, ":");
+                                                s = s[..^5] + zoneWithColon;
+                                            }
+                                        }
+
+                                        if (DateTime.TryParseExact(s, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var dt))
+                                        {
+                                            return dt.ToUniversalTime();
+                                        }
+
+                                        // Fallback
+                                        return DateTime.Parse(s, CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+                                    }
+
+                                    start = ParseXmlTvDate(startRaw);
+                                }
+                                catch
+                                {
+                                    start = DateTime.MinValue;
+                                }
+
+                                try
+                                {
+                                    static DateTime ParseXmlTvDate2(string raw) => DateTime.MinValue; // placeholder
+                                    // Reuse parsing above by calling the same logic
+                                    string stopTemp = stopRaw;
+                                    string sstop = stopTemp.Replace(" ", string.Empty);
+                                    if (sstop.Length > 14)
+                                    {
+                                        string zone = sstop[^5..];
+                                        if ((zone[0] == '+' || zone[0] == '-') && int.TryParse(zone[1..], out _))
+                                        {
+                                            string zoneWithColon = zone.Insert(3, ":");
+                                            sstop = sstop[..^5] + zoneWithColon;
+                                        }
+                                    }
+
+                                    if (!DateTime.TryParseExact(sstop, "yyyyMMddHHmmsszzz", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out stop))
+                                    {
+                                        stop = DateTime.Parse(sstop, CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+                                    }
+                                }
+                                catch
+                                {
+                                    stop = DateTime.MinValue;
+                                }
+
+                                string title = prog.Elements("title").FirstOrDefault()?.Value ?? string.Empty;
+                                string desc = prog.Elements("desc").FirstOrDefault()?.Value ?? string.Empty;
+
+                                if (!mapping.TryGetValue(ch, out var list))
+                                {
+                                    list = new List<(DateTime, DateTime, string, string)>();
+                                    mapping[ch] = list;
+                                }
+
+                                list.Add((start, stop, title, desc));
+                            }
+
+                            memoryCache.Set(xmlCacheKey, mapping, DateTimeOffset.Now.AddMinutes(plugin.Configuration.XmlTvCacheMinutes));
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Failed to download or parse XMLTV feed");
+                            mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
+                        }
+                    }
+
+                    if (mapping.TryGetValue(epgChannelKey, out var progsForChannel))
+                    {
+                        int localId = 1;
+                        foreach (var p in progsForChannel)
+                        {
+                            items.Add(new()
+                            {
+                                Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, localId++, 0).ToString(),
+                                ChannelId = channelId,
+                                StartDate = p.start,
+                                EndDate = p.end,
+                                Name = p.title,
+                                Overview = p.desc,
+                            });
+                        }
+                    }
+                }
+            }
+            else
             {
                 EpgListings epgs = await xtreamClient.GetEpgInfoAsync(plugin.Creds, streamId, cancellationToken).ConfigureAwait(false);
                 foreach (EpgInfo epg in epgs.Listings)

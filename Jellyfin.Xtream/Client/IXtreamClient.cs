@@ -25,6 +25,11 @@ namespace Jellyfin.Xtream.Client;
 public interface IXtreamClient
 {
     Task<EpgListings> GetEpgInfoAsync(ConnectionInfo connectionInfo, int streamId, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Gets the XMLTV content from the provider as a raw XML string.
+    /// </summary>
+    Task<string> GetXmlTvAsync(ConnectionInfo connectionInfo, string? xmlTvUrl, CancellationToken cancellationToken);
 
     Task<List<Category>> GetLiveCategoryAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken);
 

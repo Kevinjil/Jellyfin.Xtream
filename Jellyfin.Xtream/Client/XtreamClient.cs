@@ -178,6 +178,43 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_simple_data_table&stream_id={streamId}",
            cancellationToken);
 
+    public async Task<string> GetXmlTvAsync(ConnectionInfo connectionInfo, string? xmlTvUrl, CancellationToken cancellationToken)
+    {
+        string urlPath;
+        Plugin plugin = Plugin.Instance;
+        int historicalDays = plugin.Configuration.XmlTvHistoricalDays;
+
+        if (historicalDays <= 0)
+        {
+            // Auto-detect from channel archive durations
+            List<StreamInfo> streams = await GetLiveStreamsAsync(connectionInfo, cancellationToken).ConfigureAwait(false);
+            historicalDays = streams.Where(s => s.TvArchive).Select(s => s.TvArchiveDuration).DefaultIfEmpty(7).Max();
+        }
+
+        if (string.IsNullOrWhiteSpace(xmlTvUrl))
+        {
+            urlPath = $"/xmltv.php?username={connectionInfo.UserName}&password={connectionInfo.Password}";
+        }
+        else if (xmlTvUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            urlPath = xmlTvUrl;
+        }
+        else
+        {
+            urlPath = connectionInfo.BaseUrl + xmlTvUrl;
+        }
+
+        if (plugin.Configuration.XmlTvSupportsTimeshift)
+        {
+            string fromDate = DateTime.UtcNow.AddDays(-historicalDays).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            string toDate = DateTime.UtcNow.AddDays(2).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            urlPath += (urlPath.Contains('?') ? "&" : "?") + $"timeshift=1&from={fromDate}&to={toDate}";
+        }
+
+        Uri uri = new Uri(urlPath);
+        return await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Dispose the HTTP client.
     /// </summary>
