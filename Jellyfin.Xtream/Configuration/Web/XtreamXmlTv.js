@@ -1,35 +1,30 @@
 export default function (view) {
-    let Xtream;
-    let pluginId;
+    const pluginId = '5d774c35-8567-46d3-a950-9bb8227a0c5d';
 
     view.addEventListener('viewshow', () => {
-        const moduleUrl = ApiClient.getUrl("web/ConfigurationPage", {
-            name: "Xtream.js"
-        });
-        
-        // Use traditional script loading since dynamic import is failing
-        const script = document.createElement('script');
-        script.src = moduleUrl;
-        script.type = 'module';
-        
-        script.onload = () => {
-            // Access the module through the global namespace
-            Xtream = window.Xtream;
-            pluginId = Xtream.pluginConfig.UniqueId;
-            return ApiClient.getPluginConfiguration(pluginId);
-        };
-        
-        script.onerror = (err) => {
-            console.error('Failed to load Xtream module:', err);
-            Dashboard.alert({
-                message: 'Failed to load plugin configuration module. Please try refreshing the page.'
+        console.log("Loading XMLTV configuration...");
+        ApiClient.getPluginConfiguration(pluginId)
+            .then((config) => {
+                console.log("Loaded plugin configuration:", config);
+                view.querySelector('#UseXmlTv').checked = config.UseXmlTv;
+                view.querySelector('#XmlTvUrl').value = config.XmlTvUrl || '';
+                view.querySelector('#XmlTvHistoricalDays').value = config.XmlTvHistoricalDays || 0;
+                view.querySelector('#XmlTvCacheMinutes').value = config.XmlTvCacheMinutes || 10;
+                view.querySelector('#XmlTvSupportsTimeshift').checked = config.XmlTvSupportsTimeshift;
+                view.querySelector('#XmlTvDiskCache').checked = config.XmlTvDiskCache;
+                view.querySelector('#XmlTvCachePath').value = config.XmlTvCachePath || '';
+            })
+            .catch(err => {
+                console.error("Error loading configuration:", err);
+                Dashboard.alert({
+                    message: "Failed to load plugin configuration. Please check the server logs."
+                });
             });
-        };
-        
-        document.head.appendChild(script);
+    });
 
     view.querySelector('#XtreamXmlTvForm').addEventListener('submit', function (e) {
         e.preventDefault();
+        console.log("Saving XMLTV configuration...");
         
         const useXmlTv = view.querySelector('#UseXmlTv').checked;
         const xmlTvUrl = view.querySelector('#XmlTvUrl').value.trim();
@@ -38,7 +33,6 @@ export default function (view) {
         const diskCache = view.querySelector('#XmlTvDiskCache').checked;
         const cachePath = view.querySelector('#XmlTvCachePath').value.trim();
         
-        // Validate URL if provided and XMLTV is enabled
         if (useXmlTv && xmlTvUrl && !xmlTvUrl.startsWith('/') && !xmlTvUrl.match(/^https?:\/\/.+/i)) {
             Dashboard.alert({
                 message: "XMLTV URL must be either an absolute URL starting with http:// or https://, or a relative path starting with /"
@@ -46,37 +40,38 @@ export default function (view) {
             return false;
         }
 
-        ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-            config.UseXmlTv = useXmlTv;
-            config.XmlTvUrl = xmlTvUrl;
-            config.XmlTvHistoricalDays = historicalDays;
-            config.XmlTvCacheMinutes = cacheMinutes;
-            config.XmlTvSupportsTimeshift = view.querySelector('#XmlTvSupportsTimeshift').checked;
-            config.XmlTvDiskCache = diskCache;
-            config.XmlTvCachePath = cachePath;
+        ApiClient.getPluginConfiguration(pluginId)
+            .then(function (config) {
+                config.UseXmlTv = useXmlTv;
+                config.XmlTvUrl = xmlTvUrl;
+                config.XmlTvHistoricalDays = historicalDays;
+                config.XmlTvCacheMinutes = cacheMinutes;
+                config.XmlTvSupportsTimeshift = view.querySelector('#XmlTvSupportsTimeshift').checked;
+                config.XmlTvDiskCache = diskCache;
+                config.XmlTvCachePath = cachePath;
 
-            console.log("Updating configuration:", config);
-            return ApiClient.updatePluginConfiguration(pluginId, config)
-                .then((result) => {
-                    console.log("Configuration updated successfully");
-                    return Xtream.logConfigurationChange('XMLTV')
-                        .then(() => {
-                            console.log("Configuration change logged");
-                            Dashboard.processPluginConfigurationUpdateResult(result);
-                        })
-                        .catch(err => {
-                            console.error("Error logging configuration change:", err);
-                            // Still show success since the config was saved
-                            Dashboard.processPluginConfigurationUpdateResult(result);
-                        });
-                })
-                .catch(err => {
-                    console.error("Error updating configuration:", err);
-                    Dashboard.alert({
-                        message: "Failed to save configuration. Check the browser console for details."
-                    });
+                console.log("Saving configuration:", config);
+                return ApiClient.updatePluginConfiguration(pluginId, config);
+            })
+            .then((result) => {
+                console.log("Configuration saved successfully");
+                return ApiClient.fetch({
+                    type: 'POST',
+                    url: ApiClient.getUrl('Xtream/LogConfigChange'),
+                    data: JSON.stringify({ page: 'XMLTV' }),
+                    contentType: 'application/json'
                 });
-        });
+            })
+            .then(() => {
+                console.log("Configuration change logged");
+                Dashboard.processPluginConfigurationUpdateResult();
+            })
+            .catch(err => {
+                console.error("Error saving configuration:", err);
+                Dashboard.alert({
+                    message: "Failed to save configuration. Please check the browser console and server logs."
+                });
+            });
 
         return false;
     });
