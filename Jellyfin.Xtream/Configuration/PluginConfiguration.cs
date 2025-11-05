@@ -103,5 +103,15 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets a value indicating whether to append time range parameters to XMLTV URL (timeshift=1&amp;from=...&amp;to=...).
     /// </summary>
     public bool XmlTvSupportsTimeshift { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to cache the XMLTV file to disk.
+    /// </summary>
+    public bool XmlTvDiskCache { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the path where the XMLTV cache file will be stored. If empty, uses the plugin's data directory.
+    /// </summary>
+    public string XmlTvCachePath { get; set; } = string.Empty;
 }
 #pragma warning restore CA2227

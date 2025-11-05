@@ -179,7 +179,9 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                 StreamInfo? streamInfo = (await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false)).FirstOrDefault(s => s.StreamId == streamId);
                 if (streamInfo != null)
                 {
-                    string epgChannelKey = string.IsNullOrWhiteSpace(streamInfo.EpgChannelId) ? streamInfo.StreamId.ToString(CultureInfo.InvariantCulture) : streamInfo.EpgChannelId;
+                    // Get all live streams to build channel mapping
+                    var allStreams = await plugin.StreamService.GetLiveStreams(cancellationToken).ConfigureAwait(false);
+                    var channelMapping = XmlTvValidation.BuildChannelMapping(allStreams);
 
                     string xmlCacheKey = $"xtream-xmltv-{plugin.DataVersion}";
                     if (!memoryCache.TryGetValue(xmlCacheKey, out Dictionary<string, List<(DateTime start, DateTime end, string title, string desc)>>? mapping))
@@ -187,6 +189,36 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                         mapping = new Dictionary<string, List<(DateTime, DateTime, string, string)>>();
                         try
                         {
+                            string xml;
+                            string diskCachePath = XmlTvValidation.GetCachePath(plugin.Configuration.XmlTvCachePath);
+
+                            // Try disk cache first if enabled
+                            if (plugin.Configuration.XmlTvDiskCache && File.Exists(diskCachePath))
+                            {
+                                xml = await File.ReadAllTextAsync(diskCachePath, cancellationToken).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                xml = await xtreamClient.GetXmlTvAsync(plugin.Creds, plugin.Configuration.XmlTvUrl, cancellationToken).ConfigureAwait(false);
+
+                                // Write to disk cache if enabled
+                                if (plugin.Configuration.XmlTvDiskCache)
+                                {
+                                    await File.WriteAllTextAsync(diskCachePath, xml, cancellationToken).ConfigureAwait(false);
+                                }
+                            }
+
+                            // Validate XMLTV content
+                            int requiredDays = plugin.Configuration.XmlTvHistoricalDays;
+                            if (requiredDays <= 0)
+                            {
+                                requiredDays = allStreams.Where(s => s.TvArchive).Select(s => s.TvArchiveDuration).DefaultIfEmpty(7).Max();
+                            }
+
+                            if (!XmlTvValidation.ValidateXmlTv(xml, requiredDays, logger))
+                            {
+                                throw new InvalidDataException("XMLTV content validation failed - check logs for details");
+                            }
                             string xml = await xtreamClient.GetXmlTvAsync(plugin.Creds, plugin.Configuration.XmlTvUrl, cancellationToken).ConfigureAwait(false);
                             var doc = System.Xml.Linq.XDocument.Parse(xml);
                             foreach (var prog in doc.Descendants("programme"))
@@ -281,20 +313,24 @@ public class LiveTvService(IServerApplicationHost appHost, IHttpClientFactory ht
                         }
                     }
 
-                    if (mapping.TryGetValue(epgChannelKey, out var progsForChannel))
+                    // Find all possible EPG keys for this stream
+                    foreach (var kvp in channelMapping)
                     {
-                        int localId = 1;
-                        foreach (var p in progsForChannel)
+                        if (kvp.Value.Contains(streamId) && mapping.TryGetValue(kvp.Key, out var progsForChannel))
                         {
-                            items.Add(new()
+                            int localId = 1;
+                            foreach (var p in progsForChannel)
                             {
-                                Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, localId++, 0).ToString(),
-                                ChannelId = channelId,
-                                StartDate = p.start,
-                                EndDate = p.end,
-                                Name = p.title,
-                                Overview = p.desc,
-                            });
+                                items.Add(new()
+                                {
+                                    Id = StreamService.ToGuid(StreamService.EpgPrefix, streamId, localId++, 0).ToString(),
+                                    ChannelId = channelId,
+                                    StartDate = p.start,
+                                    EndDate = p.end,
+                                    Name = p.title,
+                                    Overview = p.desc,
+                                });
+                            }
                         }
                     }
                 }
