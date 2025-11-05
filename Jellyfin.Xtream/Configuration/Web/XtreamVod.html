@@ -1,5 +1,15 @@
 <div id="XtreamVodPage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
-  data-require="emby-input,emby-button" data-controller="__plugin/XtreamVod.js">
+  data-require="emby-input,emby-button,emby-tabs-button" data-controller="__plugin/XtreamVod.js">
+  <div class="pageTabContent">
+    <div is="emby-tabs-button" class="emby-tabs-button">
+      <button is="emby-button" class="raised button-alt emby-button" data-index="0">Credentials</button>
+      <button is="emby-button" class="raised button-alt emby-button" data-index="1">Live TV</button>
+      <button is="emby-button" class="raised button-alt emby-button" data-index="2">TV Overrides</button>
+      <button is="emby-button" class="raised button-alt emby-button" data-index="3">Video On-Demand</button>
+      <button is="emby-button" class="raised button-alt emby-button" data-index="4">Series</button>
+      <button is="emby-button" class="raised button-alt emby-button" data-index="5">XMLTV</button>
+    </div>
+  </div>
   <div data-role="content">
     <div class="content-primary">
       <form id="XtreamVodForm">

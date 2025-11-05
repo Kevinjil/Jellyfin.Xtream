@@ -4,12 +4,25 @@ const url = (name) =>
   });
 const tab = (name) => '/configurationpage?name=' + name + '.html';
 
+const tabRoutes = [
+  'XtreamCredentials',
+  'XtreamLive',
+  'XtreamLiveOverrides',
+  'XtreamVod',
+  'XtreamSeries',
+  'XtreamXmlTv'
+];
+
 $(document).ready(() => {
   const style = document.createElement('link');
   style.rel = 'stylesheet';
   style.href = url('Xtream.css')
   document.head.appendChild(style);
 });
+
+const setTabs = (index) => {
+  window.location.href = tab(tabRoutes[index]);
+};
 
 const htmlExpand = document.createElement('span');
 htmlExpand.ariaHidden = true;
@@ -205,6 +218,10 @@ const tabs = [
   {
     href: tab('XtreamSeries'),
     name: 'Series',
+  },
+  {
+    href: tab('XtreamXmlTv'),
+    name: 'XMLTV',
   },
 ];
 
