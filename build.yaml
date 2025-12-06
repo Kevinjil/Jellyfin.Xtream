@@ -7,7 +7,7 @@ framework: "net9.0"
 overview: "Stream content from an Xtream-compatible server."
 description: >
   Stream Live IPTV, Video On-Demand, and Series from an Xtream-compatible server using this plugin.
-category: "Live TV"
+category: "LiveTV"
 owner: "Kevinjil"
 artifacts:
   - "Jellyfin.Xtream.dll"
