@@ -13,6 +13,7 @@ export default function (view) {
       view.querySelector('#BaseUrl').value = config.BaseUrl;
       view.querySelector('#Username').value = config.Username;
       view.querySelector('#Password').value = config.Password;
+      view.querySelector('#UserAgent').value = config.UserAgent;
       Dashboard.hideLoadingMsg();
     });
 
@@ -45,6 +46,11 @@ export default function (view) {
     };
     reloadStatus();
 
+    view.querySelector('#UserAgentFromBrowser').addEventListener('click', (e) => {
+      e.preventDefault();
+      view.querySelector('#UserAgent').value = navigator.userAgent;
+    });
+
     view.querySelector('#XtreamCredentialsForm').addEventListener('submit', (e) => {
       Dashboard.showLoadingMsg();
 
@@ -52,6 +58,7 @@ export default function (view) {
         config.BaseUrl = view.querySelector('#BaseUrl').value;
         config.Username = view.querySelector('#Username').value;
         config.Password = view.querySelector('#Password').value;
+        config.UserAgent = view.querySelector('#UserAgent').value;
         ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
           reloadStatus();
           Dashboard.processPluginConfigurationUpdateResult(result);

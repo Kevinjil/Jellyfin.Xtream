@@ -46,10 +46,18 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
 
     public void UpdateUserAgent()
     {
-        ProductHeaderValue header = new ProductHeaderValue("Jellyfin.Xtream", Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-        ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue(header);
         client.DefaultRequestHeaders.UserAgent.Clear();
-        client.DefaultRequestHeaders.UserAgent.Add(userAgent);
+        if (string.IsNullOrWhiteSpace(Plugin.Instance.Configuration.UserAgent))
+        {
+            ProductHeaderValue header = new ProductHeaderValue("Jellyfin.Xtream", Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+            ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue(header);
+            client.DefaultRequestHeaders.UserAgent.Add(userAgent);
+        }
+        else
+        {
+            // Trust the correctness of the configuration.
+            client.DefaultRequestHeaders.Add("User-Agent", Plugin.Instance.Configuration.UserAgent);
+        }
     }
 
     /// <summary>
