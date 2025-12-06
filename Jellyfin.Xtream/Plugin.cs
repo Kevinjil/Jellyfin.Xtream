@@ -125,6 +125,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         base.UpdateConfiguration(configuration);
 
+        if (XtreamClient is XtreamClient client)
+        {
+            client.UpdateUserAgent();
+        }
+
         // Force a refresh of TV guide on configuration update.
         // - This will update the TV channels.
         // - This will remove channels on credentials change.
