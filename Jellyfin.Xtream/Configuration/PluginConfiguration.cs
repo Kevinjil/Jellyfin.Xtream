@@ -40,6 +40,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the user agent override.
+    /// </summary>
+    public string UserAgent { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the Catch-up channel is visible.
     /// </summary>
     public bool IsCatchupVisible { get; set; }
