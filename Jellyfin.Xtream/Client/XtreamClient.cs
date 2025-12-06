@@ -44,23 +44,12 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
         Error = NullableEventHandler(logger),
     };
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="XtreamClient"/> class.
-    /// </summary>
-    /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
-    public XtreamClient(ILogger<XtreamClient> logger) : this(CreateDefaultClient(), logger)
+    public void UpdateUserAgent()
     {
-    }
-
-    private static HttpClient CreateDefaultClient()
-    {
-        HttpClient client = new HttpClient();
-
         ProductHeaderValue header = new ProductHeaderValue("Jellyfin.Xtream", Assembly.GetExecutingAssembly().GetName().Version?.ToString());
         ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue(header);
+        client.DefaultRequestHeaders.UserAgent.Clear();
         client.DefaultRequestHeaders.UserAgent.Add(userAgent);
-
-        return client;
     }
 
     /// <summary>
