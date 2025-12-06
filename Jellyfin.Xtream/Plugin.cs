@@ -47,6 +47,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         _instance = this;
+        XtreamClient = xtreamClient;
+        if (XtreamClient is XtreamClient client)
+        {
+            client.UpdateUserAgent();
+        }
+
         StreamService = new(xtreamClient);
         TaskService = new(taskManager);
     }
@@ -76,6 +82,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// Gets the stream service instance.
     /// </summary>
     public StreamService StreamService { get; init; }
+
+    private IXtreamClient XtreamClient { get; init; }
 
     /// <summary>
     /// Gets the task service instance.
