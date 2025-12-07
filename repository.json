@@ -1,12 +1,20 @@
 [
   {
-    "category": "Live TV",
+    "category": "LiveTV",
     "description": "Stream Live IPTV, Video On-Demand, and Series from an Xtream-compatible server using this plugin.\n",
     "guid": "5d774c35-8567-46d3-a950-9bb8227a0c5d",
     "name": "Jellyfin Xtream",
     "overview": "Stream content from an Xtream-compatible server.",
     "owner": "Kevinjil",
     "versions": [
+      {
+        "changelog": "This patch release mainly fixes the user agent handling. Hopefully this will solve some authentication problems which were reported.\r\n\r\n## What's Changed\r\n* Make account expiry nullable by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/231\r\n* ci(deps): bump actions/download-artifact from 5 to 6 by @dependabot[bot] in https://github.com/Kevinjil/Jellyfin.Xtream/pull/233\r\n* Fix default user agent and allow changing the user agent by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/266\r\n\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.8.0...v0.8.1",
+        "checksum": "0fd6c475f2a7c5ea126a6d6d11150222",
+        "sourceUrl": "https://github.com/Kevinjil/Jellyfin.Xtream/releases/download/v0.8.1/jellyfin-xtream_0.8.0.0.zip",
+        "targetAbi": "10.11.0.0",
+        "timestamp": "2025-12-06T23:59:13Z",
+        "version": "0.8.0.0"
+      },
       {
         "changelog": "In this release, series are properly integrated in Jellyfin. When first viewing a series, it might take some time to populate the season and episode information on the background.\r\n\r\n## What's Changed\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.8.1 to 1.9.0 by @dependabot[bot] in https://github.com/Kevinjil/Jellyfin.Xtream/pull/202\r\n* ci(deps): bump actions/download-artifact from 4 to 5 by @dependabot[bot] in https://github.com/Kevinjil/Jellyfin.Xtream/pull/201\r\n* fix: handle null case in SingularToListConverter by @dank100 in https://github.com/Kevinjil/Jellyfin.Xtream/pull/204\r\n* ci(deps): bump shogo82148/actions-upload-release-asset from 1.9.0 to 1.9.1 by @dependabot[bot] in https://github.com/Kevinjil/Jellyfin.Xtream/pull/215\r\n* Update Jellyfin to 10.11 by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/221\r\n* Series metadata by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/150\r\n* Start the restream read head half a buffer back by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/222\r\n* Use relaxed error handler for json deserializer by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/225\r\n* Make episode added nullable by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/226\r\n* Handle seasons with a \"null\" air date by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/175\r\n* Use Dependency Injection for xtream client by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/227\r\n* Add episode runtime if available by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/228\r\n* Add provider status table to credentials page by @Kevinjil in https://github.com/Kevinjil/Jellyfin.Xtream/pull/229\r\n\r\n## New Contributors\r\n* @dank100 made their first contribution in https://github.com/Kevinjil/Jellyfin.Xtream/pull/204\r\n\r\n**Full Changelog**: https://github.com/Kevinjil/Jellyfin.Xtream/compare/v0.7.2...v0.8.0",
         "checksum": "73ce1bd6a9cce17e7b381e0fd166129d",
