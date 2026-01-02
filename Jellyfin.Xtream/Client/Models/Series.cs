@@ -52,7 +52,7 @@ public class Series
 
     [JsonConverter(typeof(UnixDateTimeConverter))]
     [JsonProperty("last_modified")]
-    public DateTime LastModified { get; set; }
+    public DateTime? LastModified { get; set; }
 
     [JsonProperty("rating")]
     public decimal Rating { get; set; }
