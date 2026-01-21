@@ -10,7 +10,11 @@ export default function (view) {
 
     const getConfig = ApiClient.getPluginConfiguration(pluginId);
     const visible = view.querySelector("#Visible");
-    getConfig.then((config) => visible.checked = config.IsSeriesVisible);
+    const flattenSeriesView = view.querySelector("#FlattenSeriesView");
+    getConfig.then((config) => {
+      visible.checked = config.IsSeriesVisible;
+      flattenSeriesView.checked = config.FlattenSeriesView || false;
+    });
     const table = view.querySelector('#SeriesContent');
     Xtream.populateCategoriesTable(
       table,
@@ -23,6 +27,7 @@ export default function (view) {
 
         ApiClient.getPluginConfiguration(pluginId).then((config) => {
           config.IsSeriesVisible = visible.checked;
+          config.FlattenSeriesView = flattenSeriesView.checked;
           config.Series = data;
           ApiClient.updatePluginConfiguration(pluginId, config).then((result) => {
             Dashboard.processPluginConfigurationUpdateResult(result);
