@@ -71,6 +71,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool FlattenSeriesView { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to show all VOD movies directly without category folders.
+    /// When enabled, all movies from selected categories appear directly in the library.
+    /// </summary>
+    public bool FlattenVodView { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets the channels displayed in Live TV.
     /// </summary>
     public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; } = [];
