@@ -447,6 +447,7 @@ public partial class StreamService(IXtreamClient xtreamClient)
     }
 
     // Matches tags in brackets [TAG] or pipe-delimited |TAG| (with optional spaces and Unicode pipe variants)
+    // Pipe variants: | (U+007C), │ (U+2502), ┃ (U+2503), ｜ (U+FF5C)
     [GeneratedRegex(@"\[([^\]]+)\]|[|│┃｜]\s*([^|│┃｜]+?)\s*[|│┃｜]")]
     private static partial Regex TagRegex();
 }
