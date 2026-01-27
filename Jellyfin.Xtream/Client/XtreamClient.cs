@@ -106,7 +106,25 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
     {
         Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
         string jsonContent = await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
-        return JsonConvert.DeserializeObject<T>(jsonContent, _serializerSettings)!;
+
+        try
+        {
+            // Check if we're expecting an object but got an array (empty or non-empty)
+            string trimmedJson = jsonContent.TrimStart();
+            if (trimmedJson.StartsWith('[') && typeof(T) == typeof(SeriesStreamInfo))
+            {
+                logger.LogWarning("Xtream API returned array instead of object for SeriesStreamInfo (URL: {Url}). Returning empty object.", uri);
+                return (T)(object)new SeriesStreamInfo();
+            }
+
+            return JsonConvert.DeserializeObject<T>(jsonContent, _serializerSettings)!;
+        }
+        catch (JsonSerializationException ex)
+        {
+            string jsonSample = jsonContent.Length > 500 ? string.Concat(jsonContent.AsSpan(0, 500), "...") : jsonContent;
+            logger.LogError(ex, "Failed to deserialize response from Xtream API (URL: {Url}). JSON content: {Json}", uri, jsonSample);
+            throw;
+        }
     }
 
     public Task<PlayerApi> GetUserAndServerInfoAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>
