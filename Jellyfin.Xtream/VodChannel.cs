@@ -92,6 +92,12 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
         {
             if (string.IsNullOrEmpty(query.FolderId))
             {
+                // Check if flat VOD view is enabled
+                if (Plugin.Instance.Configuration.FlattenVodView)
+                {
+                    return await GetAllStreamsFlattened(cancellationToken).ConfigureAwait(false);
+                }
+
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
@@ -150,6 +156,28 @@ public class VodChannel(ILogger<VodChannel> logger) : IChannel, IDisableMediaSou
         IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new List<ChannelItemInfo>(
             categories.Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.VodCategoryPrefix, category)));
+        return new()
+        {
+            Items = items,
+            TotalRecordCount = items.Count
+        };
+    }
+
+    private async Task<ChannelItemResult> GetAllStreamsFlattened(CancellationToken cancellationToken)
+    {
+        IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetVodCategories(cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new();
+
+        // Get all streams from all selected categories
+        foreach (Category category in categories)
+        {
+            IEnumerable<StreamInfo> streams = await Plugin.Instance.StreamService.GetVodStreams(category.CategoryId, cancellationToken).ConfigureAwait(false);
+            items.AddRange(await Task.WhenAll(streams.Select(CreateChannelItemInfo)).ConfigureAwait(false));
+        }
+
+        // Sort alphabetically for consistent display
+        items = items.OrderBy(item => item.Name).ToList();
+
         return new()
         {
             Items = items,
