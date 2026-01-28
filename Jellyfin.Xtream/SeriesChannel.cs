@@ -152,11 +152,21 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
 
     private static List<string> GetGenres(string genreString)
     {
+        if (string.IsNullOrEmpty(genreString))
+        {
+            return [];
+        }
+
         return new(genreString.Split(',').Select(genre => genre.Trim()));
     }
 
     private static List<PersonInfo> GetPeople(string cast)
     {
+        if (string.IsNullOrEmpty(cast))
+        {
+            return [];
+        }
+
         return cast.Split(',').Select(name => new PersonInfo()
         {
             Name = name.Trim()
