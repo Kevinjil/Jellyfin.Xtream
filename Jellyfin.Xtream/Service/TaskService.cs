@@ -14,17 +14,20 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Model.Tasks;
 
 namespace Jellyfin.Xtream.Service;
 
 /// <summary>
-/// A service for dealing with stream information.
+/// A service for dealing with scheduled tasks.
 /// </summary>
 /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
 public class TaskService(ITaskManager taskManager)
 {
+    private readonly ITaskManager _taskManager = taskManager;
+
     private static Type? FindType(string assembly, string fullName)
     {
         return AppDomain.CurrentDomain.GetAssemblies()
@@ -49,6 +52,65 @@ public class TaskService(ITaskManager taskManager)
         typeof(ITaskManager)
             .GetMethod(nameof(ITaskManager.CancelIfRunningAndQueue), 1, [])?
             .MakeGenericMethod(refreshType)?
-            .Invoke(taskManager, []);
+            .Invoke(_taskManager, []);
+    }
+
+    /// <summary>
+    /// Updates the interval trigger for the Xtream Series Cache Refresh task.
+    /// </summary>
+    /// <param name="intervalMinutes">The new interval in minutes.</param>
+    public void UpdateCacheRefreshInterval(int intervalMinutes)
+    {
+        if (intervalMinutes < 10)
+        {
+            intervalMinutes = 10; // Minimum 10 minutes
+        }
+
+        var task = _taskManager.ScheduledTasks
+            .FirstOrDefault(t => t.Name == "Refresh Xtream Series Cache");
+
+        if (task == null)
+        {
+            return;
+        }
+
+        // Create new trigger with updated interval
+        var newTriggers = new List<TaskTriggerInfo>
+        {
+            new TaskTriggerInfo
+            {
+                Type = TaskTriggerInfoType.IntervalTrigger,
+                IntervalTicks = TimeSpan.FromMinutes(intervalMinutes).Ticks
+            }
+        };
+
+        // Set the triggers and reload
+        task.Triggers = newTriggers;
+        task.ReloadTriggerEvents();
+    }
+
+    /// <summary>
+    /// Gets the current interval for the Xtream Series Cache Refresh task.
+    /// </summary>
+    /// <returns>The interval in minutes, or 60 if not found.</returns>
+    public int GetCacheRefreshInterval()
+    {
+        var task = _taskManager.ScheduledTasks
+            .FirstOrDefault(t => t.Name == "Refresh Xtream Series Cache");
+
+        if (task == null)
+        {
+            return 60;
+        }
+
+        var intervalTrigger = task.Triggers
+            .FirstOrDefault(t => t.Type == TaskTriggerInfoType.IntervalTrigger);
+
+        if (intervalTrigger == null || !intervalTrigger.IntervalTicks.HasValue)
+        {
+            return 60;
+        }
+
+        return (int)TimeSpan.FromTicks(intervalTrigger.IntervalTicks.Value).TotalMinutes;
     }
 }

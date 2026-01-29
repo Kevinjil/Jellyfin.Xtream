@@ -9,6 +9,93 @@
             <span>Show this channel to users</span>
           </label>
         </div>
+        <div class="checkboxContainer checkboxContainer-withDescription">
+          <label>
+            <input is="emby-checkbox" id="FlattenSeriesView" name="FlattenSeriesView" type="checkbox" />
+            <span>Flatten Series View</span>
+          </label>
+          <div class="fieldDescription">
+            When enabled, all series from selected categories appear directly in the library without category folders. Seasons and episodes remain organized under each series.
+          </div>
+        </div>
+        <div class="sectionTitleContainer flex align-items-center" style="margin-top: 1em;">
+          <h2 class="sectionTitle">Cache Settings</h2>
+        </div>
+        <div class="checkboxContainer checkboxContainer-withDescription">
+          <label>
+            <input is="emby-checkbox" id="EnableCaching" name="EnableCaching" type="checkbox" />
+            <span>Enable Series Caching</span>
+          </label>
+          <div class="fieldDescription">
+            Pre-fetch and cache all series data for faster navigation. When disabled, data is fetched on-demand from the Xtream server.
+          </div>
+        </div>
+        <div id="CacheOptionsContainer" style="display: none;">
+          <div class="inputContainer">
+            <label class="inputLabel" for="SeriesCacheRefreshMinutes">Refresh Frequency (minutes)</label>
+            <input is="emby-input" type="number" id="SeriesCacheRefreshMinutes" name="SeriesCacheRefreshMinutes" min="10" max="1380" />
+            <div class="fieldDescription">
+              How often to automatically refresh the cache (default: 600 minutes / 10 hours, min: 10, max: 1380 / 23 hours). Maximum is 23 hours to ensure refresh happens before 24-hour cache expiration. This setting syncs with Dashboard → Scheduled Tasks.
+            </div>
+          </div>
+          <div class="inputContainer">
+            <label class="inputLabel" for="CacheRefreshParallelism">Cache Refresh Parallelism: <span id="CacheParallelismValue">3</span></label>
+            <input type="range" id="CacheRefreshParallelism" name="CacheRefreshParallelism" min="1" max="10" value="3" style="width: 100%;" />
+            <div class="fieldDescription">
+              Number of concurrent API requests during cache refresh. Lower values (1-2) are safer for strict providers. Higher values (5-10) are faster but may trigger rate limiting. Default: 3 (recommended).
+            </div>
+          </div>
+          <div class="inputContainer">
+            <label class="inputLabel" for="CacheRefreshMinDelayMs">Request Throttle Delay (ms): <span id="CacheMinDelayValue">100</span></label>
+            <input type="range" id="CacheRefreshMinDelayMs" name="CacheRefreshMinDelayMs" min="0" max="500" step="25" value="100" style="width: 100%;" />
+            <div class="fieldDescription">
+              Minimum delay between API requests to avoid rate limiting. 0 = no throttling, 100 = ~10 req/sec, 500 = ~2 req/sec. Default: 100ms.
+            </div>
+          </div>
+          <div class="inputContainer" style="display: flex; gap: 10px; margin-bottom: 1em;">
+            <button is="emby-button" type="button" id="RefreshCacheBtn" class="raised emby-button">
+              <span>Refresh Now</span>
+            </button>
+            <button is="emby-button" type="button" id="ClearCacheBtn" class="raised emby-button" style="background-color: #c25;"
+              title="Clears all cached data. Next refresh will fetch everything from scratch.">
+              <span>Clear Cache</span>
+            </button>
+          </div>
+          <div class="inputContainer" id="CacheStatusContainer" style="display: none;">
+            <label class="inputLabel">Cache Refresh Status</label>
+            <div id="CacheProgressBar" style="width: 100%; height: 20px; background-color: #2a2a2a; border-radius: 4px; overflow: hidden; margin: 8px 0;">
+              <div id="CacheProgressFill" style="height: 100%; background-color: #00a4dc; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+            <div id="CacheStatusText" style="color: #a0a0a0; font-size: 0.9em; margin-top: 4px;">Idle</div>
+            <div class="fieldDescription">
+              Current cache refresh progress. You can also view this in Dashboard → Scheduled Tasks → "Refresh Xtream Series Cache".
+            </div>
+          </div>
+        </div>
+        <div class="sectionTitleContainer flex align-items-center" style="margin-top: 1em;">
+          <h2 class="sectionTitle">Artwork Injector</h2>
+        </div>
+        <div class="checkboxContainer checkboxContainer-withDescription">
+          <label>
+            <input is="emby-checkbox" id="UseTvdbForSeriesMetadata" name="UseTvdbForSeriesMetadata" type="checkbox" checked />
+            <span>Enable TVDb Artwork Lookup</span>
+          </label>
+          <div class="fieldDescription">
+            Fetch series artwork from TVDb using intelligent title matching. Falls back to Xtream provider images if no match is found.
+          </div>
+        </div>
+        <div id="TvdbOptionsContainer" style="display: none;">
+          <div class="inputContainer">
+            <label class="inputLabel" for="TvdbTitleOverrides">Title Overrides (one per line)</label>
+            <textarea is="emby-textarea" id="TvdbTitleOverrides" name="TvdbTitleOverrides" rows="6"
+              placeholder="Knabbel en Babbel: Park Life=403215&#10;Lucas de spin=364130" style="width: 100%; font-family: monospace;"></textarea>
+            <div class="fieldDescription">
+              Map series titles to TVDb IDs for guaranteed artwork matches.
+              Format: LocalTitle=TVDbID (one per line).
+              Find IDs at thetvdb.com — the number in the series URL.
+            </div>
+          </div>
+        </div>
         <div class="sectionTitleContainer flex align-items-center">
           <h2 class="sectionTitle">Series selection</h2>
         </div>

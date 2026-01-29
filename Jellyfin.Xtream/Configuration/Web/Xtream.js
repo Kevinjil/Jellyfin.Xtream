@@ -158,7 +158,24 @@ const populateCategoriesTable = (table, loadConfig, loadCategories, loadItems) =
 
   return Promise.all([fetchConfig, fetchCategories])
     .then(([config, categories]) => {
-      const data = config;
+      const data = config || {};
+      console.log('Categories loaded:', categories);
+      console.log('Initial config data:', JSON.stringify(data, null, 2));
+      if (!categories || categories.length === 0) {
+        Dashboard.hideLoadingMsg();
+        const errorRow = document.createElement('tr');
+        const errorCell = document.createElement('td');
+        errorCell.colSpan = 3;
+        errorCell.style.color = '#ff6b6b';
+        errorCell.style.padding = '16px';
+        errorCell.innerHTML = 'No categories found. Please check:<br>' +
+          '1. Xtream credentials are configured (Credentials tab)<br>' +
+          '2. Xtream server is accessible<br>' +
+          '3. Browser console (F12) for detailed errors';
+        errorRow.appendChild(errorCell);
+        table.appendChild(errorRow);
+        return data;
+      }
       for (let i = 0; i < categories.length; ++i) {
         const category = categories[i];
         const wrapper = {
@@ -172,14 +189,32 @@ const populateCategoriesTable = (table, loadConfig, loadCategories, loadItems) =
       }
       Dashboard.hideLoadingMsg();
       return data;
+    })
+    .catch((error) => {
+      Dashboard.hideLoadingMsg();
+      console.error('Error loading categories:', error);
+      throw error; // Re-throw to let caller handle
     });
 }
 
-const fetchJson = (url) => ApiClient.fetch({
-  dataType: 'json',
-  type: 'GET',
-  url: ApiClient.getUrl(url),
-});
+const fetchJson = (url) => {
+  return ApiClient.fetch({
+    dataType: 'json',
+    type: 'GET',
+    url: ApiClient.getUrl(url),
+  }).then((response) => {
+    // ApiClient.fetch may return a Response object that needs .json() called
+    // or it may already be parsed when dataType: 'json' is used
+    if (response && typeof response.json === 'function') {
+      return response.json();
+    }
+    // Already parsed JSON
+    return response;
+  }).catch((error) => {
+    console.error(`Failed to fetch ${url}:`, error);
+    throw error;
+  });
+};
 
 const filter = (obj, predicate) => Object.keys(obj)
   .filter(key => predicate(obj[key]))
