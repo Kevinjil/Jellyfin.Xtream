@@ -274,6 +274,11 @@ public partial class StreamService(IXtreamClient xtreamClient)
             return new List<Tuple<SeriesStreamInfo, int>>();
         }
 
+        if (series.Episodes == null)
+        {
+            return new List<Tuple<SeriesStreamInfo, int>>();
+        }
+
         return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
     }
 
@@ -288,7 +293,12 @@ public partial class StreamService(IXtreamClient xtreamClient)
     {
         SeriesStreamInfo series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
         Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
-        return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
+        if (series.Episodes == null || !series.Episodes.TryGetValue(seasonId, out var episodes))
+        {
+            return new List<Tuple<SeriesStreamInfo, Season?, Episode>>();
+        }
+
+        return episodes.Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
     }
 
     private static void StoreBytes(byte[] dst, int offset, int i)

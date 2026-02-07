@@ -31,6 +31,6 @@ public class SeriesStreamInfo
 
     [JsonProperty("episodes")]
 #pragma warning disable CA2227
-    public Dictionary<int, ICollection<Episode>> Episodes { get; set; } = new Dictionary<int, ICollection<Episode>>();
+    public Dictionary<int, ICollection<Episode>>? Episodes { get; set; } = new Dictionary<int, ICollection<Episode>>();
 #pragma warning restore CA2227
 }

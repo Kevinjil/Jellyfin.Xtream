@@ -93,6 +93,12 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         {
             if (string.IsNullOrEmpty(query.FolderId))
             {
+                // Check if flat series view is enabled
+                if (Plugin.Instance.Configuration.FlattenSeriesView)
+                {
+                    return await GetAllSeriesFlattened(cancellationToken).ConfigureAwait(false);
+                }
+
                 return await GetCategories(cancellationToken).ConfigureAwait(false);
             }
 
@@ -146,11 +152,21 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
 
     private static List<string> GetGenres(string genreString)
     {
+        if (string.IsNullOrEmpty(genreString))
+        {
+            return [];
+        }
+
         return new(genreString.Split(',').Select(genre => genre.Trim()));
     }
 
     private static List<PersonInfo> GetPeople(string cast)
     {
+        if (string.IsNullOrEmpty(cast))
+        {
+            return [];
+        }
+
         return cast.Split(',').Select(name => new PersonInfo()
         {
             Name = name.Trim()
@@ -238,6 +254,28 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetSeriesCategories(cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new(
             categories.Select((Category category) => StreamService.CreateChannelItemInfo(StreamService.SeriesCategoryPrefix, category)));
+        return new()
+        {
+            Items = items,
+            TotalRecordCount = items.Count
+        };
+    }
+
+    private async Task<ChannelItemResult> GetAllSeriesFlattened(CancellationToken cancellationToken)
+    {
+        IEnumerable<Category> categories = await Plugin.Instance.StreamService.GetSeriesCategories(cancellationToken).ConfigureAwait(false);
+        List<ChannelItemInfo> items = new();
+
+        // Get all series from all selected categories
+        foreach (Category category in categories)
+        {
+            IEnumerable<Series> series = await Plugin.Instance.StreamService.GetSeries(category.CategoryId, cancellationToken).ConfigureAwait(false);
+            items.AddRange(series.Select(CreateChannelItemInfo));
+        }
+
+        // Sort alphabetically for consistent display
+        items = items.OrderBy(item => item.Name).ToList();
+
         return new()
         {
             Items = items,
