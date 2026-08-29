@@ -1,11 +1,35 @@
 <div id="XtreamLivePage" data-role="page" class="page type-interior pluginConfigurationPage withTabs"
-  data-require="emby-input,emby-button" data-controller="__plugin/XtreamLiveOverrides.js">
+  data-require="emby-input,emby-button,emby-select" data-controller="__plugin/XtreamLiveOverrides.js">
   <div data-role="content">
     <div class="content-primary">
       <form id="XtreamLiveOverridesForm">
         <div class="sectionTitleContainer flex align-items-center">
+          <h2 class="sectionTitle">Custom EPG</h2>
+        </div>
+
+        <div class="selectContainer">
+          <label class="selectLabel" for="EpgMode">Guide data source</label>
+          <select is="emby-select" id="EpgMode">
+            <option value="Xtream">Xtream provider EPG</option>
+            <option value="CustomXmlTv">Custom XMLTV only</option>
+            <option value="CustomXmlTvWithXtreamFallback">Custom XMLTV with Xtream fallback</option>
+          </select>
+          <div class="fieldDescription">This changes guide data only. Live TV streams continue to use Xtream exactly as before.</div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel inputLabelUnfocused" for="CustomEpgPath">XMLTV file path</label>
+          <input is="emby-input" type="text" id="CustomEpgPath" placeholder="D:\Jellyfin Scripts\EPG\epg123.xmltv" />
+          <div class="fieldDescription">Enter a local path that the Jellyfin server process can read. Save once after changing this path, then reopen TV Overrides so the channel-id suggestions can be loaded.</div>
+          <div class="fieldDescription" id="CustomEpgStatus"></div>
+        </div>
+
+        <datalist id="XmlTvChannelOptions"></datalist>
+
+        <div class="sectionTitleContainer flex align-items-center">
           <h2 class="sectionTitle">TV channel overrides</h2>
         </div>
+        <div class="fieldDescription">For Custom XMLTV, map each Xtream channel to the XMLTV <code>&lt;channel id="..."&gt;</code>. The mapping affects guide data only.</div>
         <div class="inputContainer">
           <table class="overrides-table">
             <thead>
@@ -13,11 +37,10 @@
                 <th>Number</th>
                 <th>Name</th>
                 <th>Logo</th>
+                <th>Custom EPG ID</th>
               </tr>
             </thead>
-            <tbody id="LiveChannels">
-
-            </tbody>
+            <tbody id="LiveChannels"></tbody>
           </table>
         </div>
         <div>
