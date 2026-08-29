@@ -4,7 +4,6 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +14,6 @@
 
 using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
-
 #pragma warning disable CA2227
 namespace Jellyfin.Xtream.Configuration;
 
@@ -33,7 +31,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the username.
     /// </summary>
     public string Username { get; set; } = string.Empty;
-
     /// <summary>
     /// Gets or sets the password.
     /// </summary>
@@ -45,10 +42,20 @@ public class PluginConfiguration : BasePluginConfiguration
     public string UserAgent { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the guide-data mode. Supported values are Xtream, CustomXmlTv,
+    /// and CustomXmlTvWithXtreamFallback.
+    /// </summary>
+    public string EpgMode { get; set; } = "Xtream";
+
+    /// <summary>
+    /// Gets or sets the local XMLTV file used by custom guide modes.
+    /// </summary>
+    public string CustomEpgPath { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the Catch-up channel is visible.
     /// </summary>
     public bool IsCatchupVisible { get; set; }
-
     /// <summary>
     /// Gets or sets a value indicating whether the Series channel is visible.
     /// </summary>
@@ -58,7 +65,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets a value indicating whether the Video On-demand channel is visible.
     /// </summary>
     public bool IsVodVisible { get; set; }
-
     /// <summary>
     /// Gets or sets a value indicating whether the Video On-demand channel is visible.
     /// </summary>
@@ -68,7 +74,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the channels displayed in Live TV.
     /// </summary>
     public SerializableDictionary<int, HashSet<int>> LiveTv { get; set; } = [];
-
     /// <summary>
     /// Gets or sets the streams displayed in VOD.
     /// </summary>
@@ -78,7 +83,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the streams displayed in Series.
     /// </summary>
     public SerializableDictionary<int, HashSet<int>> Series { get; set; } = [];
-
     /// <summary>
     /// Gets or sets the channel override configuration for Live TV.
     /// </summary>
