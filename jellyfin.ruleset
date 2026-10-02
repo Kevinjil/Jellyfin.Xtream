@@ -100,6 +100,8 @@
         <Rule Id="CA1308" Action="None" />
         <!-- disable warning CA1848: Use the LoggerMessage delegates -->
         <Rule Id="CA1848" Action="None" />
+        <!-- disable warning CA1873: Avoid potentially expensive logging -->
+        <Rule Id="CA1873" Action="Info" />
         <!-- disable warning CA2101: Specify marshaling for P/Invoke string arguments -->
         <Rule Id="CA2101" Action="None" />
         <!-- disable warning CA2234: Pass System.Uri objects instead of strings -->

@@ -198,6 +198,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger, IXtreamClient xtream
                         new()
                         {
                             ContentType = ChannelMediaContentType.TvExtra,
+                            DateModified = StreamService.MediaSourceRevision,
                             Id = StreamService.ToGuid(StreamService.CatchupStreamPrefix, channelId, 0, day).ToString(),
                             IsLiveStream = false,
                             MediaSources = [
@@ -226,6 +227,7 @@ public class CatchupChannel(ILogger<CatchupChannel> logger, IXtreamClient xtream
             {
                 ContentType = ChannelMediaContentType.TvExtra,
                 DateCreated = epg.Start,
+                DateModified = StreamService.MediaSourceRevision,
                 Id = StreamService.ToGuid(StreamService.CatchupStreamPrefix, channel.StreamId, epg.Id, day).ToString(),
                 IsLiveStream = false,
                 MediaSources = sources,

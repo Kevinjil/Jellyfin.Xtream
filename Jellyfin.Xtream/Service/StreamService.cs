@@ -91,6 +91,13 @@ public partial class StreamService(IXtreamClient xtreamClient)
     /// </summary>
     public const int EpgPrefix = 0x5d774c3f;
 
+    /// <summary>
+    /// The time the media sources of channel items last changed shape.
+    /// Jellyfin only rewrites the sources it saved for a channel item when the item changes,
+    /// so channel media items carry this as their modification date.
+    /// </summary>
+    public static readonly DateTime MediaSourceRevision = new(2026, 9, 28, 0, 0, 0, DateTimeKind.Utc);
+
     private static readonly Regex _tagRegex = TagRegex();
 
     /// <summary>
@@ -399,7 +406,9 @@ public partial class StreamService(IXtreamClient xtreamClient)
         {
             Container = extension,
             EncoderProtocol = MediaProtocol.Http,
-            Id = ToGuid(MediaSourcePrefix, (int)type, id, 0).ToString(),
+            // Jellyfin gives a channel source without an id the id of its item, which it requires since 12.0.
+            // Live TV keeps its own id, which identifies the restream to share.
+            Id = isLive ? ToGuid(MediaSourcePrefix, (int)type, id, 0).ToString() : null,
             IsInfiniteStream = isLive,
             IsRemote = true,
             MediaStreams =

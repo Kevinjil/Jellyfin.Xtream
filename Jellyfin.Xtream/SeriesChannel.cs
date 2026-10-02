@@ -217,6 +217,7 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         {
             ContentType = ChannelMediaContentType.Episode,
             DateCreated = episode.Added,
+            DateModified = StreamService.MediaSourceRevision,
             Genres = GetGenres(serie.Genre),
             Id = StreamService.ToGuid(StreamService.EpisodePrefix, 0, 0, episode.EpisodeId).ToString(),
             IndexNumber = episode.EpisodeNum,
