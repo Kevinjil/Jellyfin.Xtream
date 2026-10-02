@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using Jellyfin.Xtream.Client.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 #pragma warning disable CS1591
@@ -61,7 +62,7 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
     }
 
     /// <summary>
-    /// Ignores error events if the target property is nullable.
+    /// Ignores parsing errors which apply to a single member; errors at the root are left to propagate.
     /// </summary>
     /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
     /// <returns>An event handler using the given logger.</returns>
@@ -69,44 +70,99 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
     {
         return (object? sender, ErrorEventArgs args) =>
         {
-            if (args.ErrorContext.OriginalObject?.GetType() is Type type && args.ErrorContext.Member is string jsonName)
+            if (args.ErrorContext.OriginalObject?.GetType() is not Type type || args.ErrorContext.Member is not string jsonName)
             {
-                PropertyInfo? property = type.GetProperties().FirstOrDefault((p) =>
-                {
-                    CustomAttributeData? attribute = p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(JsonPropertyAttribute));
-                    if (attribute == null)
-                    {
-                        return false;
-                    }
-
-                    if (attribute.ConstructorArguments.Count > 0)
-                    {
-                        // Attribute contains a `propertyName`.
-                        string? value = attribute.ConstructorArguments.First().Value as string;
-                        return jsonName.Equals(value, StringComparison.Ordinal);
-                    }
-                    else
-                    {
-                        // Attribute does not contain a `propertyName`, compare with the name of the property itself.
-                        return jsonName.Equals(p.Name, StringComparison.Ordinal);
-                    }
-                });
-
-                if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
-                {
-                    logger.LogDebug("Property `{0}` (`{1}` in JSON) is nullable, ignoring parsing error!", property.Name, jsonName);
-                    logger.LogDebug("Stack trace: {0}", new System.Diagnostics.StackTrace());
-                    args.ErrorContext.Handled = true;
-                }
+                return;
             }
+
+            PropertyInfo? property = type.GetProperties().FirstOrDefault((p) =>
+            {
+                CustomAttributeData? attribute = p.CustomAttributes.FirstOrDefault(a => a.AttributeType == typeof(JsonPropertyAttribute));
+                if (attribute == null)
+                {
+                    return false;
+                }
+
+                if (attribute.ConstructorArguments.Count > 0)
+                {
+                    // Attribute contains a `propertyName`.
+                    string? value = attribute.ConstructorArguments.First().Value as string;
+                    return jsonName.Equals(value, StringComparison.Ordinal);
+                }
+                else
+                {
+                    // Attribute does not contain a `propertyName`, compare with the name of the property itself.
+                    return jsonName.Equals(p.Name, StringComparison.Ordinal);
+                }
+            });
+
+            if (property != null && Nullable.GetUnderlyingType(property.PropertyType) != null)
+            {
+                logger.LogDebug("Property `{0}` (`{1}` in JSON) is nullable, ignoring parsing error!", property.Name, jsonName);
+                logger.LogDebug("Stack trace: {0}", new System.Diagnostics.StackTrace());
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Ignoring unparseable JSON member `{JsonName}` at path `{Path}`: {Message}",
+                    jsonName,
+                    args.ErrorContext.Path,
+                    args.ErrorContext.Error.Message);
+            }
+
+            args.ErrorContext.Handled = true;
         };
+    }
+
+    private async Task<string> QueryApiRaw(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
+    {
+        Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
+        return await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<T> QueryApi<T>(ConnectionInfo connectionInfo, string urlPath, CancellationToken cancellationToken)
     {
-        Uri uri = new Uri(connectionInfo.BaseUrl + urlPath);
-        string jsonContent = await client.GetStringAsync(uri, cancellationToken).ConfigureAwait(false);
+        string jsonContent = await QueryApiRaw(connectionInfo, urlPath, cancellationToken).ConfigureAwait(false);
         return JsonConvert.DeserializeObject<T>(jsonContent, _serializerSettings)!;
+    }
+
+    /// <summary>
+    /// Deserializes a response expected to hold a single object, yielding null when it does not.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the object into.</typeparam>
+    /// <param name="jsonContent">The response body.</param>
+    /// <param name="itemKind">The kind of item requested, used for logging.</param>
+    /// <param name="itemId">The Xtream id of the item requested, used for logging.</param>
+    /// <returns>The deserialized object, or null if the response does not hold one.</returns>
+    internal T? ParseObjectResponse<T>(string jsonContent, string itemKind, int itemId)
+        where T : class
+    {
+        JToken token;
+        try
+        {
+            token = JToken.Parse(jsonContent);
+        }
+        catch (JsonReaderException ex)
+        {
+            logger.LogWarning(ex, "{ItemKind} {ItemId} returned malformed JSON, skipping it", itemKind, itemId);
+            return null;
+        }
+
+        if (token.Type != JTokenType.Object)
+        {
+            // Some providers return [] instead of {} when an item has no data.
+            logger.LogInformation("{ItemKind} {ItemId} returned `{TokenType}` instead of an object, skipping it", itemKind, itemId, token.Type);
+            return null;
+        }
+
+        return token.ToObject<T>(JsonSerializer.Create(_serializerSettings));
+    }
+
+    private async Task<T?> QueryApiObject<T>(ConnectionInfo connectionInfo, string urlPath, string itemKind, int itemId, CancellationToken cancellationToken)
+        where T : class
+    {
+        string jsonContent = await QueryApiRaw(connectionInfo, urlPath, cancellationToken).ConfigureAwait(false);
+        return ParseObjectResponse<T>(jsonContent, itemKind, itemId);
     }
 
     public Task<PlayerApi> GetUserAndServerInfoAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>
@@ -121,10 +177,12 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_series&category_id={categoryId}",
            cancellationToken);
 
-    public Task<SeriesStreamInfo> GetSeriesStreamsBySeriesAsync(ConnectionInfo connectionInfo, int seriesId, CancellationToken cancellationToken) =>
-         QueryApi<SeriesStreamInfo>(
+    public Task<SeriesStreamInfo?> GetSeriesStreamsBySeriesAsync(ConnectionInfo connectionInfo, int seriesId, CancellationToken cancellationToken) =>
+         QueryApiObject<SeriesStreamInfo>(
            connectionInfo,
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_series_info&series_id={seriesId}",
+           "Series",
+           seriesId,
            cancellationToken);
 
     public Task<List<StreamInfo>> GetVodStreamsByCategoryAsync(ConnectionInfo connectionInfo, int categoryId, CancellationToken cancellationToken) =>
@@ -133,10 +191,12 @@ public class XtreamClient(HttpClient client, ILogger<XtreamClient> logger) : IDi
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_vod_streams&category_id={categoryId}",
            cancellationToken);
 
-    public Task<VodStreamInfo> GetVodInfoAsync(ConnectionInfo connectionInfo, int streamId, CancellationToken cancellationToken) =>
-         QueryApi<VodStreamInfo>(
+    public Task<VodStreamInfo?> GetVodInfoAsync(ConnectionInfo connectionInfo, int streamId, CancellationToken cancellationToken) =>
+         QueryApiObject<VodStreamInfo>(
            connectionInfo,
            $"/player_api.php?username={connectionInfo.UserName}&password={connectionInfo.Password}&action=get_vod_info&vod_id={streamId}",
+           "VOD stream",
+           streamId,
            cancellationToken);
 
     public Task<List<StreamInfo>> GetLiveStreamsAsync(ConnectionInfo connectionInfo, CancellationToken cancellationToken) =>

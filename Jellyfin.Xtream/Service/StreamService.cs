@@ -27,6 +27,7 @@ using MediaBrowser.Controller.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Xtream.Service;
 
@@ -34,7 +35,8 @@ namespace Jellyfin.Xtream.Service;
 /// A service for dealing with stream information.
 /// </summary>
 /// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
-public partial class StreamService(IXtreamClient xtreamClient)
+/// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
+public partial class StreamService(IXtreamClient xtreamClient, ILogger<StreamService> logger)
 {
     /// <summary>
     /// The id prefix for VOD category channel items.
@@ -151,6 +153,37 @@ public partial class StreamService(IXtreamClient xtreamClient)
     }
 
     /// <summary>
+    /// Checks whether an Xtream id is usable, which excludes the default left by a failed parse.
+    /// </summary>
+    /// <param name="id">The Xtream id to check.</param>
+    /// <returns>True if the id can address an item.</returns>
+    internal static bool IsUsableId(int id) => id > 0;
+
+    /// <summary>
+    /// Keeps the items with a usable id, reporting how many were dropped.
+    /// </summary>
+    /// <typeparam name="T">The type of item to filter.</typeparam>
+    /// <param name="items">The items to filter.</param>
+    /// <param name="id">Selects the Xtream id of an item.</param>
+    /// <param name="itemKind">The kind of item, used for logging.</param>
+    /// <returns>The items which can be addressed by their id.</returns>
+    private List<T> WithUsableIds<T>(IEnumerable<T> items, Func<T, int> id, string itemKind)
+    {
+        List<T> source = items.ToList();
+        List<T> usable = source.Where(item => IsUsableId(id(item))).ToList();
+        if (usable.Count != source.Count)
+        {
+            logger.LogWarning(
+                "Dropped {Count} of {Total} {ItemKind} entries whose Xtream id could not be parsed",
+                source.Count - usable.Count,
+                source.Count,
+                itemKind);
+        }
+
+        return usable;
+    }
+
+    /// <summary>
     /// Gets an async iterator for the configured channels.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -160,7 +193,8 @@ public partial class StreamService(IXtreamClient xtreamClient)
         PluginConfiguration config = Plugin.Instance.Configuration;
 
         IEnumerable<StreamInfo> streams = await xtreamClient.GetLiveStreamsAsync(Plugin.Instance.Creds, cancellationToken).ConfigureAwait(false);
-        return streams.Where((StreamInfo channel) => channel.CategoryId.HasValue && IsConfigured(config.LiveTv, channel.CategoryId.Value, channel.StreamId));
+        return WithUsableIds(streams, (StreamInfo channel) => channel.StreamId, "live channel")
+            .Where((StreamInfo channel) => channel.CategoryId.HasValue && IsConfigured(config.LiveTv, channel.CategoryId.Value, channel.StreamId));
     }
 
     /// <summary>
@@ -228,7 +262,8 @@ public partial class StreamService(IXtreamClient xtreamClient)
         }
 
         List<StreamInfo> streams = await xtreamClient.GetVodStreamsByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-        return streams.Where((StreamInfo stream) => IsConfigured(Plugin.Instance.Configuration.Vod, categoryId, stream.StreamId));
+        return WithUsableIds(streams, (StreamInfo stream) => stream.StreamId, "VOD stream")
+            .Where((StreamInfo stream) => IsConfigured(Plugin.Instance.Configuration.Vod, categoryId, stream.StreamId));
     }
 
     /// <summary>
@@ -256,7 +291,8 @@ public partial class StreamService(IXtreamClient xtreamClient)
         }
 
         List<Series> series = await xtreamClient.GetSeriesByCategoryAsync(Plugin.Instance.Creds, categoryId, cancellationToken).ConfigureAwait(false);
-        return series.Where((Series series) => IsConfigured(Plugin.Instance.Configuration.Series, series.CategoryId, series.SeriesId));
+        return WithUsableIds(series, (Series s) => s.SeriesId, "series")
+            .Where((Series s) => IsConfigured(Plugin.Instance.Configuration.Series, s.CategoryId, s.SeriesId));
     }
 
     /// <summary>
@@ -267,14 +303,47 @@ public partial class StreamService(IXtreamClient xtreamClient)
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, int>>> GetSeasons(int seriesId, CancellationToken cancellationToken)
     {
-        SeriesStreamInfo series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        SeriesStreamInfo? series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        if (series == null)
+        {
+            return [];
+        }
+
         int categoryId = series.Info.CategoryId;
         if (!IsConfigured(Plugin.Instance.Configuration.Series, categoryId, seriesId))
         {
-            return new List<Tuple<SeriesStreamInfo, int>>();
+            return [];
         }
 
-        return series.Episodes.Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
+        return GroupEpisodesBySeason(series, logger).Keys.Select((int seasonId) => new Tuple<SeriesStreamInfo, int>(series, seasonId));
+    }
+
+    /// <summary>
+    /// Groups the episodes of a series by the season they report, falling back to the key they are stored under.
+    /// </summary>
+    /// <param name="series">The series to group the episodes of.</param>
+    /// <param name="logger">The logger to report dropped episodes to, if any.</param>
+    /// <returns>The episodes of the series, keyed by season id.</returns>
+    internal static Dictionary<int, List<Episode>> GroupEpisodesBySeason(SeriesStreamInfo series, ILogger? logger = null)
+    {
+        int total = series.Episodes.Sum(kv => kv.Value.Count);
+        Dictionary<int, List<Episode>> grouped = series.Episodes
+            .SelectMany(kv => kv.Value
+                .Where(e => IsUsableId(e.EpisodeId))
+                .Select(e => (SeasonId: e.Season != 0 ? e.Season : kv.Key, Episode: e)))
+            .GroupBy(x => x.SeasonId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Episode).ToList());
+
+        int kept = grouped.Sum(kv => kv.Value.Count);
+        if (kept != total)
+        {
+            logger?.LogWarning(
+                "Dropped {Count} of {Total} episode entries whose Xtream id could not be parsed",
+                total - kept,
+                total);
+        }
+
+        return grouped;
     }
 
     /// <summary>
@@ -286,9 +355,44 @@ public partial class StreamService(IXtreamClient xtreamClient)
     /// <returns>IAsyncEnumerable{StreamInfo}.</returns>
     public async Task<IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>>> GetEpisodes(int seriesId, int seasonId, CancellationToken cancellationToken)
     {
-        SeriesStreamInfo series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        SeriesStreamInfo? series = await xtreamClient.GetSeriesStreamsBySeriesAsync(Plugin.Instance.Creds, seriesId, cancellationToken).ConfigureAwait(false);
+        if (series == null)
+        {
+            return [];
+        }
+
         Season? season = series.Seasons.FirstOrDefault(s => s.SeasonId == seasonId);
-        return series.Episodes[seasonId].Select((Episode episode) => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, episode));
+        return ResolveEpisodes(series, seasonId, logger)
+            .Select(e => new Tuple<SeriesStreamInfo, Season?, Episode>(series, season, e));
+    }
+
+    /// <summary>
+    /// Resolves the episodes of one season, falling back to the key they are stored under.
+    /// </summary>
+    /// <param name="series">The series to take the episodes from.</param>
+    /// <param name="seasonId">The season to resolve the episodes of.</param>
+    /// <param name="logger">The logger to report a fallback to, if any.</param>
+    /// <returns>The episodes of the season, empty when it holds none.</returns>
+    internal static List<Episode> ResolveEpisodes(SeriesStreamInfo series, int seasonId, ILogger? logger = null)
+    {
+        if (GroupEpisodesBySeason(series, logger).TryGetValue(seasonId, out List<Episode>? episodes))
+        {
+            return episodes;
+        }
+
+        // A season folder built under an earlier grouping still asks for the key it was built with.
+        List<Episode> stored = series.Episodes.TryGetValue(seasonId, out ICollection<Episode>? value) && value is not null
+            ? value.Where(e => IsUsableId(e.EpisodeId)).ToList()
+            : [];
+        if (stored.Count > 0)
+        {
+            logger?.LogWarning(
+                "Season {SeasonId} is not a season of this series, falling back to the {Count} episodes stored under that key",
+                seasonId,
+                stored.Count);
+        }
+
+        return stored;
     }
 
     private static void StoreBytes(byte[] dst, int offset, int i)

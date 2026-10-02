@@ -55,9 +55,13 @@ public class XtreamVodProvider(ILogger<VodChannel> logger, IProviderManager prov
         {
             logger.LogDebug("Getting metadata for movie {Id}", idStr);
             int id = int.Parse(idStr, CultureInfo.InvariantCulture);
-            VodStreamInfo vod = await xtreamClient.GetVodInfoAsync(Plugin.Instance.Creds, id, cancellationToken).ConfigureAwait(false);
-            VodInfo? i = vod.Info;
+            VodStreamInfo? vod = await xtreamClient.GetVodInfoAsync(Plugin.Instance.Creds, id, cancellationToken).ConfigureAwait(false);
+            if (vod is null)
+            {
+                return ItemUpdateType.None;
+            }
 
+            VodInfo? i = vod.Info;
             if (i is null)
             {
                 return ItemUpdateType.None;

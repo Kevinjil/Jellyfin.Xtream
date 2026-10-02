@@ -36,6 +36,7 @@ public class VodInfo
     [JsonProperty("rating")]
     public decimal? Rating { get; set; }
 
+    [JsonConverter(typeof(SafeDateTimeConverter))]
     [JsonProperty("releasedate")]
     public DateTime? ReleaseDate { get; set; }
 

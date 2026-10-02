@@ -16,7 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
+using System.IO;
+using System.Security.Cryptography;
+using System.Xml.Serialization;
 using Jellyfin.Xtream.Client;
 using Jellyfin.Xtream.Configuration;
 using Jellyfin.Xtream.Service;
@@ -35,6 +37,7 @@ namespace Jellyfin.Xtream;
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     private static Plugin? _instance;
+    private volatile string _configVersion = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -43,17 +46,19 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     /// <param name="taskManager">Instance of the <see cref="ITaskManager"/> interface.</param>
     /// <param name="xtreamClient">Instance of the <see cref="IXtreamClient"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager, IXtreamClient xtreamClient)
+    /// <param name="streamServiceLogger">Instance of the <see cref="ILogger"/> interface.</param>
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ITaskManager taskManager, IXtreamClient xtreamClient, ILogger<StreamService> streamServiceLogger)
         : base(applicationPaths, xmlSerializer)
     {
         _instance = this;
+        _configVersion = ComputeConfigurationVersion(Configuration);
         XtreamClient = xtreamClient;
         if (XtreamClient is XtreamClient client)
         {
             client.UpdateUserAgent();
         }
 
-        StreamService = new(xtreamClient);
+        StreamService = new(xtreamClient, streamServiceLogger);
         TaskService = new(taskManager);
     }
 
@@ -71,7 +76,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <summary>
     /// Gets the data version used to trigger a cache invalidation on plugin update or config change.
     /// </summary>
-    public string DataVersion => Assembly.GetCallingAssembly().GetName().Version?.ToString() + Configuration.GetHashCode();
+    public string DataVersion => typeof(Plugin).Assembly.GetName().Version?.ToString() + _configVersion;
 
     /// <summary>
     /// Gets the current plugin instance.
@@ -120,10 +125,23 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         };
     }
 
+    /// <summary>
+    /// Derives a version string from the contents of the configuration.
+    /// </summary>
+    /// <param name="configuration">The configuration to derive a version from.</param>
+    /// <returns>A stable version string for the given configuration.</returns>
+    internal static string ComputeConfigurationVersion(PluginConfiguration configuration)
+    {
+        using MemoryStream stream = new MemoryStream();
+        new XmlSerializer(typeof(PluginConfiguration)).Serialize(stream, configuration);
+        return Convert.ToHexString(SHA256.HashData(stream.ToArray()))[..16];
+    }
+
     /// <inheritdoc />
     public override void UpdateConfiguration(BasePluginConfiguration configuration)
     {
         base.UpdateConfiguration(configuration);
+        _configVersion = ComputeConfigurationVersion(Configuration);
 
         if (XtreamClient is XtreamClient client)
         {

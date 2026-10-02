@@ -144,17 +144,20 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         };
     }
 
-    private static List<string> GetGenres(string genreString)
+    internal static List<string> GetGenres(string? genreString)
     {
-        return new(genreString.Split(',').Select(genre => genre.Trim()));
+        // Providers send null or an empty string for a series without genres.
+        return genreString?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? [];
     }
 
-    private static List<PersonInfo> GetPeople(string cast)
+    internal static List<PersonInfo> GetPeople(string? cast)
     {
-        return cast.Split(',').Select(name => new PersonInfo()
-        {
-            Name = name.Trim()
-        }).ToList();
+        // Providers send null or an empty string for a series without cast.
+        return cast?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(name => new PersonInfo()
+            {
+                Name = name
+            }).ToList() ?? [];
     }
 
     private ChannelItemInfo CreateChannelItemInfo(int seriesId, SeriesStreamInfo series, int seasonId)
@@ -195,7 +198,7 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
         };
     }
 
-    private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode)
+    private ChannelItemInfo CreateChannelItemInfo(SeriesStreamInfo series, Season? season, Episode episode, int seasonId)
     {
         Client.Models.SeriesInfo serie = series.Info;
         ParsedName parsedName = StreamService.ParseName(episode.Title);
@@ -225,7 +228,8 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
             MediaType = ChannelMediaType.Video,
             Name = $"Episode {episode.EpisodeNum}",
             Overview = episode.Info?.Plot,
-            ParentIndexNumber = episode.Season,
+            // The season resolved for the folder, which episode.Season may disagree with.
+            ParentIndexNumber = seasonId,
             People = GetPeople(serie.Cast),
             RunTimeTicks = episode.Info?.DurationSecs * TimeSpan.TicksPerSecond,
             Tags = new(parsedName.Tags),
@@ -272,7 +276,7 @@ public class SeriesChannel(ILogger<SeriesChannel> logger) : IChannel, IDisableMe
     {
         IEnumerable<Tuple<SeriesStreamInfo, Season?, Episode>> episodes = await Plugin.Instance.StreamService.GetEpisodes(seriesId, seasonId, cancellationToken).ConfigureAwait(false);
         List<ChannelItemInfo> items = new List<ChannelItemInfo>(
-            episodes.Select((Tuple<SeriesStreamInfo, Season?, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3)));
+            episodes.Select((Tuple<SeriesStreamInfo, Season?, Episode> tuple) => CreateChannelItemInfo(tuple.Item1, tuple.Item2, tuple.Item3, seasonId)));
         return new()
         {
             Items = items,
