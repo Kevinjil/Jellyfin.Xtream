@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -22,8 +23,34 @@ namespace Jellyfin.Xtream.Client.Models;
 
 public class EpgInfo
 {
+    // Kept as text: some providers send hex ids like "6ae0d9df220c7", which cannot be parsed as an int.
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public string RawId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets a stable 32-bit id for GUID building: the numeric id when it fits, otherwise an FNV-1a hash of the text,
+    /// or of the start timestamp when the provider sent no id.
+    /// </summary>
+    [JsonIgnore]
+    public int Id
+    {
+        get
+        {
+            if (int.TryParse(RawId, NumberStyles.Integer, CultureInfo.InvariantCulture, out int id))
+            {
+                return id;
+            }
+
+            string text = string.IsNullOrEmpty(RawId) ? Start.Ticks.ToString(CultureInfo.InvariantCulture) : RawId;
+            uint hash = 2166136261;
+            foreach (char c in text)
+            {
+                hash = unchecked((hash ^ c) * 16777619);
+            }
+
+            return unchecked((int)hash);
+        }
+    }
 
     [JsonProperty("epg_id")]
     public int EpgId { get; set; }
